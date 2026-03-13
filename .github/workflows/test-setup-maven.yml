@@ -1,0 +1,43 @@
+name: Test setup-maven action
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Checkout Mono
+        uses: actions/checkout@v6
+        with:
+          repository: hazelcast/hazelcast-mono
+          path: hazelcast-mono
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Run setup-maven composite action
+        id: setup-maven
+        uses: ./setup-maven
+        with:
+          mono-root: ${{ github.workspace }}/hazelcast-mono
+          gh-token: ${{ secrets.GH_TOKEN }}
+
+      - name: Test outputs
+        shell: bash
+        run: |
+          source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+
+          assert_non_empty() {
+            local actual=$1
+            local name=$2
+            local msg="${name} should not be empty"
+            assert_not_empty "${actual}" "$msg" && log_success "${msg}" || TESTS_RESULT=$?
+          }
+
+          assert_non_empty "${{ steps.setup-maven.outputs.local-repository }}" "local-repository"
+          assert_non_empty "${{ steps.setup-maven.outputs.cache-key }}" "cache-key"
+          assert_non_empty "${{ steps.setup-maven.outputs.cache-hit }}" "cache-hit"
+
+
