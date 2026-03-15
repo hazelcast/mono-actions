@@ -74,13 +74,7 @@ runs:
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
           source "${ACTION_SCRIPTS}/maven.functions.sh"
-
-          RESOLVED_VERSION=$(evaluate_mvn_expression jdk.version)
-          if [[ ! "$RESOLVED_VERSION" =~ (^[0-9]+$) ]]; then
-              echo "Failed to extract version from the pom.xml"
-              exit 1
-          fi
-          echo "JAVA_VERSION=${RESOLVED_VERSION}" >> ${GITHUB_OUTPUT}
+          echo "JAVA_VERSION=$(get_jdk_version)" >> ${GITHUB_OUTPUT}
 
       - name: Setup JDK
         uses: actions/setup-java@v4

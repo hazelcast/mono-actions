@@ -48,6 +48,16 @@ function get_project_version() {
     evaluate_mvn_expression "project.version" ${@-}
 }
 
+function get_jdk_version() {
+    # shellcheck disable=SC2068
+    RESOLVED_VERSION=$(evaluate_mvn_expression "jdk.version" ${@-})
+    if [[ ! "$RESOLVED_VERSION" =~ (^[0-9]+$) ]]; then
+        echoerr "Failed to extract 'jdk.version=${RESOLVED_VERSION}' from the pom.xml"
+        exit 1
+    fi
+    echo "${RESOLVED_VERSION}"
+}
+
 function evaluate_mvn_expression() {
     local expression=$1
 
