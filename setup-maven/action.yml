@@ -49,7 +49,7 @@ runs:
         id: get-local-repository
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
-          source /dev/stdin <<< "$(curl --silent --fail -H "Authorization: Bearer ${GH_TOKEN}" "https://raw.githubusercontent.com/hazelcast/mono-actions/DI-717-javadoc-promo/.github/scripts/maven.functions.sh")"
+          source "${GITHUB_ACTION_PATH}/.github/scripts/maven.functions.sh"
           echo "LOCAL_REPOSITORY=$(get_repo_path)" >> ${GITHUB_OUTPUT}
         env:
           GH_TOKEN: ${{ inputs.gh-token }}
@@ -79,7 +79,7 @@ runs:
         shell: bash
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
-          source /dev/stdin <<< "$(curl --silent --fail -H "Authorization: Bearer ${GH_TOKEN}" "https://raw.githubusercontent.com/hazelcast/mono-actions/DI-717-javadoc-promo/.github/scripts/maven.functions.sh")"
+          source "${GITHUB_ACTION_PATH}/.github/scripts/maven.functions.sh"
           echo "MAVEN_ARGS=$(get_maven_args)" >> ${GITHUB_ENV}
         env:
           GH_TOKEN: ${{ inputs.gh-token }}
