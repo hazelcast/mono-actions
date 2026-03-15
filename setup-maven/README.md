@@ -17,7 +17,7 @@ A GitHub Action to setup Maven:
 | Name             | Description                            |
 |:-----------------|:---------------------------------------|
 | cache-hit        | If there was cache hit                 |
-| cache-key        | The key to the cachje                  |
+| cache-key        | The key to the cache                  |
 | local-repository | Path to Maven local repository (~/.m2) |
 
 ## Usage
