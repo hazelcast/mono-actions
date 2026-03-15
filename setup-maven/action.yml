@@ -31,6 +31,11 @@ runs:
           fi
           
           echo "ROOT_FOLDER=${FINAL_ROOT}" >> $GITHUB_OUTPUT
+          echo "ACTION_SCRIPTS=${GITHUB_ACTION_PATH}/.github/scripts" >> $GITHUB_ENV
+
+      - name: Set env variable ACTION_SCRIPTS folder
+        shell: bash
+        run: echo "ACTION_SCRIPTS=${GITHUB_ACTION_PATH}/.github/scripts" >> $GITHUB_ENV
 
       - name: Generate cache key
         shell: bash
@@ -49,7 +54,7 @@ runs:
         id: get-local-repository
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
-          source "${GITHUB_ACTION_PATH}/.github/scripts/maven.functions.sh"
+          source "${ACTION_SCRIPTS}/maven.functions.sh"
           echo "LOCAL_REPOSITORY=$(get_repo_path)" >> ${GITHUB_OUTPUT}
         env:
           GH_TOKEN: ${{ inputs.gh-token }}
@@ -67,7 +72,15 @@ runs:
         shell: bash
         id: get-java-version
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
-        run: echo "JAVA_VERSION=$(.jenkins/get-jdk-version-from-pom.sh)" >> ${GITHUB_OUTPUT}
+        run: |
+          source "${ACTION_SCRIPTS}/maven.functions.sh"
+
+          RESOLVED_VERSION=$(evaluate_mvn_expression jdk.version)
+          if [[ ! "$RESOLVED_VERSION" =~ (^[0-9]+$) ]]; then
+              echo "Failed to extract version from the pom.xml"
+              exit 1
+          fi
+          echo "JAVA_VERSION=${RESOLVED_VERSION}" >> ${GITHUB_OUTPUT}
 
       - name: Setup JDK
         uses: actions/setup-java@v4
@@ -79,7 +92,7 @@ runs:
         shell: bash
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
-          source "${GITHUB_ACTION_PATH}/.github/scripts/maven.functions.sh"
+          source "${ACTION_SCRIPTS}/maven.functions.sh"
           echo "MAVEN_ARGS=$(get_maven_args)" >> ${GITHUB_ENV}
         env:
           GH_TOKEN: ${{ inputs.gh-token }}
