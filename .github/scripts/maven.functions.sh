@@ -1,5 +1,3 @@
-set -o errexit -o nounset -o pipefail
-
 source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
 
 # Returns a path to a given Maven artifact, downloading if required
