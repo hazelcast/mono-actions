@@ -1,4 +1,4 @@
-# docker-actions
+# mono-actions
 
 This repository contains GitHub Actions for working with [Hazelcast Mono](https://github.com/hazelcast/hazelcast-mono) images.
 
