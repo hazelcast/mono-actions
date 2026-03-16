@@ -14,6 +14,10 @@ jobs:
     uses: ./.github/workflows/test-setup-maven.yml
     secrets: inherit
 
+  test-setup-maven:
+    uses: ./.github/workflows/test-get-javadoc-matrix.yml
+    secrets: inherit
+
   assert-all-jobs-succeeded:
     runs-on: ubuntu-latest
     needs:
