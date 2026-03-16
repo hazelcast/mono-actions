@@ -38,7 +38,7 @@ runs:
           matrix=()
         
           if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" == "true" ]]; then
-              editmatrixions+=($(echo "${oss_json}" | jq --compact-output '.'))
+              matrix+=($(echo "${oss_json}" | jq --compact-output '.'))
           fi
 
           if [[ "${{ steps.resolve-editions.outputs.should_build_ee }}" == "true" ]]; then
