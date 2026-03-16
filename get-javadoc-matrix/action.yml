@@ -46,6 +46,4 @@ runs:
           fi
 
           json="[$(IFS=,; echo "${editions[*]}")]"
-
-          echo "AAAAAAAAA ${{ inputs.release-type }} ######### ${json}"
           echo "json=${json}" >> "$GITHUB_OUTPUT"
