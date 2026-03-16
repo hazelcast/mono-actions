@@ -10,6 +10,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Test scripts
+        run: ./setup-maven/scripts/maven.functions_tests.sh
+
       - name: Checkout Mono
         uses: actions/checkout@v6
         with:
