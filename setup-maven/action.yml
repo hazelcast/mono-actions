@@ -34,7 +34,7 @@ runs:
 
       - name: Set env variable ACTION_SCRIPTS folder
         shell: bash
-        run: echo "ACTION_SCRIPTS=${GITHUB_ACTION_PATH}/../.github/scripts" >> $GITHUB_ENV
+        run: echo "ACTION_SCRIPTS=${GITHUB_ACTION_PATH}/scripts" >> $GITHUB_ENV
 
       - name: Generate cache key
         shell: bash
