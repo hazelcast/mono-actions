@@ -21,25 +21,29 @@ runs:
         id: compute-matrix
         shell: bash
         run: |
+          oss_json='{
+            "label": "oss",
+            "local-root": "hazelcast",
+            "remote-root": "hazelcast-docs",
+            "mvn-options": ""
+          }'
+
+          ee_json='{
+            "label": "ee",
+            "local-root": ".",
+            "remote-root": "hazelcast-ee-docs",
+            "mvn-options": "-P-os-hazelcast"
+          }'
+
           editions=()
-
-          if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" = "true" ]]; then
-              editions+=('{ \
-                          "label":"oss",\
-                          "local-root":"hazelcast", \
-                          "remote-root":"hazelcast-docs", \
-                          "mvn-options":"" \
-                        }')
+          if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" == "true" ]]; then
+              editions+=("${oss_json}")
           fi
 
-          if [[ "${{ steps.resolve-editions.outputs.should_build_ee }}" = "true" ]]; then
-              editions+=('{ \
-                          "label":"ee", \
-                          "local-root":".", \
-                          "remote-root":"hazelcast-ee-docs", \
-                          "mvn-options":"-P-os-hazelcast" \
-                        }')
+          if [[ "${{ steps.resolve-editions.outputs.should_build_ee }}" == "true" ]]; then
+              editions+=("${ee_json}")
           fi
 
-          json="[$(IFS=,; echo "${editions[*]}")]"
-          echo "json=${json}" >> "${GITHUB_OUTPUT}"
+          json=$(echo "[$(IFS=,; echo "${editions[*]}")]" | jq --compact-output '.')
+          echo "json=${json}" >> "$GITHUB_OUTPUT"
+
