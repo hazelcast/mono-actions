@@ -44,5 +44,6 @@ runs:
               editions+=("${ee_json}")
           fi
 
-          json=$(echo "[$(IFS=,; echo "${editions[*]}")]" | jq --compact-output '.')
+          json=$(printf "%s," "${editions[@]}" | sed 's/,$//')
+          json=$(echo "[$json]" | jq --compact-output '.')
           echo "json=${json}" >> "$GITHUB_OUTPUT"
