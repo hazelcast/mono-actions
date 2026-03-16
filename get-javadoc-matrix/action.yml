@@ -21,14 +21,15 @@ runs:
         id: compute-matrix
         shell: bash
         run: |
-          oss_json='{
+          # 1. Define your templates (multiline is fine here)
+          oss_template='{
             "label": "oss",
             "local-root": "hazelcast",
             "remote-root": "hazelcast-docs",
             "mvn-options": ""
           }'
 
-          ee_json='{
+          ee_template='{
             "label": "ee",
             "local-root": ".",
             "remote-root": "hazelcast-ee-docs",
@@ -36,14 +37,15 @@ runs:
           }'
 
           editions=()
+        
           if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" == "true" ]]; then
-              editions+=("${oss_json}")
+              editions+=($(echo "$oss_template" | jq --compact-output '.'))
           fi
 
           if [[ "${{ steps.resolve-editions.outputs.should_build_ee }}" == "true" ]]; then
-              editions+=("${ee_json}")
+              editions+=($(echo "$ee_template" | jq --compact-output '.'))
           fi
 
-          json=$(printf "%s," "${editions[@]}" | sed 's/,$//')
-          json=$(echo "[$json]" | jq --compact-output '.')
+          json=$(IFS=,; echo "${editions[*]}")
+          json="[$json]"
           echo "json=${json}" >> "$GITHUB_OUTPUT"
