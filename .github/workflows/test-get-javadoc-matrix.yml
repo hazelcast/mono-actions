@@ -7,6 +7,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
       - name: Get matrix (ALL)
         id: get-javadoc-matrix-all
         uses: ./get-javadoc-matrix
