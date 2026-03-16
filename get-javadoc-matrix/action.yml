@@ -35,15 +35,15 @@ runs:
             "mvn-options": "-P-os-hazelcast"
           }'
 
-          editions=()
+          matrix=()
         
           if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" == "true" ]]; then
-              editions+=($(echo "${oss_json}" | jq --compact-output '.'))
+              editmatrixions+=($(echo "${oss_json}" | jq --compact-output '.'))
           fi
 
           if [[ "${{ steps.resolve-editions.outputs.should_build_ee }}" == "true" ]]; then
-              editions+=($(echo "${ee_json}" | jq --compact-output '.'))
+              matrix+=($(echo "${ee_json}" | jq --compact-output '.'))
           fi
 
-          json="[$(IFS=,; echo "${editions[*]}")]"
+          json="[$(IFS=,; echo "${matrix[*]}")]"
           echo "json=${json}" >> "$GITHUB_OUTPUT"
