@@ -35,26 +35,27 @@ jobs:
 
           assert_label() {
             local label=$1
-            local actual-matrix=$2
-            local has-matrix=$(echo "${actual-matrix}" | jq 'any(.[]; .label == "${label}")')
-            assert_true "${has-matrix}" "'${label}' label is missing"
+            local actual_matrix=$2
+            local has_matrix=$(echo "${actual_matrix}" | jq --arg lbl "$label" 'any(.[]; .label == $lbl)')
+            assert_true "${has_matrix}" "'${label}' label is missing"
           }
 
           assert_matrix() {
-            local rel-type=$1
-            local actual-matrix=$2
+            local rel_type=$1
+            local actual_matrix=$2
             
-            if [[ "${rel-type}" =~ ALL|OSS ]]; then
-              assert_label "oss" "${actual-matrix}"
+            if [[ "${rel_type}" =~ ALL|OSS ]]; then
+              assert_label "oss" "${actual_matrix}"
             fi
 
-            if [[ "${rel-type}" =~ ALL|EE ]]; then
-              assert_label "ee" "${actual-matrix}"
+            if [[ "${rel_type}" =~ ALL|EE ]]; then
+              assert_label "ee" "${actual_matrix}"
             fi
           }
 
           assert_matrix "ALL" "${{ steps.get-javadoc-matrix-all.outputs.json }}"
           assert_matrix "OSS" "${{ steps.get-javadoc-matrix-oss.outputs.json }}"
           assert_matrix "EE" "${{ steps.get-javadoc-matrix-ee.outputs.json }}"
+
 
 
