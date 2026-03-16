@@ -19,6 +19,7 @@ runs:
 
       - name: Compute edition type matrix
         id: compute-matrix
+        shell: bash
         run: |
           editions=()
 
