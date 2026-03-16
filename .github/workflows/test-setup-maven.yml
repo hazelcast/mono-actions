@@ -20,7 +20,7 @@ jobs:
       - name: Test scripts
         working-directory: hazelcast-mono
         shell: bash
-        run: ./setup-maven/scripts/maven.functions_tests.sh
+        run: ../setup-maven/scripts/maven.functions_tests.sh
 
       - name: Run setup-maven composite action
         id: setup-maven
