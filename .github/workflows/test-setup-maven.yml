@@ -10,16 +10,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Test scripts
-        shell: bash
-        run: ./setup-maven/scripts/maven.functions_tests.sh
-
       - name: Checkout Mono
         uses: actions/checkout@v6
         with:
           repository: hazelcast/hazelcast-mono
           path: hazelcast-mono
           token: ${{ secrets.GH_TOKEN }}
+
+      - name: Test scripts
+        working-directory: hazelcast-mono
+        shell: bash
+        run: ./setup-maven/scripts/maven.functions_tests.sh
 
       - name: Run setup-maven composite action
         id: setup-maven
