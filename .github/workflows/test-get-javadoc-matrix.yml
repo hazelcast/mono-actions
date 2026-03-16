@@ -1,0 +1,57 @@
+name: Test setup-maven action
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get matrix (ALL)
+        id: get-javadoc-matrix-all
+        uses: ./get-javadoc-matrix
+        with:
+          release-type: 'ALL'
+
+      - name: Get matrix (OSS)
+        id: get-javadoc-matrix-oss
+        uses: ./get-javadoc-matrix
+        with:
+          release-type: 'OSS'
+
+      - name: Get matrix (EE)
+        id: get-javadoc-matrix-ee
+        uses: ./get-javadoc-matrix
+        with:
+          release-type: 'EE'
+
+      - name: Test outputs
+        shell: bash
+        run: |
+          source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+
+          assert_label() {
+            local label=$1
+            local actual-matrix=$2
+            local has-matrix=$(echo "${actual-matrix}" | jq 'any(.[]; .label == "${label}")')
+            assert_true "${has-matrix}" "'${label}' label is missing"
+          }
+
+          assert_matrix() {
+            local rel-type=$1
+            local actual-matrix=$2
+            
+            if [[ "${rel-type}" =~ ALL|OSS ]]; then
+              assert_label "oss" "${actual-matrix}"
+            fi
+
+            if [[ "${rel-type}" =~ ALL|EE ]]; then
+              assert_label "ee" "${actual-matrix}"
+            fi
+          }
+
+          assert_matrix "ALL" "${{ steps.get-javadoc-matrix-all.outputs.json }}"
+          assert_matrix "OSS" "${{ steps.get-javadoc-matrix-oss.outputs.json }}"
+          assert_matrix "EE" "${{ steps.get-javadoc-matrix-ee.outputs.json }}"
+
+

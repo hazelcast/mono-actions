@@ -1,0 +1,44 @@
+name: Get JavaDoc matrix
+inputs:
+  release-type:
+    description: 'Type of Edition ALL|OSS|EE'
+    required: false
+
+outputs:
+  json:
+    value: ${{ steps.compute-matrix.outputs.json }}
+
+runs:
+  using: composite
+  steps:
+      - name: Resolve editions
+        id: resolve-editions
+        uses: hazelcast/docker-actions/resolve-editions@master
+        with:
+          release-type: ${{ inputs.release-type }}
+
+      - name: Compute edition type matrix
+        id: compute-matrix
+        run: |
+          editions=()
+
+          if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" = "true" ]]; then
+              editions+=('{ \
+                          "label":"oss",\
+                          "local-root":"hazelcast", \
+                          "remote-root":"hazelcast-docs", \
+                          "mvn-options":"" \
+                        }')
+          fi
+
+          if [[ "${{ steps.resolve-editions.outputs.should_build_ee }}" = "true" ]]; then
+              editions+=('{ \
+                          "label":"ee", \
+                          "local-root":".", \
+                          "remote-root":"hazelcast-ee-docs", \
+                          "mvn-options":"-P-os-hazelcast" \
+                        }')
+          fi
+
+          json="[$(IFS=,; echo "${editions[*]}")]"
+          echo "json=${json}" >> "${GITHUB_OUTPUT}"
