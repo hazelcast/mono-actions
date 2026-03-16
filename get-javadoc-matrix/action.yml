@@ -21,14 +21,14 @@ runs:
         id: compute-matrix
         shell: bash
         run: |
-          oss_template='{
+          oss_json='{
             "label": "oss",
             "local-root": "hazelcast",
             "remote-root": "hazelcast-docs",
             "mvn-options": ""
           }'
 
-          ee_template='{
+          ee_json='{
             "label": "ee",
             "local-root": ".",
             "remote-root": "hazelcast-ee-docs",
@@ -38,11 +38,11 @@ runs:
           editions=()
         
           if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" == "true" ]]; then
-              editions+=($(echo "$oss_template" | jq --compact-output '.'))
+              editions+=($(echo "${oss_json}" | jq --compact-output '.'))
           fi
 
           if [[ "${{ steps.resolve-editions.outputs.should_build_ee }}" == "true" ]]; then
-              editions+=($(echo "$ee_template" | jq --compact-output '.'))
+              editions+=($(echo "${ee_json}" | jq --compact-output '.'))
           fi
 
           json="[$(IFS=,; echo "${editions[*]}")]"
