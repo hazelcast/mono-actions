@@ -42,4 +42,3 @@ log_header "Tests for get_jdk_version"
 assert_get_jdk_version
 
 assert_eq 0 "${TESTS_RESULT}" "All tests should pass"
-
