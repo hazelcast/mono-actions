@@ -1,6 +1,6 @@
 ### setup-maven Action
 
-A GitHub Action to get JavaDoc matrix for job concurrency
+A GitHub Action to generate a JavaDoc matrix for distributed jobs
 
 #### Inputs
 
