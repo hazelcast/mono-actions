@@ -30,7 +30,7 @@ runs:
             FINAL_ROOT="${GITHUB_WORKSPACE}"
           fi
           
-          echo "ROOT_FOLDER=${FINAL_ROOT}" >> $GITHUB_OUTPUT
+          echo "ROOT_FOLDER=${FINAL_ROOT}" >> ${GITHUB_OUTPUT}
 
       - name: Set env variable ACTION_SCRIPTS folder
         shell: bash

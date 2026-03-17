@@ -19,7 +19,6 @@ jobs:
 
       - name: Test scripts
         working-directory: hazelcast-mono
-        shell: bash
         run: ../setup-maven/scripts/maven.functions_tests.sh
 
       - name: Run setup-maven composite action
@@ -30,7 +29,6 @@ jobs:
           gh-token: ${{ secrets.GH_TOKEN }}
 
       - name: Test outputs
-        shell: bash
         run: |
           source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
@@ -44,5 +42,4 @@ jobs:
           assert_non_empty "${{ steps.setup-maven.outputs.local-repository }}" "local-repository"
           assert_non_empty "${{ steps.setup-maven.outputs.cache-key }}" "cache-key"
           assert_non_empty "${{ steps.setup-maven.outputs.cache-hit }}" "cache-hit"
-
 

@@ -1,4 +1,4 @@
-### setup-maven Action
+### get-javadoc-matrix Action
 
 A GitHub Action to generate a JavaDoc matrix for distributed jobs
 
@@ -12,7 +12,7 @@ A GitHub Action to generate a JavaDoc matrix for distributed jobs
 
 | Name | Description                   |
 |:-----|:------------------------------|
-| json | Matrix JSon anchored by label |
+| json | Matrix JSON anchored by label |
 
 ## Usage
 
