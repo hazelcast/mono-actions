@@ -32,9 +32,10 @@ runs:
           
           echo "ROOT_FOLDER=${FINAL_ROOT}" >> ${GITHUB_OUTPUT}
 
-      - name: Set env variable ACTION_SCRIPTS folder
+      - name: Set ACTION_SCRIPTS_FOLDER
+        id: get-action-scripts-folder
         shell: bash
-        run: echo "ACTION_SCRIPTS=${GITHUB_ACTION_PATH}/scripts" >> $GITHUB_ENV
+        run: echo "ACTION_SCRIPTS_FOLDER=${GITHUB_ACTION_PATH}/scripts" >> ${GITHUB_OUTPUT}
 
       - name: Generate cache key
         shell: bash
@@ -53,7 +54,7 @@ runs:
         id: get-local-repository
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
-          source "${ACTION_SCRIPTS}/maven.functions.sh"
+          source "${{ steps.get-action-scripts-folder.outputs.ACTION_SCRIPTS_FOLDER }}/maven.functions.sh"
           echo "LOCAL_REPOSITORY=$(get_repo_path)" >> ${GITHUB_OUTPUT}
         env:
           GH_TOKEN: ${{ inputs.gh-token }}
@@ -72,7 +73,7 @@ runs:
         id: get-java-version
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
-          source "${ACTION_SCRIPTS}/maven.functions.sh"
+          source "${{ steps.get-action-scripts-folder.outputs.ACTION_SCRIPTS_FOLDER }}/maven.functions.sh"
           echo "JAVA_VERSION=$(get_jdk_version)" >> ${GITHUB_OUTPUT}
 
       - name: Setup JDK
@@ -85,7 +86,7 @@ runs:
         shell: bash
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
-          source "${ACTION_SCRIPTS}/maven.functions.sh"
+          source "${{ steps.get-action-scripts-folder.outputs.ACTION_SCRIPTS_FOLDER }}/maven.functions.sh"
           echo "MAVEN_ARGS=$(get_maven_args)" >> ${GITHUB_ENV}
         env:
           GH_TOKEN: ${{ inputs.gh-token }}
