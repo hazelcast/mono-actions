@@ -1,4 +1,4 @@
-### setup-maven Action
+### get-javadoc-matrix Action
 
 A GitHub Action to get JavaDoc matrix for job concurrency
 
