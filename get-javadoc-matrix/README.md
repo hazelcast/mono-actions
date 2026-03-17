@@ -21,7 +21,7 @@ Example workflow:
 ```yaml
 jobs:
   test-mono:
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-2
     steps:
       - uses: hazelcast/mono-actions/get-javadox-matrix@main
         id: get-javadox-matrix
