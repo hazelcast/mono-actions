@@ -42,4 +42,3 @@ jobs:
           assert_non_empty "${{ steps.setup-maven.outputs.local-repository }}" "local-repository"
           assert_non_empty "${{ steps.setup-maven.outputs.cache-key }}" "cache-key"
           assert_non_empty "${{ steps.setup-maven.outputs.cache-hit }}" "cache-hit"
-

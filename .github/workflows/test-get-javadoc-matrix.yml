@@ -55,4 +55,3 @@ jobs:
           assert_matrix 'ALL' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
           assert_matrix 'OSS' '${{ steps.get-javadoc-matrix-oss.outputs.json }}'
           assert_matrix 'EE' '${{ steps.get-javadoc-matrix-ee.outputs.json }}'
-
