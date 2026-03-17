@@ -12,7 +12,7 @@ A GitHub Action to get JavaDoc matrix for job concurrency
 
 | Name | Description                   |
 |:-----|:------------------------------|
-| json | Matrix JSon anchored by label |
+| json | Matrix JSON anchored by label |
 
 ## Usage
 
