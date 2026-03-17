@@ -29,7 +29,6 @@ jobs:
           release-type: 'EE'
 
       - name: Test outputs
-        shell: bash
         run: |
           source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
