@@ -35,7 +35,7 @@ runs:
       - name: Set ACTION_SCRIPTS_FOLDER
         id: get-action-scripts-folder
         shell: bash
-        run: echo "ACTION_SCRIPTS_FOLDER=${GITHUB_ACTION_PATH}/scripts" >> ${GITHUB_OUTPUT}
+        run: echo "ACTION_SCRIPTS_FOLDER=${ROOT_FOLDER}/.github/scripts" >> ${GITHUB_OUTPUT}
 
       - name: Generate cache key
         shell: bash
