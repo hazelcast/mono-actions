@@ -10,7 +10,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - run: .github/scripts/test_scripts.sh
+
+      - name: Checkout Mono
+        uses: actions/checkout@v6
+        with:
+          repository: hazelcast/hazelcast
+          path: hazelcast
+
+      - name: Run test_scripts.sh
+        working-directory: hazelcast
+        run: ${GITHUB_WORKSPACE}/.github/scripts/test_scripts.sh
 
   test-setup-maven:
     uses: ./.github/workflows/test-setup-maven.yml

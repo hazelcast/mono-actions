@@ -5,13 +5,12 @@
 name: Setup Maven
 
 inputs:
-  mono-root:
-    description: Custom Mono root folder. Defaults to ${GITHUB_WORKSPACE}
+  root:
+    description: Custom root where Hazelcast code is checkouted out. Defaults to ${GITHUB_WORKSPACE}
     required: false
-  gh-token:
-    description: 'The PAT for internal repo access'
-    required: true
-
+  skip-maven-cache:
+    description: 'Skip Maven cache setup'
+    type: boolean
 outputs:
   cache-hit:
     value: ${{ steps.maven-cache.outputs.cache-hit == 'true' && 'true' || 'false' }}
@@ -28,7 +27,7 @@ runs:
         id: get-root-folder
         run: |
           # Path to the root of the checked-out `hazelcast-mono` repo i.e. custom or GITHUB_WORKSPACE
-          FINAL_ROOT="${{ inputs.mono-root }}"
+          FINAL_ROOT="${{ inputs.root }}"
           if [ -z "$FINAL_ROOT" ]; then
             FINAL_ROOT="${GITHUB_WORKSPACE}"
           fi
@@ -38,9 +37,10 @@ runs:
       - name: Set ACTION_SCRIPTS_FOLDER
         id: get-action-scripts-folder
         shell: bash
-        run: echo "ACTION_SCRIPTS_FOLDER=${ROOT_FOLDER}/.github/scripts" >> ${GITHUB_OUTPUT}
+        run: echo "ACTION_SCRIPTS_FOLDER=${GITHUB_ACTION_PATH}/../.github/scripts" >> ${GITHUB_OUTPUT}
 
       - name: Generate cache key
+        if: ${{ inputs.skip-maven-cache == 'false' }}
         shell: bash
         id: get-cache-key
         run: |
@@ -59,10 +59,9 @@ runs:
         run: |
           source "${{ steps.get-action-scripts-folder.outputs.ACTION_SCRIPTS_FOLDER }}/maven.functions.sh"
           echo "LOCAL_REPOSITORY=$(get_repo_path)" >> ${GITHUB_OUTPUT}
-        env:
-          GH_TOKEN: ${{ inputs.gh-token }}
 
       - id: maven-cache
+        if: ${{ inputs.skip-maven-cache == 'false' }}
         uses: actions/cache@v4
         with:
           path: |
@@ -91,5 +90,3 @@ runs:
         run: |
           source "${{ steps.get-action-scripts-folder.outputs.ACTION_SCRIPTS_FOLDER }}/maven.functions.sh"
           echo "MAVEN_ARGS=$(get_maven_args)" >> ${GITHUB_ENV}
-        env:
-          GH_TOKEN: ${{ inputs.gh-token }}
