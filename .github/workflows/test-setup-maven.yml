@@ -21,11 +21,12 @@ jobs:
         uses: ./setup-maven
         with:
           root: hazelcast
-          skip-maven-cache: true
 
       - name: Test outputs
         run: |
           source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+
+          TESTS_RESULT=0
 
           assert_non_empty() {
             local actual=$1
@@ -37,3 +38,5 @@ jobs:
           assert_non_empty "${{ steps.setup-maven.outputs.local-repository }}" "local-repository"
           assert_non_empty "${{ steps.setup-maven.outputs.cache-key }}" "cache-key"
           assert_non_empty "${{ steps.setup-maven.outputs.cache-hit }}" "cache-hit"
+
+          assert_eq 0 "$TESTS_RESULT" "All tests should pass"

@@ -32,11 +32,13 @@ jobs:
         run: |
           source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
+          TESTS_RESULT=0
+
           assert_label() {
             local label=$1
             local actual_matrix=$2
             local has_matrix=$(echo "${actual_matrix}" | jq --arg lbl "$label" 'any(.[]; .label == $lbl)')
-            assert_true "${has_matrix}" "'${label}' label is missing"
+            assert_true "${has_matrix}" "'${label}' label is missing" || TESTS_RESULT=$?
           }
 
           assert_matrix() {
@@ -55,3 +57,5 @@ jobs:
           assert_matrix 'ALL' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
           assert_matrix 'OSS' '${{ steps.get-javadoc-matrix-oss.outputs.json }}'
           assert_matrix 'EE' '${{ steps.get-javadoc-matrix-ee.outputs.json }}'
+
+          assert_eq 0 "$TESTS_RESULT" "All tests should pass"
