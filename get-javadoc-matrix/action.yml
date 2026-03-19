@@ -1,4 +1,10 @@
+# GitHub Action to generate JavaDoc workflow matrix (JSON) for distributed jobs (OSS/EE)
+# This is used for parallelizing Mono OS/EE JavaDoc generation during 'package.yml' and
+# 'promote.yml' phases. The JSON matrix computation has been centralized here to avoid
+# duplication in the calling workflows
+
 name: Get JavaDoc matrix
+
 inputs:
   release-type:
     description: 'Type of Edition ALL|OSS|EE'

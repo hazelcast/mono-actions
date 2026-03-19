@@ -1,6 +1,9 @@
+# GitHub Action to amalgamate various common Mono pre-build actions in a single
+# place e.g. JDK setup, Maven cache, Maven arguments etc. Use this Action to
+# setup Maven correctly prior to building Mono
+
 name: Setup Maven
 
-# Configures a Maven environment, with a suitable JDK and Maven cache pre-populated
 inputs:
   mono-root:
     description: Custom Mono root folder. Defaults to ${GITHUB_WORKSPACE}
