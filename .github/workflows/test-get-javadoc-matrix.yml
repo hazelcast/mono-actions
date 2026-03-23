@@ -34,28 +34,52 @@ jobs:
 
           TESTS_RESULT=0
 
+          assert_field_by_label() {
+              # Generic function to test single JSON field by label. The same field will exist
+              # for 'ALL' and the test asserts the field against expected label
+              local label=$1
+              local field=$2
+              local field_value=$3
+              local matrix=$4
+
+              local has_field=$(echo "${matrix}" | jq \
+                  --arg field "${field}" \
+                  --arg fieldVal "${field_value}" \
+                  --arg lbl "${label}" \
+                  'any(.[]; .[$field] == $fieldVal and .label == $lbl)')
+
+              assert_true "${has_field}" "'${field}=${field_value}' is missing/incorrect for label '${label}'" || TESTS_RESULT=$?
+          }
+
           assert_label() {
-            local label=$1
-            local actual_matrix=$2
-            local has_matrix=$(echo "${actual_matrix}" | jq --arg lbl "$label" 'any(.[]; .label == $lbl)')
-            assert_true "${has_matrix}" "'${label}' label is missing" || TESTS_RESULT=$?
+              local label=$1
+              local actual_matrix=$2
+              local has_label=$(echo "${actual_matrix}" | jq --arg lbl "${label}" 'any(.[]; .label == $lbl)')
+              assert_true "${has_label}" "label '${label}' is missing" || TESTS_RESULT=$?
           }
 
-          assert_matrix() {
-            local rel_type=$1
-            local actual_matrix=$2
-            
-            if [[ "${rel_type}" =~ ALL|OSS ]]; then
-              assert_label "oss" "${actual_matrix}"
-            fi
+          # Assert 'label'
+          assert_label 'oss' '${{ steps.get-javadoc-matrix-oss.outputs.json }}'
+          assert_label 'oss' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
+          assert_label 'ee' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
+          assert_label 'ee' '${{ steps.get-javadoc-matrix-ee.outputs.json }}'
 
-            if [[ "${rel_type}" =~ ALL|EE ]]; then
-              assert_label "ee" "${actual_matrix}"
-            fi
-          }
+          FIELD="remote-root"
+          assert_field_by_label 'oss' "${FIELD}" 'hazelcast-docs' '${{ steps.get-javadoc-matrix-oss.outputs.json }}'
+          assert_field_by_label 'oss' "${FIELD}" 'hazelcast-docs' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
+          assert_field_by_label 'ee' "${FIELD}" 'hazelcast-ee-docs' '${{ steps.get-javadoc-matrix-ee.outputs.json }}'
+          assert_field_by_label 'ee' "${FIELD}" 'hazelcast-ee-docs' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
 
-          assert_matrix 'ALL' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
-          assert_matrix 'OSS' '${{ steps.get-javadoc-matrix-oss.outputs.json }}'
-          assert_matrix 'EE' '${{ steps.get-javadoc-matrix-ee.outputs.json }}'
+          FIELD="local-root"
+          assert_field_by_label 'oss' "${FIELD}" 'hazelcast' '${{ steps.get-javadoc-matrix-oss.outputs.json }}'
+          assert_field_by_label 'oss' "${FIELD}" 'hazelcast' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
+          assert_field_by_label 'ee' "${FIELD}" '.' '${{ steps.get-javadoc-matrix-ee.outputs.json }}'
+          assert_field_by_label 'ee' "${FIELD}" '.' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
+
+          FIELD="mvn-options"
+          assert_field_by_label 'oss' "${FIELD}" '' '${{ steps.get-javadoc-matrix-oss.outputs.json }}'
+          assert_field_by_label 'oss' "${FIELD}" '' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
+          assert_field_by_label 'ee' "${FIELD}" '-P-os-hazelcast' '${{ steps.get-javadoc-matrix-ee.outputs.json }}'
+          assert_field_by_label 'ee' "${FIELD}" '-P-os-hazelcast' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
 
           assert_eq 0 "$TESTS_RESULT" "All tests should pass"
