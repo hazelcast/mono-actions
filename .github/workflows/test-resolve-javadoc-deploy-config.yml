@@ -1,4 +1,4 @@
-name: Test setup-maven action
+name: Test resolve-javadoc-deploy-config action
 
 on:
   workflow_call:
@@ -10,21 +10,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Get matrix (ALL)
-        id: get-javadoc-matrix-all
-        uses: ./get-javadoc-matrix
+      - name: Resolve JavaDoc deploy config (ALL)
+        id: resolve-javadoc-deploy-config-all
+        uses: ./resolve-javadoc-deploy-config
         with:
           release-type: 'ALL'
 
-      - name: Get matrix (OSS)
-        id: get-javadoc-matrix-oss
-        uses: ./get-javadoc-matrix
+      - name: Resolve JavaDoc deploy config (OSS)
+        id: resolve-javadoc-deploy-config-oss
+        uses: ./resolve-javadoc-deploy-config
         with:
           release-type: 'OSS'
 
-      - name: Get matrix (EE)
-        id: get-javadoc-matrix-ee
-        uses: ./get-javadoc-matrix
+      - name: Resolve JavaDoc deploy config (EE)
+        id: resolve-javadoc-deploy-config-ee
+        uses: ./resolve-javadoc-deploy-config
         with:
           release-type: 'EE'
 
@@ -59,27 +59,27 @@ jobs:
           }
 
           # Assert 'label'
-          assert_label 'oss' '${{ steps.get-javadoc-matrix-oss.outputs.json }}'
-          assert_label 'oss' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
-          assert_label 'ee' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
-          assert_label 'ee' '${{ steps.get-javadoc-matrix-ee.outputs.json }}'
+          assert_label 'oss' '${{ steps.resolve-javadoc-deploy-config-oss.outputs.json }}'
+          assert_label 'oss' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
+          assert_label 'ee' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
+          assert_label 'ee' '${{ steps.resolve-javadoc-deploy-config-ee.outputs.json }}'
 
           FIELD="remote-root"
-          assert_field_by_label 'oss' "${FIELD}" 'hazelcast-docs' '${{ steps.get-javadoc-matrix-oss.outputs.json }}'
-          assert_field_by_label 'oss' "${FIELD}" 'hazelcast-docs' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
-          assert_field_by_label 'ee' "${FIELD}" 'hazelcast-ee-docs' '${{ steps.get-javadoc-matrix-ee.outputs.json }}'
-          assert_field_by_label 'ee' "${FIELD}" 'hazelcast-ee-docs' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
+          assert_field_by_label 'oss' "${FIELD}" 'hazelcast-docs' '${{ steps.resolve-javadoc-deploy-config-oss.outputs.json }}'
+          assert_field_by_label 'oss' "${FIELD}" 'hazelcast-docs' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
+          assert_field_by_label 'ee' "${FIELD}" 'hazelcast-ee-docs' '${{ steps.resolve-javadoc-deploy-config-ee.outputs.json }}'
+          assert_field_by_label 'ee' "${FIELD}" 'hazelcast-ee-docs' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
 
           FIELD="local-root"
-          assert_field_by_label 'oss' "${FIELD}" 'hazelcast' '${{ steps.get-javadoc-matrix-oss.outputs.json }}'
-          assert_field_by_label 'oss' "${FIELD}" 'hazelcast' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
-          assert_field_by_label 'ee' "${FIELD}" '.' '${{ steps.get-javadoc-matrix-ee.outputs.json }}'
-          assert_field_by_label 'ee' "${FIELD}" '.' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
+          assert_field_by_label 'oss' "${FIELD}" 'hazelcast' '${{ steps.resolve-javadoc-deploy-config-oss.outputs.json }}'
+          assert_field_by_label 'oss' "${FIELD}" 'hazelcast' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
+          assert_field_by_label 'ee' "${FIELD}" '.' '${{ steps.resolve-javadoc-deploy-config-ee.outputs.json }}'
+          assert_field_by_label 'ee' "${FIELD}" '.' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
 
           FIELD="mvn-options"
-          assert_field_by_label 'oss' "${FIELD}" '' '${{ steps.get-javadoc-matrix-oss.outputs.json }}'
-          assert_field_by_label 'oss' "${FIELD}" '' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
-          assert_field_by_label 'ee' "${FIELD}" '-P-os-hazelcast' '${{ steps.get-javadoc-matrix-ee.outputs.json }}'
-          assert_field_by_label 'ee' "${FIELD}" '-P-os-hazelcast' '${{ steps.get-javadoc-matrix-all.outputs.json }}'
+          assert_field_by_label 'oss' "${FIELD}" '' '${{ steps.resolve-javadoc-deploy-config-oss.outputs.json }}'
+          assert_field_by_label 'oss' "${FIELD}" '' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
+          assert_field_by_label 'ee' "${FIELD}" '-P-os-hazelcast' '${{ steps.resolve-javadoc-deploy-config-ee.outputs.json }}'
+          assert_field_by_label 'ee' "${FIELD}" '-P-os-hazelcast' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
 
           assert_eq 0 "$TESTS_RESULT" "All tests should pass"
