@@ -6,6 +6,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_VERSION: '5.5.5'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -14,18 +16,21 @@ jobs:
         id: resolve-javadoc-deploy-config-all
         uses: ./resolve-javadoc-deploy-config
         with:
+          release-version: ${{ env.RELEASE_VERSION }}
           release-type: 'ALL'
 
       - name: Resolve JavaDoc deploy config (OSS)
         id: resolve-javadoc-deploy-config-oss
         uses: ./resolve-javadoc-deploy-config
         with:
+          release-version:  ${{ env.RELEASE_VERSION }}
           release-type: 'OSS'
 
       - name: Resolve JavaDoc deploy config (EE)
         id: resolve-javadoc-deploy-config-ee
         uses: ./resolve-javadoc-deploy-config
         with:
+          release-version:  ${{ env.RELEASE_VERSION }}
           release-type: 'EE'
 
       - name: Test outputs
@@ -75,6 +80,18 @@ jobs:
           assert_field_by_label 'oss' "${FIELD}" 'hazelcast' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
           assert_field_by_label 'ee' "${FIELD}" '.' '${{ steps.resolve-javadoc-deploy-config-ee.outputs.json }}'
           assert_field_by_label 'ee' "${FIELD}" '.' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
+
+          FIELD="jar-folder"
+          assert_field_by_label 'oss' "${FIELD}" 'hazelcast/target' "${json_oss}"
+          assert_field_by_label 'oss' "${FIELD}" 'hazelcast/target' "${json_all}"
+          assert_field_by_label 'ee' "${FIELD}" './target' "${json_ee}"
+          assert_field_by_label 'ee' "${FIELD}" './target' "${json_all}"
+
+          FIELD="jar-file"
+          assert_field_by_label 'oss' "${FIELD}" "hazelcast-root-${RELEASE_VERSION}-javadoc.jar" "${json_oss}"
+          assert_field_by_label 'oss' "${FIELD}" "hazelcast-root-${RELEASE_VERSION}-javadoc.jar" "${json_all}"
+          assert_field_by_label 'ee' "${FIELD}" "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar" "${json_ee}"
+          assert_field_by_label 'ee' "${FIELD}" "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar" "${json_all}"
 
           FIELD="mvn-options"
           assert_field_by_label 'oss' "${FIELD}" '' '${{ steps.resolve-javadoc-deploy-config-oss.outputs.json }}'

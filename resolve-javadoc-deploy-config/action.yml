@@ -6,9 +6,12 @@
 name: Resolve JavaDoc deploy config
 
 inputs:
+  release-version:
+    description: 'The release version e.g. `5.4.1`'
+    required: true
   release-type:
     description: 'Type of Edition ALL|OSS|EE'
-    required: false
+    required: true
 
 outputs:
   json:
@@ -27,19 +30,31 @@ runs:
         id: compute-config
         shell: bash
         run: |
-          oss_json='{
-            "label": "oss",
-            "local-root": "hazelcast",
-            "remote-root": "hazelcast-docs",
-            "mvn-options": ""
-          }'
+          ROOT_FOLDER=hazelcast
+          oss_json=$(cat <<EOF
+          {
+              "label"       : "oss",
+              "local-root"  : "${ROOT_FOLDER}",
+              "remote-root" : "hazelcast-docs",
+              "jar-folder"  : "${ROOT_FOLDER}/target",
+              "jar-file"    : "hazelcast-root-${RELEASE_VERSION}-javadoc.jar",
+              "mvn-options" : ""
+          }
+          EOF
+          )
 
-          ee_json='{
-            "label": "ee",
-            "local-root": ".",
-            "remote-root": "hazelcast-ee-docs",
-            "mvn-options": "-P-os-hazelcast"
-          }'
+          ROOT_FOLDER=.
+          ee_json=$(cat <<EOF
+          {
+              "label"       : "ee",
+              "local-root"  : "${ROOT_FOLDER}",
+              "remote-root" : "hazelcast-ee-docs",
+              "jar-folder"  : "${ROOT_FOLDER}/target",
+              "jar-file"    : "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar",
+              "mvn-options" : "-P-os-hazelcast"
+          }
+          EOF
+          )
 
           matrix=()
         
@@ -53,3 +68,5 @@ runs:
 
           json="[$(IFS=,; echo "${matrix[*]}")]"
           echo "json=${json}" >> "${GITHUB_OUTPUT}"
+        env:
+          RELEASE_VERSION: ${{ inputs.release-version }}
