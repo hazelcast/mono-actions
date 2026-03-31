@@ -39,7 +39,7 @@ jobs:
 
           TESTS_RESULT=0
 
-          assert_field_by_label() {
+          assert_field() {
               # Generic function to test single JSON field by label. The same field will exist
               # for 'ALL' and the test asserts the field against expected label
               local label=$1
@@ -56,6 +56,14 @@ jobs:
               assert_true "${has_field}" "'${field}=${field_value}' is missing/incorrect for label '${label}'" || TESTS_RESULT=$?
           }
 
+          assert_field_oss() {
+              assert_field 'oss' "$@"
+          }
+
+          assert_field_ee() {
+              assert_field 'ee' "$@"
+          }
+
           assert_label() {
               local label=$1
               local actual_matrix=$2
@@ -63,40 +71,45 @@ jobs:
               assert_true "${has_label}" "label '${label}' is missing" || TESTS_RESULT=$?
           }
 
+          # JSON shortcuts for readability
+          JSON_ALL='${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
+          JSON_OSS='${{ steps.resolve-javadoc-deploy-config-oss.outputs.json }}'
+          JSON_EE='${{ steps.resolve-javadoc-deploy-config-ee.outputs.json }}'
+
           # Assert 'label'
-          assert_label 'oss' '${{ steps.resolve-javadoc-deploy-config-oss.outputs.json }}'
-          assert_label 'oss' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
-          assert_label 'ee' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
-          assert_label 'ee' '${{ steps.resolve-javadoc-deploy-config-ee.outputs.json }}'
+          assert_label 'oss' "${JSON_OSS}"
+          assert_label 'oss' "${JSON_ALL}"
+          assert_label 'ee' "${JSON_ALL}"
+          assert_label 'ee' "${JSON_EE}"
 
           FIELD="remote-root"
-          assert_field_by_label 'oss' "${FIELD}" 'hazelcast-docs' '${{ steps.resolve-javadoc-deploy-config-oss.outputs.json }}'
-          assert_field_by_label 'oss' "${FIELD}" 'hazelcast-docs' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
-          assert_field_by_label 'ee' "${FIELD}" 'hazelcast-ee-docs' '${{ steps.resolve-javadoc-deploy-config-ee.outputs.json }}'
-          assert_field_by_label 'ee' "${FIELD}" 'hazelcast-ee-docs' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
+          assert_field_oss "${FIELD}" 'hazelcast-docs' "${JSON_OSS}"
+          assert_field_oss "${FIELD}" 'hazelcast-docs' "${JSON_ALL}"
+          assert_field_ee "${FIELD}" 'hazelcast-ee-docs' "${JSON_EE}"
+          assert_field_ee "${FIELD}" 'hazelcast-ee-docs' "${JSON_ALL}"
 
           FIELD="local-root"
-          assert_field_by_label 'oss' "${FIELD}" 'hazelcast' '${{ steps.resolve-javadoc-deploy-config-oss.outputs.json }}'
-          assert_field_by_label 'oss' "${FIELD}" 'hazelcast' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
-          assert_field_by_label 'ee' "${FIELD}" '.' '${{ steps.resolve-javadoc-deploy-config-ee.outputs.json }}'
-          assert_field_by_label 'ee' "${FIELD}" '.' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
+          assert_field_oss "${FIELD}" 'hazelcast' "${JSON_OSS}"
+          assert_field_oss "${FIELD}" 'hazelcast' "${JSON_ALL}"
+          assert_field_ee "${FIELD}" '.' "${JSON_EE}"
+          assert_field_ee "${FIELD}" '.' "${JSON_ALL}"
 
           FIELD="jar-folder"
-          assert_field_by_label 'oss' "${FIELD}" 'hazelcast/target' "${json_oss}"
-          assert_field_by_label 'oss' "${FIELD}" 'hazelcast/target' "${json_all}"
-          assert_field_by_label 'ee' "${FIELD}" './target' "${json_ee}"
-          assert_field_by_label 'ee' "${FIELD}" './target' "${json_all}"
+          assert_field_oss "${FIELD}" 'hazelcast/target' ""${JSON_OSS}"
+          assert_field_oss "${FIELD}" 'hazelcast/target' "${JSON_ALL}"
+          assert_field_ee "${FIELD}" './target' "${JSON_EE}"
+          assert_field_ee "${FIELD}" './target' "${JSON_ALL}"
 
           FIELD="jar-file"
-          assert_field_by_label 'oss' "${FIELD}" "hazelcast-root-${RELEASE_VERSION}-javadoc.jar" "${json_oss}"
-          assert_field_by_label 'oss' "${FIELD}" "hazelcast-root-${RELEASE_VERSION}-javadoc.jar" "${json_all}"
-          assert_field_by_label 'ee' "${FIELD}" "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar" "${json_ee}"
-          assert_field_by_label 'ee' "${FIELD}" "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar" "${json_all}"
+          assert_field_oss "${FIELD}" "hazelcast-root-${RELEASE_VERSION}-javadoc.jar" "${JSON_OSS}"
+          assert_field_oss "${FIELD}" "hazelcast-root-${RELEASE_VERSION}-javadoc.jar" "${JSON_ALL}"
+          assert_field_ee "${FIELD}" "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar" "${JSON_EE}"
+          assert_field_ee "${FIELD}" "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar" "${JSON_ALL}"
 
           FIELD="mvn-options"
-          assert_field_by_label 'oss' "${FIELD}" '' '${{ steps.resolve-javadoc-deploy-config-oss.outputs.json }}'
-          assert_field_by_label 'oss' "${FIELD}" '' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
-          assert_field_by_label 'ee' "${FIELD}" '-P-os-hazelcast' '${{ steps.resolve-javadoc-deploy-config-ee.outputs.json }}'
-          assert_field_by_label 'ee' "${FIELD}" '-P-os-hazelcast' '${{ steps.resolve-javadoc-deploy-config-all.outputs.json }}'
+          assert_field_oss "${FIELD}" '' "${JSON_OSS}"
+          assert_field_oss "${FIELD}" '' "${JSON_ALL}"
+          assert_field_ee "${FIELD}" '-P-os-hazelcast' "${JSON_EE}"
+          assert_field_ee "${FIELD}" '-P-os-hazelcast' "${JSON_ALL}"
 
           assert_eq 0 "$TESTS_RESULT" "All tests should pass"
