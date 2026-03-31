@@ -95,7 +95,7 @@ jobs:
           assert_field_ee "${FIELD}" '.' "${JSON_ALL}"
 
           FIELD="jar-folder"
-          assert_field_oss "${FIELD}" 'hazelcast/target' ""${JSON_OSS}"
+          assert_field_oss "${FIELD}" 'hazelcast/target' "${JSON_OSS}"
           assert_field_oss "${FIELD}" 'hazelcast/target' "${JSON_ALL}"
           assert_field_ee "${FIELD}" './target' "${JSON_EE}"
           assert_field_ee "${FIELD}" './target' "${JSON_ALL}"
