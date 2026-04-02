@@ -12,21 +12,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Resolve JavaDoc deploy config (ALL)
+      - name: Resolve Javadoc deploy config (ALL)
         id: resolve-javadoc-deploy-config-all
         uses: ./resolve-javadoc-deploy-config
         with:
           release-version: ${{ env.RELEASE_VERSION }}
           release-type: 'ALL'
 
-      - name: Resolve JavaDoc deploy config (OSS)
+      - name: Resolve Javadoc deploy config (OSS)
         id: resolve-javadoc-deploy-config-oss
         uses: ./resolve-javadoc-deploy-config
         with:
           release-version:  ${{ env.RELEASE_VERSION }}
           release-type: 'OSS'
 
-      - name: Resolve JavaDoc deploy config (EE)
+      - name: Resolve Javadoc deploy config (EE)
         id: resolve-javadoc-deploy-config-ee
         uses: ./resolve-javadoc-deploy-config
         with:
