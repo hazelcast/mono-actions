@@ -10,7 +10,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Checkout Mono
+      - name: Checkout target repo
         uses: actions/checkout@v6
         with:
           repository: hazelcast/hazelcast

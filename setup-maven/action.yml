@@ -1,8 +1,8 @@
-# GitHub Action to amalgamate various common Mono pre-build actions in a single
-# place e.g. JDK setup, Maven cache, Maven arguments etc. Use this Action to
-# setup Maven correctly prior to building Mono
-
 name: Setup Maven
+description: |
+  GitHub Action to amalgamate various common Mono pre-build actions in a single
+  place e.g. JDK setup, Maven cache, Maven arguments etc. Use this Action to
+  setup Maven correctly prior to building Mono
 
 inputs:
   root:
@@ -32,8 +32,8 @@ runs:
           echo "ROOT_FOLDER=${FINAL_ROOT}" >> ${GITHUB_OUTPUT}
 
       - name: Set ACTION_SCRIPTS_FOLDER
-        id: get-action-scripts-folder
         shell: bash
+        id: get-action-scripts-folder
         run: echo "ACTION_SCRIPTS_FOLDER=${GITHUB_ACTION_PATH}/../.github/scripts" >> ${GITHUB_OUTPUT}
 
       - name: Generate cache key
