@@ -10,7 +10,12 @@ inputs:
     description: 'The release version e.g. `5.4.1`'
     required: true
   release-type:
-    description: 'Type of Edition ALL|OSS|EE'
+    description: EE, OS, ALL etc
+    type: choice
+    options:
+      - ALL
+      - OSS
+      - EE
     required: true
 
 outputs:
