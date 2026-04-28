@@ -1,0 +1,42 @@
+name: Test setup-maven action
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Checkout target repo
+        uses: actions/checkout@v6
+        with:
+          repository: hazelcast/hazelcast
+          path: hazelcast
+
+      - name: Run setup-maven
+        id: setup-maven
+        uses: ./setup-maven
+        with:
+          root: hazelcast
+
+      - name: Test outputs
+        run: |
+          source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+
+          TESTS_RESULT=0
+
+          assert_non_empty() {
+            local actual=$1
+            local name=$2
+            local msg="${name} should not be empty"
+            assert_not_empty "${actual}" "$msg" && log_success "${msg}" || TESTS_RESULT=$?
+          }
+
+          assert_non_empty "${{ steps.setup-maven.outputs.local-repository }}" "local-repository"
+          assert_non_empty "${{ steps.setup-maven.outputs.cache-key }}" "cache-key"
+          assert_non_empty "${{ steps.setup-maven.outputs.cache-hit }}" "cache-hit"
+
+          assert_eq 0 "$TESTS_RESULT" "All tests should pass"
