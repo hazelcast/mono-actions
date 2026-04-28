@@ -53,6 +53,7 @@ runs:
         id: get-local-repository
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
+          set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
           source "${{ steps.get-action-scripts-folder.outputs.ACTION_SCRIPTS_FOLDER }}/maven.functions.sh"
           echo "LOCAL_REPOSITORY=$(get_repo_path)" >> ${GITHUB_OUTPUT}
 
@@ -70,6 +71,7 @@ runs:
         id: get-java-version
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
+          set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
           source "${{ steps.get-action-scripts-folder.outputs.ACTION_SCRIPTS_FOLDER }}/maven.functions.sh"
           echo "JAVA_VERSION=$(get_jdk_version)" >> ${GITHUB_OUTPUT}
 
