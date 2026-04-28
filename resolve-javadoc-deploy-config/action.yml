@@ -56,7 +56,7 @@ runs:
               "remote-root" : "hazelcast-ee-docs",
               "jar-folder"  : "${ROOT_FOLDER}/target",
               "jar-file"    : "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar",
-              "mvn-options" : "-P-os-hazelcast"
+              "mvn-options" : "--activate-profiles -os-hazelcast"
           }
           EOF
           )
