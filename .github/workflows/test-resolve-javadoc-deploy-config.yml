@@ -109,7 +109,7 @@ jobs:
           FIELD="mvn-options"
           assert_field_oss "${FIELD}" '' "${JSON_OSS}"
           assert_field_oss "${FIELD}" '' "${JSON_ALL}"
-          assert_field_ee "${FIELD}" '-P-os-hazelcast' "${JSON_EE}"
-          assert_field_ee "${FIELD}" '-P-os-hazelcast' "${JSON_ALL}"
+          assert_field_ee "${FIELD}" '--activate-profiles -os-hazelcast' "${JSON_EE}"
+          assert_field_ee "${FIELD}" '--activate-profiles -os-hazelcast' "${JSON_ALL}"
 
           assert_eq 0 "$TESTS_RESULT" "All tests should pass"
