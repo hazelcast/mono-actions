@@ -73,6 +73,9 @@ runs:
         run: |
           set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
           source "${{ steps.get-action-scripts-folder.outputs.ACTION_SCRIPTS_FOLDER }}/maven.functions.sh"
+          echo "get-java-version entry"
+          pwd
+          ls
           echo "JAVA_VERSION=$(get_jdk_version)" >> ${GITHUB_OUTPUT}
 
       - name: Setup JDK
