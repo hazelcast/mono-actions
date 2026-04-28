@@ -1,9 +1,9 @@
-# GitHub Action to generate Javadoc workflow deploy config (JSON) for distributed jobs
-# The config is used for parallelizing OS/EE Javadoc generation during 'package.yml' and
-# 'promote.yml' phases. The JSON computation has been centralized here to avoid
-# duplication in the calling workflows
-
 name: Resolve Javadoc deploy config
+description: |
+  GitHub Action to generate Javadoc workflow deploy config (JSON) for distributed jobs
+  The config is used for parallelizing OS/EE Javadoc generation during 'package.yml' and
+  'promote.yml' phases. The JSON computation has been centralized here to avoid
+  duplication in the calling workflows
 
 inputs:
   release-version:
