@@ -18,12 +18,10 @@ outputs:
 
 runs:
   using: composite
-  defaults:
-    run:
-      shell: bash
   steps:
       - name: Set ROOT_FOLDER
         id: get-root-folder
+        shell: bash
         run: |
           # Path to the root of the checked-out `hazelcast-mono` repo i.e. custom or GITHUB_WORKSPACE
           FINAL_ROOT="${{ inputs.root }}"
@@ -35,10 +33,12 @@ runs:
 
       - name: Set ACTION_SCRIPTS_FOLDER
         id: get-action-scripts-folder
+        shell: bash
         run: echo "ACTION_SCRIPTS_FOLDER=${GITHUB_ACTION_PATH}/../.github/scripts" >> ${GITHUB_OUTPUT}
 
       - name: Generate cache key
         id: get-cache-key
+        shell: bash
         run: |
           # This is a generic key to access a cache for this month
           #
@@ -50,6 +50,7 @@ runs:
 
       - name: Get Maven repository location
         id: get-local-repository
+        shell: bash
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
           source "${{ steps.get-action-scripts-folder.outputs.ACTION_SCRIPTS_FOLDER }}/maven.functions.sh"
@@ -66,6 +67,7 @@ runs:
 
       - name: Get Java Version from POM
         id: get-java-version
+        shell: bash
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
           source "${{ steps.get-action-scripts-folder.outputs.ACTION_SCRIPTS_FOLDER }}/maven.functions.sh"
@@ -78,6 +80,7 @@ runs:
           distribution: temurin
           
       - name: Set MAVEN_ARGS
+        shell: bash
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
           source "${{ steps.get-action-scripts-folder.outputs.ACTION_SCRIPTS_FOLDER }}/maven.functions.sh"
