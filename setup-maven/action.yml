@@ -57,7 +57,7 @@ runs:
           echo "LOCAL_REPOSITORY=$(get_repo_path)" >> ${GITHUB_OUTPUT}
 
       - id: maven-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ${{ steps.get-local-repository.outputs.LOCAL_REPOSITORY }}
