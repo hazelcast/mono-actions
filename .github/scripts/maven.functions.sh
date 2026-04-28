@@ -49,6 +49,9 @@ function get_project_version() {
 }
 
 function get_jdk_version() {
+    pwd
+    ls
+
     # shellcheck disable=SC2068
     RESOLVED_VERSION=$(evaluate_mvn_expression "jdk.version" ${@-})
     if [[ ! "$RESOLVED_VERSION" =~ (^[0-9]+$) ]]; then
