@@ -16,7 +16,8 @@ jobs:
           repository: hazelcast/hazelcast
           path: hazelcast
 
-      - id: setup-maven
+      - name: Run setup-maven
+        id: setup-maven
         uses: ./setup-maven
         with:
           root: hazelcast

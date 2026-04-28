@@ -1,7 +1,10 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directories:
+      - "/"
+      # https://github.com/dependabot/dependabot-core/issues/6345#issuecomment-3376986288
+      - "/*"
     target-branch: "main"
     schedule:
       interval: "daily"
