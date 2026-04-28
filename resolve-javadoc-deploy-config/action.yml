@@ -24,6 +24,9 @@ outputs:
 
 runs:
   using: composite
+  defaults:
+    run:
+      shell: bash
   steps:
       - name: Resolve editions
         id: resolve-editions
@@ -33,7 +36,6 @@ runs:
 
       - name: Compute config
         id: compute-config
-        shell: bash
         run: |
           ROOT_FOLDER=hazelcast
           oss_json=$(cat <<EOF
