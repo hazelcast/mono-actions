@@ -64,11 +64,11 @@ runs:
           matrix=()
         
           if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" == "true" ]]; then
-              matrix+=($(echo "${oss_json}" | jq --compact-output '.'))
+              matrix+=("$(echo "${oss_json}" | jq --compact-output '.')")
           fi
 
           if [[ "${{ steps.resolve-editions.outputs.should_build_ee }}" == "true" ]]; then
-              matrix+=($(echo "${ee_json}" | jq --compact-output '.'))
+              matrix+=("$(echo "${ee_json}" | jq --compact-output '.')")
           fi
 
           json="[$(IFS=,; echo "${matrix[*]}")]"
