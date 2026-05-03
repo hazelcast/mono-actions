@@ -42,8 +42,7 @@ runs:
               "local-root"  : "${ROOT_FOLDER}",
               "remote-root" : "hazelcast-docs",
               "jar-folder"  : "${ROOT_FOLDER}/target",
-              "jar-file"    : "hazelcast-root-${RELEASE_VERSION}-javadoc.jar",
-              "mvn-options" : ""
+              "jar-file"    : "hazelcast-root-${RELEASE_VERSION}-javadoc.jar"
           }
           EOF
           )
@@ -55,8 +54,7 @@ runs:
               "local-root"  : "${ROOT_FOLDER}",
               "remote-root" : "hazelcast-ee-docs",
               "jar-folder"  : "${ROOT_FOLDER}/target",
-              "jar-file"    : "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar",
-              "mvn-options" : "--activate-profiles -os-hazelcast"
+              "jar-file"    : "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar"
           }
           EOF
           )
