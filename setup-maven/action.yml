@@ -20,8 +20,8 @@ runs:
   using: composite
   steps:
       - name: Set ROOT_FOLDER
-        shell: bash
         id: get-root-folder
+        shell: bash
         run: |
           # Path to the root of the checked-out `hazelcast-mono` repo i.e. custom or GITHUB_WORKSPACE
           FINAL_ROOT="${{ inputs.root }}"
@@ -32,13 +32,13 @@ runs:
           echo "ROOT_FOLDER=${FINAL_ROOT}" >> ${GITHUB_OUTPUT}
 
       - name: Set ACTION_SCRIPTS_FOLDER
-        shell: bash
         id: get-action-scripts-folder
+        shell: bash
         run: echo "ACTION_SCRIPTS_FOLDER=${GITHUB_ACTION_PATH}/../.github/scripts" >> ${GITHUB_OUTPUT}
 
       - name: Generate cache key
-        shell: bash
         id: get-cache-key
+        shell: bash
         run: |
           # This is a generic key to access a cache for this month
           #
@@ -49,8 +49,8 @@ runs:
           echo "CACHE_KEY=$(date +'%Y-%m')" >> ${GITHUB_OUTPUT}
 
       - name: Get Maven repository location
-        shell: bash
         id: get-local-repository
+        shell: bash
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
           source "${{ steps.get-action-scripts-folder.outputs.ACTION_SCRIPTS_FOLDER }}/maven.functions.sh"
@@ -66,8 +66,8 @@ runs:
           key: ${{ runner.os }}-maven-${{ steps.get-cache-key.outputs.CACHE_KEY }}
 
       - name: Get Java Version from POM
-        shell: bash
         id: get-java-version
+        shell: bash
         working-directory: ${{ steps.get-root-folder.outputs.ROOT_FOLDER }}
         run: |
           source "${{ steps.get-action-scripts-folder.outputs.ACTION_SCRIPTS_FOLDER }}/maven.functions.sh"

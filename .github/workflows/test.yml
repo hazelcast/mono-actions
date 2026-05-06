@@ -25,10 +25,15 @@ jobs:
     uses: ./.github/workflows/test-setup-maven.yml
     secrets: inherit
 
+  test-resolve-javadoc-deploy-config:
+    uses: ./.github/workflows/test-resolve-javadoc-deploy-config.yml
+    secrets: inherit
+
   assert-all-jobs-succeeded:
     runs-on: ubuntu-latest
     needs:
       - test-setup-maven
+      - test-resolve-javadoc-deploy-config
     if: always()
     steps:
       - name: Check all jobs succeeded
