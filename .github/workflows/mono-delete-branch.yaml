@@ -17,6 +17,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: hazelcast/mono-actions
+          ref: ${{ github.job_workflow_sha }}
           path: .mono-actions
           sparse-checkout: .github
       - name: Delete '${{ github.event.ref }}' branch from ${{ matrix.repository }} repository
