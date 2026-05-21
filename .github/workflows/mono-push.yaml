@@ -4,7 +4,6 @@ on:
 env:
   sot_repo: ${{ github.repository_owner }}/hazelcast-mono
   destination_os_repo: ${{ github.repository_owner }}/hazelcast
-  GH_TOKEN: ${{ secrets.DEVOPSHAZELCAST_PAT_FOR_MONOREPO }}
 
 concurrency:
   group: '${{ github.workflow }}-${{ github.ref_name}}'
@@ -13,6 +12,8 @@ jobs:
   copybara-mono-push:
     # we need to use GH runners for now as there's a GH issue with triggering jobs on ubicloud in a private sandbox fork
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.DEVOPSHAZELCAST_PAT_FOR_MONOREPO }}
     steps:
       - uses: actions/checkout@v6
         with:
