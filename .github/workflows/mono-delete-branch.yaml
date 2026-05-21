@@ -1,0 +1,31 @@
+name: Delete branch
+on:
+  workflow_call:
+
+jobs:
+  delete-branch:
+    name: Delete '${{ github.event.ref }}' branch from ${{ matrix.repository }} repository
+    # we need to use GH runners for now as there's a GH issue with triggering jobs on ubicloud in a private sandbox fork
+    runs-on: ubuntu-slim
+    if: github.event.ref_type == 'branch'
+    strategy:
+      fail-fast: false
+      matrix:
+        repository:
+          - ${{ github.repository_owner }}/hazelcast
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: hazelcast/mono-actions
+          path: .mono-actions
+          sparse-checkout: .github
+      - name: Delete '${{ github.event.ref }}' branch from ${{ matrix.repository }} repository
+        run: |
+          .mono-actions/.github/workflows/mono-delete-branch.sh "${{ matrix.repository }}" "${{ github.event.ref }}"
+        env:
+          GH_TOKEN: ${{ secrets.DEVOPSHAZELCAST_PAT_FOR_MONOREPO }}
+      - uses: hazelcast/docker-actions/slack-notification@master
+        if: failure()
+        with:
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_MONOREPO }}
+          slack-channel: ${{ vars.MONOREPO_SLACK_CHANNEL }}

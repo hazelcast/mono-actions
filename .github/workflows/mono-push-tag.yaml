@@ -1,0 +1,24 @@
+name: Create temporary branch from tag
+on:
+  workflow_call:
+
+jobs:
+  copybara-mono-push:
+    # we need to use GH runners for now as there's a GH issue with triggering jobs on ubicloud in a private sandbox fork
+    runs-on: ubuntu-slim
+    steps:
+      - name: Create temporary branch from tag
+        run: |
+          gh api \
+            --method POST \
+            repos/${GITHUB_REPOSITORY}/git/refs \
+            -f ref="refs/heads/tag-in-creation-${GITHUB_REF_NAME}" \
+            -f sha="${GITHUB_SHA}"
+        env:
+          GH_TOKEN: ${{ secrets.DEVOPSHAZELCAST_PAT_FOR_MONOREPO }}
+
+      - uses: hazelcast/docker-actions/slack-notification@master
+        if: failure()
+        with:
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_MONOREPO }}
+          slack-channel: ${{ vars.MONOREPO_SLACK_CHANNEL }}
