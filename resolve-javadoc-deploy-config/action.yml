@@ -17,6 +17,9 @@ inputs:
       - OSS
       - EE
     required: true
+  jfrog-repo:
+    description: 'Jfrog repo targets'
+    required: true
 
 outputs:
   json:
@@ -38,11 +41,12 @@ runs:
           ROOT_FOLDER=hazelcast
           oss_json=$(cat <<EOF
           {
-              "label"       : "oss",
-              "local-root"  : "${ROOT_FOLDER}",
-              "remote-root" : "hazelcast-docs",
-              "jar-folder"  : "${ROOT_FOLDER}/target",
-              "jar-file"    : "hazelcast-root-${RELEASE_VERSION}-javadoc.jar"
+              "label"          : "oss",
+              "local-root"     : "${ROOT_FOLDER}",
+              "remote-root"    : "hazelcast-docs",
+              "jar-folder"     : "${ROOT_FOLDER}/target",
+              "jar-file"       : "hazelcast-root-${RELEASE_VERSION}-javadoc.jar",
+              "jfrog-location" : "${JFROG_REPO}/hazelcast"
           }
           EOF
           )
@@ -50,11 +54,12 @@ runs:
           ROOT_FOLDER=.
           ee_json=$(cat <<EOF
           {
-              "label"       : "ee",
-              "local-root"  : "${ROOT_FOLDER}",
-              "remote-root" : "hazelcast-ee-docs",
-              "jar-folder"  : "${ROOT_FOLDER}/target",
-              "jar-file"    : "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar"
+              "label"          : "ee",
+              "local-root"     : "${ROOT_FOLDER}",
+              "remote-root"    : "hazelcast-ee-docs",
+              "jar-folder"     : "${ROOT_FOLDER}/target",
+              "jar-file"       : "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar",
+              "jfrog-location" : "${JFROG_REPO}/hazelcast-enterprise"
           }
           EOF
           )
@@ -73,3 +78,4 @@ runs:
           echo "json=${json}" >> "${GITHUB_OUTPUT}"
         env:
           RELEASE_VERSION: ${{ inputs.release-version }}
+          JFROG_REPO: ${{ inputs.jfrog-repo }}
