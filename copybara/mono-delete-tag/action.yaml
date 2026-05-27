@@ -1,0 +1,30 @@
+name: Delete tag
+
+inputs:
+  token:
+    required: true
+  repository:
+    required: true
+  slack-webhook-url:
+    required: true
+  slack-channel:
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Delete '${{ github.event.ref }}' tag from ${{ inputs.repository }} repository
+      shell: bash
+      run: |
+        . ${GITHUB_ACTION_PATH}/mono-delete-tag.sh \
+          "${REPOSITORY}" \
+          "${{ github.event.ref }}"
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPOSITORY: ${{ inputs.repository }}
+
+    - uses: hazelcast/docker-actions/slack-notification@master
+      if: failure()
+      with:
+        slack-webhook-url: ${{ inputs.slack-webhook-url }}
+        slack-channel: ${{ inputs.slack-channel }}
