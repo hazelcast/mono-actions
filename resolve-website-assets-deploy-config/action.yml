@@ -1,0 +1,180 @@
+name: Resolve website assets deploy config
+description: |
+  GitHub Action to generate website assets workflow deploy config (JSON) for job distribution
+  In addition, it generates JFrog AQLs for Hazelcast distribution and asset files downloads
+
+inputs:
+  release-version:
+    description: 'The release version e.g. `5.4.1`'
+    required: true
+  release-type:
+    description: EE, OS, ALL etc
+    type: choice
+    options:
+      - ALL
+      - OSS
+      - EE
+    required: true
+  jfrog-download-repo:
+    description: 'The JFrog download repo used in AQL'
+    required: true
+  include-oss:
+    description: 'TEMPORARY - Force OSS in the matrix for testing. Remove during DI-800'
+    type: boolean
+    default: false
+    required: false
+
+outputs:
+  json:
+    description: 'The generated deployment matrix JSON string'
+    value: ${{ steps.compute-config.outputs.json }}
+  jfrog-aql-json:
+    description: 'A single aggregated JSON string containing all dynamically resolved entries'
+    value: ${{ steps.compute-config.outputs.jfrog-aql-json }}
+
+runs:
+  using: composite
+  steps:
+      - name: Resolve editions
+        id: resolve-editions
+        uses: hazelcast/docker-actions/resolve-editions@master
+        with:
+          release-type: ${{ inputs.release-type }}
+
+      - name: Compute config
+        id: compute-config
+        shell: bash
+        run: |
+          get_jfrog_download_aql() {
+            local REPO_PATH=$1
+            local MATCH_NAME=$2
+            local JFROG_REPO=$3
+
+            # note: 'DOWNLOAD_FOLDER' should be passed in when calling 'jf rt download --spec-vars ...'
+            cat << EOF
+          {
+            "files": [
+              {
+                "aql": {
+                  "items.find": {
+                    "repo": "${JFROG_REPO}",
+                    "path": { "\$match": "${REPO_PATH}" },
+                    "\$and": [
+                      { "name": { "\$match": "*${MATCH_NAME}*" } },
+                      {
+                        "\$or": [
+                          { "name": { "\$match": "*.zip" } },
+                          { "name": { "\$match": "*.tar.gz" } }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "target": "\${DOWNLOAD_FOLDER}/",
+                "flat": "true"
+              }
+            ]
+          }
+          EOF
+          }
+
+          generate_config_matrix_fragment() {
+            local LABEL=$1
+            local REPO_PATH_HAZELCAST_ARTIFACT=$2
+            local REPO_PATH_ASSETS=$3
+            local RELEASE_VERSION=$4
+
+            local ARCHIVE_PREFIX="${REPO_PATH_HAZELCAST_ARTIFACT}-${RELEASE_VERSION}"
+            local DIRECTORY_PREFIX="${REPO_PATH_ASSETS}-${RELEASE_VERSION}"
+
+            # FIXED: Returns BOTH names with clear, distinct parameter keys
+            cat << EOF
+          {
+              "label"                    : "${LABEL}",
+              "hz-distros-archive-name"  : "${ARCHIVE_PREFIX}",
+              "hz-distros-root-name"     : "${DIRECTORY_PREFIX}",
+              "hz-assets-jfrog-path"     : "${REPO_PATH_ASSETS}"
+          }
+          EOF
+          }
+
+          generate_config_matrix() {
+            local frag_oss=""
+            local frag_ee=""
+
+            if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" == "true" && "${INCLUDE_OSS}" == "true" ]]; then
+              frag_oss=$(generate_config_matrix_fragment "oss" "hazelcast-distribution" "hazelcast" "${RELEASE_VERSION}" | jq --compact-output '.')
+            fi
+
+            if [[ "${{ steps.resolve-editions.outputs.should_build_ee }}" == "true" ]]; then
+              frag_ee=$(generate_config_matrix_fragment "ee" "hazelcast-enterprise-distribution" "hazelcast-enterprise" "${RELEASE_VERSION}" | jq --compact-output '.')
+            fi
+
+            local matrix=()
+            [[ -n "${frag_oss}" ]] && matrix+=("${frag_oss}")
+            [[ -n "${frag_ee}" ]]  && matrix+=("${frag_ee}")
+
+            local json="[$(IFS=,; echo "${matrix[*]}")]"
+            echo "json=${json}" >> "${GITHUB_OUTPUT}"
+          }
+
+          generate_config_aql() {
+            local REPO_PATH_HAZELCAST_ROOT="com/hazelcast"
+
+            local distro_oss_aql="{}"
+            local distro_ee_aql="{}"
+            local asset_oss_aql="{}"
+            local asset_ee_aql="{}"
+
+            if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" == "true" && "${INCLUDE_OSS}" == "true" ]]; then
+              local hz_dist_oss_versioned="hazelcast-distribution-${RELEASE_VERSION}"
+
+              distro_oss_aql=$(get_jfrog_download_aql \
+                "${REPO_PATH_HAZELCAST_ROOT}/hazelcast-distribution/${RELEASE_VERSION}" \
+                "${hz_dist_oss_versioned}" \
+                "${JFROG_REPO}" | jq --compact-output '.')
+
+              asset_oss_aql=$(get_jfrog_download_aql \
+                "hazelcast" \
+                "hazelcast-${RELEASE_VERSION}" \
+                "${JFROG_REPO}" | jq --compact-output '.')
+            fi
+
+            if [[ "${{ steps.resolve-editions.outputs.should_build_ee }}" == "true" ]]; then
+              local hz_dist_ee_versioned="hazelcast-enterprise-distribution-${RELEASE_VERSION}"
+
+              distro_ee_aql=$(get_jfrog_download_aql \
+                "${REPO_PATH_HAZELCAST_ROOT}/hazelcast-enterprise-distribution/${RELEASE_VERSION}" \
+                "${hz_dist_ee_versioned}" \
+                "${JFROG_REPO}" | jq --compact-output '.')
+
+              asset_ee_aql=$(get_jfrog_download_aql \
+                "hazelcast-enterprise" \
+                "hazelcast-enterprise-${RELEASE_VERSION}" \
+                "${JFROG_REPO}" | jq --compact-output '.')
+            fi
+
+            local aql_aggregated_json
+            aql_aggregated_json=$(cat << EOF
+          {
+            "hz-distros-downloads-aql-oss" : ${distro_oss_aql},
+            "hz-distros-downloads-aql-ee"  : ${distro_ee_aql},
+            "hz-assets-downloads-aql-oss"  : ${asset_oss_aql},
+            "hz-assets-downloads-aql-ee"   : ${asset_ee_aql}
+          }
+          EOF
+            )
+
+            # All AQLs are aggregated into a single indepedent output. Unfortunaly, this cannot be added 
+            # to the main matrix JSON which trips GitHub workflow parser and results in (mapping) error.
+            # This is likely becasue AQL includes characters e.g. '\$' which breaks the parser. 
+            #
+            echo "jfrog-aql-json=$(echo "${aql_aggregated_json}" | jq --compact-output '.')" >> "${GITHUB_OUTPUT}"
+          }
+
+          generate_config_matrix
+          generate_config_aql
+        env:
+          JFROG_REPO: ${{ inputs.jfrog-download-repo }}
+          RELEASE_VERSION: ${{ inputs.release-version }}
+          INCLUDE_OSS: ${{ inputs.include-oss }}

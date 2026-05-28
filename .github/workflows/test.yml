@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
 
 jobs:
-
   test-scripts:
     runs-on: ubuntu-latest
     steps:
@@ -29,11 +28,21 @@ jobs:
     uses: ./.github/workflows/test-resolve-javadoc-deploy-config.yml
     secrets: inherit
 
+  test-resolve-website-assets-deploy-config:
+    uses: ./.github/workflows/test-resolve-website-assets-deploy-config.yml
+    secrets: inherit
+
+  test-download-latest-management-center:
+    uses: ./.github/workflows/test-download-latest-management-center.yml
+    secrets: inherit
+
   assert-all-jobs-succeeded:
     runs-on: ubuntu-latest
     needs:
       - test-setup-maven
       - test-resolve-javadoc-deploy-config
+      - test-resolve-website-assets-deploy-config
+      - test-download-latest-management-center
     if: always()
     steps:
       - name: Check all jobs succeeded
