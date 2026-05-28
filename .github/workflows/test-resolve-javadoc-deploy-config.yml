@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_VERSION: '5.5.5'
+      JFROG_REPO: 'sandbox-files'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -18,6 +19,7 @@ jobs:
         with:
           release-version: ${{ env.RELEASE_VERSION }}
           release-type: 'ALL'
+          jfrog-repo: ${{ env.JFROG_REPO }}
 
       - name: Resolve Javadoc deploy config (OSS)
         id: resolve-javadoc-deploy-config-oss
@@ -25,6 +27,7 @@ jobs:
         with:
           release-version:  ${{ env.RELEASE_VERSION }}
           release-type: 'OSS'
+          jfrog-repo: ${{ env.JFROG_REPO }}
 
       - name: Resolve Javadoc deploy config (EE)
         id: resolve-javadoc-deploy-config-ee
@@ -32,6 +35,7 @@ jobs:
         with:
           release-version:  ${{ env.RELEASE_VERSION }}
           release-type: 'EE'
+          jfrog-repo: ${{ env.JFROG_REPO }}
 
       - name: Test outputs
         run: |
@@ -105,5 +109,11 @@ jobs:
           assert_field_oss "${FIELD}" "hazelcast-root-${RELEASE_VERSION}-javadoc.jar" "${JSON_ALL}"
           assert_field_ee "${FIELD}" "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar" "${JSON_EE}"
           assert_field_ee "${FIELD}" "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar" "${JSON_ALL}"
+
+          FIELD="jfrog-location"
+          assert_field_oss "${FIELD}" "${JFROG_REPO}/hazelcast" "${JSON_OSS}"
+          assert_field_oss "${FIELD}" "${JFROG_REPO}/hazelcast" "${JSON_ALL}"
+          assert_field_ee "${FIELD}" "${JFROG_REPO}/hazelcast-enterprise" "${JSON_EE}"
+          assert_field_ee "${FIELD}" "${JFROG_REPO}/hazelcast-enterprise" "${JSON_ALL}"
 
           assert_eq 0 "$TESTS_RESULT" "All tests should pass"
