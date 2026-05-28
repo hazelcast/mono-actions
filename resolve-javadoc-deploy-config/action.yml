@@ -18,7 +18,7 @@ inputs:
       - EE
     required: true
   jfrog-repo:
-    description: 'Jfrog repo targets'
+    description: 'Jfrog repo to where javadoc zip will be pushed'
     required: true
 
 outputs:
