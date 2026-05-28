@@ -111,9 +111,9 @@ jobs:
           assert_field_ee "${FIELD}" "hazelcast-enterprise-root-${RELEASE_VERSION}-javadoc.jar" "${JSON_ALL}"
 
           FIELD="jfrog-location"
-          assert_field_oss "${FIELD}" "${{ env.JFROG_REPO }}/hazelcast" "${JSON_OSS}"
-          assert_field_oss "${FIELD}" "${{ env.JFROG_REPO }}/hazelcast" "${JSON_ALL}"
-          assert_field_ee "${FIELD}" "${{ env.JFROG_REPO }}/hazelcast-enterprise" "${JSON_EE}"
-          assert_field_ee "${FIELD}" "${{ env.JFROG_REPO }}/hazelcast-enterprise" "${JSON_ALL}"
+          assert_field_oss "${FIELD}" "${JFROG_REPO}/hazelcast" "${JSON_OSS}"
+          assert_field_oss "${FIELD}" "${JFROG_REPO}/hazelcast" "${JSON_ALL}"
+          assert_field_ee "${FIELD}" "${JFROG_REPO}/hazelcast-enterprise" "${JSON_EE}"
+          assert_field_ee "${FIELD}" "${JFROG_REPO}/hazelcast-enterprise" "${JSON_ALL}"
 
           assert_eq 0 "$TESTS_RESULT" "All tests should pass"
