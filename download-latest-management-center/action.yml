@@ -82,7 +82,7 @@ runs:
         echo "url=${DOWNLOAD_URL}" >> "${GITHUB_OUTPUT}"
         echo "local-zip-name=${LOCAL_ZIP_NAME}" >> "${GITHUB_OUTPUT}"
         echo "unzip-folder=${UNZIP_FOLDER}/${MC_NAME}" >> "${GITHUB_OUTPUT}"
-        echo "unzip-folder-root=${UNZIP_FOLDER}" >> "${GITHUB_OUTPUT}"
+        echo "unzip-folder-root=${UNZIP_FOLDER}" >> ${GITHUB_OUTPUT}
       env:
         MC_NAME: ${{ steps.resolve-latest-mc-zip.outputs.name }}
         MC_NAME_ZIP: ${{ steps.resolve-latest-mc-zip.outputs.name-zip }}
