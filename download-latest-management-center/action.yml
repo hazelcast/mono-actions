@@ -91,6 +91,7 @@ runs:
         S3_PATH: ${{ inputs.aws-s3-path }}
 
     - name: Get JFrog credentials
+      if: ${{ inputs.license-type == 'LICENSED' }}
       uses: hazelcast/docker-actions/get-jfrog-credentials@master
       with:
         aws-role-to-assume: ${{ inputs.aws-role-to-assume }}
@@ -113,6 +114,13 @@ runs:
         GH_TOKEN: ${{ inputs.github-token }}
         DOWNLOAD_URL: ${{ steps.get-mc-download-vars.outputs.url }}
         UNZIP_FOLDER: ${{ steps.get-mc-download-vars.outputs.unzip-folder-root }}
+
+    - name: Configure AWS credentials
+      if: ${{ inputs.license-type == 'UNLICENSED' }}
+      uses: aws-actions/configure-aws-credentials@v6
+      with:
+        role-to-assume: ${{ secrets.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+        aws-region: 'us-east-1'
 
     - name: Download ManCenter from S3
       if: ${{ inputs.license-type == 'UNLICENSED' }}
