@@ -87,7 +87,6 @@ runs:
             local ARCHIVE_PREFIX="${REPO_PATH_HAZELCAST_ARTIFACT}-${RELEASE_VERSION}"
             local DIRECTORY_PREFIX="${REPO_PATH_ASSETS}-${RELEASE_VERSION}"
 
-            # FIXED: Returns BOTH names with clear, distinct parameter keys
             cat << EOF
           {
               "label"                    : "${LABEL}",
