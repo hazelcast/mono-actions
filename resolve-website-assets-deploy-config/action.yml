@@ -18,11 +18,6 @@ inputs:
   jfrog-download-repo:
     description: 'The JFrog download repo used in AQL'
     required: true
-  include-oss:
-    description: 'TEMPORARY - Force OSS in the matrix for testing. Remove during DI-800'
-    type: boolean
-    default: false
-    required: false
 
 outputs:
   json:
@@ -89,10 +84,10 @@ runs:
 
             cat << EOF
           {
-              "label"                    : "${LABEL}",
-              "hz-distros-archive-name"  : "${ARCHIVE_PREFIX}",
-              "hz-distros-root-name"     : "${DIRECTORY_PREFIX}",
-              "hz-assets-jfrog-path"     : "${REPO_PATH_ASSETS}"
+              "label": "${LABEL}",
+              "hz-distros-archive-name": "${ARCHIVE_PREFIX}",
+              "hz-distros-root-name": "${DIRECTORY_PREFIX}",
+              "hz-assets-jfrog-path": "${REPO_PATH_ASSETS}"
           }
           EOF
           }
@@ -101,7 +96,7 @@ runs:
             local frag_oss=""
             local frag_ee=""
 
-            if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" == "true" && "${INCLUDE_OSS}" == "true" ]]; then
+            if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" == "true" ]]; then
               frag_oss=$(generate_config_matrix_fragment "oss" "hazelcast-distribution" "hazelcast" "${RELEASE_VERSION}" | jq --compact-output '.')
             fi
 
@@ -125,7 +120,7 @@ runs:
             local asset_oss_aql="{}"
             local asset_ee_aql="{}"
 
-            if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" == "true" && "${INCLUDE_OSS}" == "true" ]]; then
+            if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" == "true" ]]; then
               local hz_dist_oss_versioned="hazelcast-distribution-${RELEASE_VERSION}"
 
               distro_oss_aql=$(get_jfrog_download_aql \
@@ -156,10 +151,10 @@ runs:
             local aql_aggregated_json
             aql_aggregated_json=$(cat << EOF
           {
-            "hz-distros-downloads-aql-oss" : ${distro_oss_aql},
-            "hz-distros-downloads-aql-ee"  : ${distro_ee_aql},
-            "hz-assets-downloads-aql-oss"  : ${asset_oss_aql},
-            "hz-assets-downloads-aql-ee"   : ${asset_ee_aql}
+              "hz-distros-downloads-aql-oss": ${distro_oss_aql},
+              "hz-distros-downloads-aql-ee": ${distro_ee_aql},
+              "hz-assets-downloads-aql-oss": ${asset_oss_aql},
+              "hz-assets-downloads-aql-ee": ${asset_ee_aql}
           }
           EOF
             )
@@ -176,4 +171,3 @@ runs:
         env:
           JFROG_REPO: ${{ inputs.jfrog-download-repo }}
           RELEASE_VERSION: ${{ inputs.release-version }}
-          INCLUDE_OSS: ${{ inputs.include-oss }}
