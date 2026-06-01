@@ -83,13 +83,13 @@ runs:
             local DIRECTORY_PREFIX="${REPO_PATH_ASSETS}-${RELEASE_VERSION}"
 
             cat << EOF
-            {
+          {
               "label": "${LABEL}",
               "hz-distros-archive-name": "${ARCHIVE_PREFIX}",
               "hz-distros-root-name": "${DIRECTORY_PREFIX}",
               "hz-assets-jfrog-path": "${REPO_PATH_ASSETS}"
-            }
-            EOF
+          }
+          EOF
           }
 
           generate_config_matrix() {
@@ -150,13 +150,13 @@ runs:
 
             local aql_aggregated_json
             aql_aggregated_json=$(cat << EOF
-            {
+          {
               "hz-distros-downloads-aql-oss": ${distro_oss_aql},
               "hz-distros-downloads-aql-ee": ${distro_ee_aql},
               "hz-assets-downloads-aql-oss": ${asset_oss_aql},
               "hz-assets-downloads-aql-ee": ${asset_ee_aql}
-            }
-            EOF
+          }
+          EOF
             )
 
             # All AQLs are aggregated into a single indepedent output. Unfortunaly, this cannot be added 
