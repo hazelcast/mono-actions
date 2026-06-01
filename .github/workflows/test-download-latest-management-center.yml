@@ -17,7 +17,7 @@ jobs:
         uses: ./download-latest-management-center
         with:
           license-type: 'LICENSED'
-          aws-role-to-assume: ${{ secrets.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
           github-token: ${{ secrets.GH_TOKEN }}
 
       - name: Download Management Center (S3)
@@ -25,7 +25,7 @@ jobs:
         uses: ./download-latest-management-center
         with:
           license-type: 'UNLICENSED'
-          aws-role-to-assume: ${{ secrets.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
           aws-s3-path: ${{ vars.S3_MANCENTER_NLC_PATH }}
           unzip-folder: '/tmp/custom-mc-unzip-dir'
           github-token: ${{ secrets.GH_TOKEN }}
