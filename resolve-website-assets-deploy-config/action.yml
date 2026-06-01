@@ -48,27 +48,7 @@ runs:
             # note: 'DOWNLOAD_FOLDER' should be passed in when calling 'jf rt download --spec-vars ...'
             cat << EOF
           {
-            "files": [
-              {
-                "aql": {
-                  "items.find": {
-                    "repo": "${JFROG_REPO}",
-                    "path": { "\$match": "${REPO_PATH}" },
-                    "\$and": [
-                      { "name": { "\$match": "*${MATCH_NAME}*" } },
-                      {
-                        "\$or": [
-                          { "name": { "\$match": "*.zip" } },
-                          { "name": { "\$match": "*.tar.gz" } }
-                        ]
-                      }
-                    ]
-                  }
-                },
-                "target": "\${DOWNLOAD_FOLDER}/",
-                "flat": "true"
-              }
-            ]
+
           }
           EOF
           }
