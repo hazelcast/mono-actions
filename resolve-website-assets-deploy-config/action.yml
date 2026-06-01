@@ -46,7 +46,7 @@ runs:
             local JFROG_REPO=$3
 
             # note: 'DOWNLOAD_FOLDER' should be passed in when calling 'jf rt download --spec-vars ...'
-          cat <<EOF
+            cat << EOF
           {
             "files": [
               {
@@ -96,7 +96,7 @@ runs:
             local frag_oss=""
             local frag_ee=""
 
-            if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" ]]; then
+            if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}"  == "true" ]]; then
               frag_oss=$(generate_config_matrix_fragment "oss" "hazelcast-distribution" "hazelcast" "${RELEASE_VERSION}" | jq --compact-output '.')
             fi
 
@@ -120,7 +120,7 @@ runs:
             local asset_oss_aql="{}"
             local asset_ee_aql="{}"
 
-            if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" ]]; then
+            if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}"  == "true" ]]; then
               local hz_dist_oss_versioned="hazelcast-distribution-${RELEASE_VERSION}"
 
               distro_oss_aql=$(get_jfrog_download_aql \
