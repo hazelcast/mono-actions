@@ -119,7 +119,7 @@ runs:
       if: ${{ inputs.license-type == 'UNLICENSED' }}
       uses: aws-actions/configure-aws-credentials@v6
       with:
-        role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+        role-to-assume: ${{ inputs.aws-role-to-assume }}
         aws-region: 'us-east-1'
 
     - name: Download ManCenter from S3
