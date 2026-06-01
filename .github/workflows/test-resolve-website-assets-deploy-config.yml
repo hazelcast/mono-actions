@@ -19,7 +19,6 @@ jobs:
           release-version: ${{ env.RELEASE_VERSION }}
           release-type: 'ALL'
           jfrog-download-repo: 'preprod'
-          include-oss: true
 
       - name: Setup website assets deploy config (OSS)
         id: resolve-website-assets-deploy-config-oss
@@ -28,7 +27,6 @@ jobs:
           release-version:  ${{ env.RELEASE_VERSION }}
           release-type: 'OSS'
           jfrog-download-repo: 'preprod'
-          include-oss: true
 
       - name: Setup website assets deploy config (EE)
         id: resolve-website-assets-deploy-config-ee
