@@ -46,7 +46,7 @@ runs:
             local JFROG_REPO=$3
 
             # note: 'DOWNLOAD_FOLDER' should be passed in when calling 'jf rt download --spec-vars ...'
-            cat << EOF
+            cat <<EOF
           {
             "files": [
               {
