@@ -54,14 +54,11 @@ runs:
                   "items.find": {
                     "repo": "${JFROG_REPO}",
                     "path": { "\$match": "${REPO_PATH}" },
-                    "\$and": [
-                      { "name": { "\$match": "*${MATCH_NAME}*" } },
-                      {
-                        "\$or": [
-                          { "name": { "\$match": "*.zip" } },
-                          { "name": { "\$match": "*.tar.gz" } }
-                        ]
-                      }
+                    "\$or": [
+                      { "name": { "\$match": "*${MATCH_NAME}.zip" } },
+                      { "name": { "\$match": "*${MATCH_NAME}-slim.zip" } },
+                      { "name": { "\$match": "*${MATCH_NAME}.tar.gz" } },
+                      { "name": { "\$match": "*${MATCH_NAME}-slim.tar.gz" } }
                     ]
                   }
                 },

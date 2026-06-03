@@ -65,10 +65,10 @@ jobs:
           }
 
           get_expected_aql_json() {
-              local repo_path=$1
-              local match_name=$2
+            local repo_path=$1
+            local match_name=$2
 
-              cat << EOF | jq --compact-output '.'
+            cat << EOF | jq --compact-output '.'
           {
             "files": [
               {
@@ -76,14 +76,11 @@ jobs:
                   "items.find": {
                     "repo": "preprod",
                     "path": { "\$match": "${repo_path}" },
-                    "\$and": [
-                      { "name": { "\$match": "*${match_name}*" } },
-                      {
-                        "\$or": [
-                          { "name": { "\$match": "*.zip" } },
-                          { "name": { "\$match": "*.tar.gz" } }
-                        ]
-                      }
+                    "\$or": [
+                      { "name": { "\$match": "*${match_name}.zip" } },
+                      { "name": { "\$match": "*${match_name}-slim.zip" } },
+                      { "name": { "\$match": "*${match_name}.tar.gz" } },
+                      { "name": { "\$match": "*${match_name}-slim.tar.gz" } }
                     ]
                   }
                 },
