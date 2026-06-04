@@ -101,15 +101,8 @@ runs:
       if: ${{ inputs.license-type == 'LICENSED' }}
       shell: bash
       run: |
-        jf rt \
-          download \
-          --fail-no-op \
-          --build-name=false \
-          --build-number=false \
-          --flat \
-          --explode \
-          "${DOWNLOAD_URL}" \
-          "${UNZIP_FOLDER}/"
+        source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/mono-actions/DI-792-website-assets-jfrog/.github/scripts/jfrog.functions.sh)"
+        jfrog_cli_download_by_file "${UNZIP_FOLDER}" "${DOWNLOAD_URL}" 1
       env:
         GH_TOKEN: ${{ inputs.github-token }}
         DOWNLOAD_URL: ${{ steps.get-mc-download-vars.outputs.url }}

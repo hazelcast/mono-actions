@@ -127,17 +127,13 @@ jobs:
           assert_label 'ee' "${JSON_ALL}"
           assert_label 'ee' "${JSON_EE}"
 
-          UNZIPPED_ROOT_NAME_OSS="hazelcast-${RELEASE_VERSION}"
-          UNZIPPED_ROOT_NAME_EE="hazelcast-enterprise-${RELEASE_VERSION}"
-
-          ARCHIVE_FILE_NAME_OSS="hazelcast-distribution-${RELEASE_VERSION}"
-          ARCHIVE_FILE_NAME_EE="hazelcast-enterprise-distribution-${RELEASE_VERSION}"
-
           FIELD="hz-distros-root-name"
-          assert_field_oss "${FIELD}" "${UNZIPPED_ROOT_NAME_OSS}" "${JSON_OSS}"
-          assert_field_oss "${FIELD}" "${UNZIPPED_ROOT_NAME_OSS}" "${JSON_ALL}"
-          assert_field_ee "${FIELD}" "${UNZIPPED_ROOT_NAME_EE}" "${JSON_EE}"
-          assert_field_ee "${FIELD}" "${UNZIPPED_ROOT_NAME_EE}" "${JSON_ALL}"
+          ASSET_UNZIPPED_ROOT_NAME_OSS="hazelcast-${RELEASE_VERSION}"
+          ASSET_UNZIPPED_ROOT_NAME_EE="hazelcast-enterprise-${RELEASE_VERSION}"
+          assert_field_oss "${FIELD}" "${ASSET_UNZIPPED_ROOT_NAME_OSS}" "${JSON_OSS}"
+          assert_field_oss "${FIELD}" "${ASSET_UNZIPPED_ROOT_NAME_OSS}" "${JSON_ALL}"
+          assert_field_ee "${FIELD}" "${ASSET_UNZIPPED_ROOT_NAME_EE}" "${JSON_EE}"
+          assert_field_ee "${FIELD}" "${ASSET_UNZIPPED_ROOT_NAME_EE}" "${JSON_ALL}"
 
           FIELD="hz-assets-jfrog-path"
           ASSETS_JFROG_PATH_OSS="hazelcast"
@@ -148,16 +144,18 @@ jobs:
           assert_field_ee "${FIELD}" "${ASSETS_JFROG_PATH_EE}" "${JSON_ALL}"
 
           FIELD="hz-distros-downloads-aql-oss"
+          DISTRO_ARCHIVE_FILE_NAME_OSS="hazelcast-distribution-${RELEASE_VERSION}"
+          DISTRO_ARCHIVE_FILE_NAME_EE="hazelcast-enterprise-distribution-${RELEASE_VERSION}"
           HZ_DISTRO_PATH_OSS="com/hazelcast/hazelcast-distribution/${RELEASE_VERSION}"
-          hz_oss_expected_oss=$(get_expected_aql_json "${HZ_DISTRO_PATH_OSS}" "${ARCHIVE_FILE_NAME_OSS}")
-          hz_oss_expected_all=$(get_expected_aql_json "${HZ_DISTRO_PATH_OSS}" "${ARCHIVE_FILE_NAME_OSS}")
+          hz_oss_expected_oss=$(get_expected_aql_json "${HZ_DISTRO_PATH_OSS}" "${DISTRO_ARCHIVE_FILE_NAME_OSS}")
+          hz_oss_expected_all=$(get_expected_aql_json "${HZ_DISTRO_PATH_OSS}" "${DISTRO_ARCHIVE_FILE_NAME_OSS}")
           assert_field_aql_json "${FIELD}" "${hz_oss_expected_oss}" "${AQL_OSS}"
           assert_field_aql_json "${FIELD}" "${hz_oss_expected_all}" "${AQL_ALL}"
 
           FIELD="hz-distros-downloads-aql-ee"
           HZ_DISTRO_PATH_EE="com/hazelcast/hazelcast-enterprise-distribution/${RELEASE_VERSION}"
-          hz_ee_expected_ee=$(get_expected_aql_json "${HZ_DISTRO_PATH_EE}" "${ARCHIVE_FILE_NAME_EE}")
-          hz_ee_expected_all=$(get_expected_aql_json "${HZ_DISTRO_PATH_EE}" "${ARCHIVE_FILE_NAME_EE}")
+          hz_ee_expected_ee=$(get_expected_aql_json "${HZ_DISTRO_PATH_EE}" "${DISTRO_ARCHIVE_FILE_NAME_EE}")
+          hz_ee_expected_all=$(get_expected_aql_json "${HZ_DISTRO_PATH_EE}" "${DISTRO_ARCHIVE_FILE_NAME_EE}")
           assert_field_aql_json "${FIELD}" "${hz_ee_expected_ee}" "${AQL_EE}"
           assert_field_aql_json "${FIELD}" "${hz_ee_expected_all}" "${AQL_ALL}"
 
