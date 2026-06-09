@@ -67,17 +67,26 @@ runs:
       id: get-mc-download-vars
       shell: bash
       run: |
+        source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
+
         if [[ -z "${UNZIP_FOLDER}" ]]; then
           UNZIP_FOLDER=$(mktemp --directory)
         fi
 
-        if [[ "${LICENSE_TYPE}" == "UNLICENSED" ]]; then
-          LOCAL_ZIP_NAME="${MC_NAME_ZIP%.zip}-nlc.zip"
-          DOWNLOAD_URL="s3://${S3_PATH}/${LOCAL_ZIP_NAME}"
-        else
-          LOCAL_ZIP_NAME="${MC_NAME_ZIP}"
-          DOWNLOAD_URL="download/management-center/${MC_NAME_ZIP}"
-        fi
+        case "${LICENSE_TYPE}" in
+          "UNLICENSED")
+            LOCAL_ZIP_NAME="${MC_NAME_ZIP%.zip}-nlc.zip"
+            DOWNLOAD_URL="s3://${S3_PATH}/${LOCAL_ZIP_NAME}"
+            ;;
+          "LICENSED")
+            LOCAL_ZIP_NAME="${MC_NAME_ZIP}"
+            DOWNLOAD_URL="download/management-center/${MC_NAME_ZIP}"
+            ;;
+          *)
+            echoerr "❌ Invalid license type '${LICENSE_TYPE}'. Must be 'UNLICENSED' or 'LICENSED'." >&2
+            exit 1
+            ;;
+        esac
 
         echo "url=${DOWNLOAD_URL}" >> "${GITHUB_OUTPUT}"
         echo "local-zip-name=${LOCAL_ZIP_NAME}" >> "${GITHUB_OUTPUT}"
