@@ -13,7 +13,7 @@ function jfrog_cli_download_by_aql() {
   local cmd_type="${4:-download}"
   local thread_count="${5:-$DEFAULT_JF_CLI_THREAD_COUNT}"
 
-  echo "${aql_payload}" | _execute_jf_command "${cmd_type}" "${expected_count}" $(_get_jf_options "aql" "${spec_vars}" "${thread_count}")
+  echo "${aql_payload}" | __execute_jf_command "${cmd_type}" "${expected_count}" $(__get_jf_options "aql" "${spec_vars}" "${thread_count}")
 }
 
 function jfrog_cli_download_by_file() {
@@ -22,7 +22,7 @@ function jfrog_cli_download_by_file() {
   local expected_count="${3:-}"
   local thread_count="${4:-$DEFAULT_JF_CLI_THREAD_COUNT}"
 
-  echo -n "" | _execute_jf_command "download" "${expected_count}" $(_get_jf_options "file" "" "${thread_count}") "${file_payload}" "${target_dir}/"
+  echo -n "" | __execute_jf_command "download" "${expected_count}" $(__get_jf_options "file" "" "${thread_count}") "${file_payload}" "${target_dir}/"
 }
 
 function jfrog_cli_copy_by_aql() {
@@ -40,7 +40,7 @@ function jfrog_cli_upload_by_file() {
   local expected_count="${3:-}"
   local thread_count="${4:-$DEFAULT_JF_CLI_THREAD_COUNT}"
 
-  echo -n "" | _execute_jf_command "upload" "${expected_count}" $(_get_jf_options "upload" "" "${thread_count}") "${source_file_pattern}" "${target_repo_path}/"
+  echo -n "" | __execute_jf_command "upload" "${expected_count}" $(__get_jf_options "upload" "" "${thread_count}") "${source_file_pattern}" "${target_repo_path}/"
 }
 
 function jq_extract_json_aql() {
@@ -49,7 +49,7 @@ function jq_extract_json_aql() {
   echo "${aql_json_string}" | jq --raw-output --arg target "${target_key}" '.[$target] | tostring'
 }
 
-function _get_jf_options() {
+function __get_jf_options() {
   local mode="$1"
   local spec_vars="${2:-}"
   local thread_count="$3"
@@ -74,7 +74,7 @@ function _get_jf_options() {
   echo "${opts[@]}"
 }
 
-function _execute_jf_command() {
+function __execute_jf_command() {
   local cmd_type="$1"
   local expected_count="$2"
   shift 2
