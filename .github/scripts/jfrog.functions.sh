@@ -1,33 +1,46 @@
-# distros and assets always come in fours
-JF_CLI_THREAD_COUNT=4
+# Default 'jf' cli thread count for concurrency. Use different thread count
+# before calling any functions (where applicable):
+#
+#  1. pass in the value (thread_count) to the function, or
+#  2. set environment variable 'DEFAULT_JF_CLI_THREAD_COUNT'
+
+: "${DEFAULT_JF_CLI_THREAD_COUNT:=4}"
 
 function jfrog_cli_download_by_aql() {
   local aql_payload="$1"
   local spec_vars="$2"
   local expected_count="${3:-}"
   local cmd_type="${4:-download}"
-  echo "${aql_payload}" | _execute_jf_command "${cmd_type}" "${expected_count}" $(_get_jf_options "aql" "${spec_vars}")
+  local thread_count="${5:-$DEFAULT_JF_CLI_THREAD_COUNT}"
+
+  echo "${aql_payload}" | _execute_jf_command "${cmd_type}" "${expected_count}" $(_get_jf_options "aql" "${spec_vars}" "${thread_count}")
 }
 
 function jfrog_cli_download_by_file() {
   local target_dir="$1"
   local file_payload="$2"
   local expected_count="${3:-}"
-  echo -n "" | _execute_jf_command "download" "${expected_count}" $(_get_jf_options "file" "") "${file_payload}" "${target_dir}/"
+  local thread_count="${4:-$DEFAULT_JF_CLI_THREAD_COUNT}"
+
+  echo -n "" | _execute_jf_command "download" "${expected_count}" $(_get_jf_options "file" "" "${thread_count}") "${file_payload}" "${target_dir}/"
 }
 
 function jfrog_cli_copy_by_aql() {
   local aql_payload="$1"
   local spec_vars="$2"
   local expected_count="${3:-}"
-  jfrog_cli_download_by_aql "${aql_payload}" "${spec_vars}" "${expected_count}" "copy"
+  local thread_count="${4:-$DEFAULT_JF_CLI_THREAD_COUNT}"
+
+  jfrog_cli_download_by_aql "${aql_payload}" "${spec_vars}" "${expected_count}" "copy" "${thread_count}"
 }
 
 function jfrog_cli_upload_by_file() {
   local target_repo_path="$1"
   local source_file_pattern="$2"
   local expected_count="${3:-}"
-  echo -n "" | _execute_jf_command "upload" "${expected_count}" $(_get_jf_options "upload" "") "${source_file_pattern}" "${target_repo_path}/"
+  local thread_count="${4:-$DEFAULT_JF_CLI_THREAD_COUNT}"
+
+  echo -n "" | _execute_jf_command "upload" "${expected_count}" $(_get_jf_options "upload" "" "${thread_count}") "${source_file_pattern}" "${target_repo_path}/"
 }
 
 function jq_extract_json_aql() {
@@ -39,11 +52,12 @@ function jq_extract_json_aql() {
 function _get_jf_options() {
   local mode="$1"
   local spec_vars="${2:-}"
+  local thread_count="$3"
   local opts=()
 
   opts+=("--fail-no-op")
   opts+=("--format=json")
-  opts+=("--threads" "${JF_CLI_THREAD_COUNT}")
+  opts+=("--threads" "${thread_count}")
 
   if [ "${mode}" = "aql" ]; then
     opts+=("--spec" "/dev/stdin")
@@ -65,7 +79,7 @@ function _execute_jf_command() {
   local expected_count="$2"
   shift 2
 
-  source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
+  source /dev/stdin <<< "$(curl --silent https://githubusercontent.com)"
 
   local stdin_payload
   stdin_payload=$(cat)

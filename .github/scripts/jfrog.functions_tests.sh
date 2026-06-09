@@ -173,6 +173,40 @@ function test_jfrog_skip_assertion_flow() {
   assert_eq 0 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 }
 
+function test_jfrog_thread_count_parameter_override() {
+  log_header "Testing explicit thread count parameter override"
+  reset_mocks
+
+  local payload='{"items": []}'
+  local spec_vars=""
+  local expected_count=""
+  local cmd_type="download"
+  local custom_threads=8
+
+  jfrog_cli_download_by_aql "${payload}" "${spec_vars}" "${expected_count}" "${cmd_type}" "${custom_threads}"
+
+  local actual_args=$(cat "${MOCK_ARGS_FILE}")
+  local msg="Explicit thread count parameter overrides default value"
+  assert_eq "rt download --fail-no-op --format=json --threads ${custom_threads} --spec /dev/stdin --spec-vars=" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+}
+
+function test_jfrog_thread_count_env_override() {
+  log_header "Testing DEFAULT_JF_CLI_THREAD_COUNT environment variable override"
+  reset_mocks
+
+  (
+    export DEFAULT_JF_CLI_THREAD_COUNT=16
+    . "${SCRIPT_DIR}"/jfrog.functions.sh
+
+    local payload='{"items": []}'
+    jfrog_cli_download_by_aql "${payload}" "" ""
+
+    local actual_args=$(cat "${MOCK_ARGS_FILE}")
+    local msg="Global environment variable definitions override fallback default constants"
+    assert_eq "rt download --fail-no-op --format=json --threads ${DEFAULT_JF_CLI_THREAD_COUNT} --spec /dev/stdin --spec-vars=" "${actual_args}" "${msg}" && log_success "${msg}"
+  ) || TESTS_RESULT=$?
+}
+
 test_jq_extract_json_aql
 test_jfrog_cli_download_by_file
 test_jfrog_cli_download_by_aql
@@ -180,5 +214,7 @@ test_jfrog_cli_copy_by_aql
 test_jfrog_cli_upload_by_file
 test_jfrog_assert_failure_flow
 test_jfrog_skip_assertion_flow
+test_jfrog_thread_count_parameter_override
+test_jfrog_thread_count_env_override
 
 assert_eq 0 "${TESTS_RESULT}" "All tests should pass"
