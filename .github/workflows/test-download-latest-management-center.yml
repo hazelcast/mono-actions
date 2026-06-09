@@ -24,7 +24,7 @@ jobs:
         id: test-mc-s3
         uses: ./download-latest-management-center
         with:
-          license-type: 'UNLICENSED'
+          license-type: 'NLC'
           aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
           aws-s3-path: ${{ vars.S3_MANCENTER_NLC_PATH }}
           unzip-folder: '/tmp/custom-mc-unzip-dir'

@@ -7,8 +7,8 @@ inputs:
     description: "The license type"
     type: choice
     options:
-      - LICENSED   # licensed public version
-      - UNLICENSED # private operator version (NLC)
+      - LICENSED # licensed public version
+      - NLC # private operator version
     required: true
   aws-role-to-assume:
     description: 'AWS Role to assume for accessing secrets'
@@ -74,7 +74,7 @@ runs:
         fi
 
         case "${LICENSE_TYPE}" in
-          "UNLICENSED")
+          "NLC")
             LOCAL_ZIP_NAME="${MC_NAME_ZIP%.zip}-nlc.zip"
             DOWNLOAD_URL="s3://${S3_PATH}/${LOCAL_ZIP_NAME}"
             ;;
@@ -83,7 +83,7 @@ runs:
             DOWNLOAD_URL="download/management-center/${MC_NAME_ZIP}"
             ;;
           *)
-            echoerr "❌ Invalid license type '${LICENSE_TYPE}'. Must be 'UNLICENSED' or 'LICENSED'." >&2
+            echoerr "❌ Invalid license type '${LICENSE_TYPE}'. Must be 'NLC' or 'LICENSED'." >&2
             exit 1
             ;;
         esac
@@ -118,14 +118,14 @@ runs:
         UNZIP_FOLDER: ${{ steps.get-mc-download-vars.outputs.unzip-folder-root }}
 
     - name: Configure AWS credentials
-      if: ${{ inputs.license-type == 'UNLICENSED' }}
+      if: ${{ inputs.license-type == 'NLC' }}
       uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ inputs.aws-role-to-assume }}
         aws-region: 'us-east-1'
 
     - name: Download ManCenter from S3
-      if: ${{ inputs.license-type == 'UNLICENSED' }}
+      if: ${{ inputs.license-type == 'NLC' }}
       shell: bash
       run: |
         mkdir -p "${UNZIP_FOLDER}"
