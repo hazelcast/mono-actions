@@ -77,10 +77,10 @@ jobs:
                     "repo": "preprod",
                     "path": { "\$match": "${repo_path}" },
                     "\$or": [
-                      { "name": { "\$match": "*${match_name}.zip" } },
-                      { "name": { "\$match": "*${match_name}-slim.zip" } },
-                      { "name": { "\$match": "*${match_name}.tar.gz" } },
-                      { "name": { "\$match": "*${match_name}-slim.tar.gz" } }
+                      { "name": { "$eq": "${MATCH_NAME}.zip" } },
+                      { "name": { "$eq": "${MATCH_NAME}-slim.zip" } },
+                      { "name": { "$eq": "${MATCH_NAME}.tar.gz" } },
+                      { "name": { "$eq": "${MATCH_NAME}-slim.tar.gz" } }
                     ]
                   }
                 },
