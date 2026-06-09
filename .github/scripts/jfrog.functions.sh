@@ -87,7 +87,7 @@ function _execute_jf_command() {
   local jf_output
   jf_output=$(echo "${stdin_payload}" | jf rt "${cmd_type}" "$@")
 
-  if [ -n "${expected_count}" ]; then
+  if [[ -n "${expected_count}" ]]; then
     local actual_count
     actual_count=$(echo "${jf_output}" | jq '.totals.success')
 
