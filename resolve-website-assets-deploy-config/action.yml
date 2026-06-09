@@ -1,7 +1,28 @@
 name: Resolve website assets deploy config
 description: |
-  GitHub Action to generate website assets workflow deploy config (JSON) for job distribution
-  In addition, it generates JFrog AQLs for Hazelcast distribution and asset files downloads
+  GitHub Action to generate website assets workflow deploy config (JSON) for job distribution.
+  In addition, it generates four JFrog AQLs from a single template used for OS/EE Hazelcast
+  distributions and asset files downloads. AQL is the query language for Artifactory and is accepted as
+  input by various JFrog CLI commands. See https://docs.jfrog.com/artifactory/docs/artifactory-query-language
+
+  Each distribution or asset set constitutes exactly four files (eight in total for OSS and EE). The JFrog
+  CLI commands (e.g. 'download') are limited in what you can target, only allowing * or ? wildcards.
+  Either each file needs to be downloaded separately, or you must use a wide wildcard to capture different
+  file names, running the risk of capturing unwanted files.
+
+  AQL is an ideal alternative for complex file captures and provides the following advantages:
+
+  1. Single call to JFrog CLI
+  2. Parallel downloads
+  3. Precise to target exact file names
+  4. Same AQL template in a single place
+  5. AQL variable replacement via `--spec-vars`
+
+  Outputs:
+
+  1. `json`: Main JSON deploy config containing the deployment distribution matrix for OSS and EE.
+  2. `jfrog-aql-json`: Wrapper JSON containing the four generated AQL queries. The caller can use a
+     `label` (oss or ee) to extract the correct AQL
 
 inputs:
   release-version:
@@ -24,7 +45,7 @@ outputs:
     description: 'The generated deployment matrix JSON string'
     value: ${{ steps.compute-config.outputs.json }}
   jfrog-aql-json:
-    description: 'A single aggregated JSON string containing all dynamically resolved entries'
+    description: 'A single aggregated JSON string containing all dynamically resolved AQL entries'
     value: ${{ steps.compute-config.outputs.jfrog-aql-json }}
 
 runs:
@@ -55,10 +76,10 @@ runs:
                     "repo": "${JFROG_REPO}",
                     "path": { "\$match": "${REPO_PATH}" },
                     "\$or": [
-                      { "name": { "\$match": "*${MATCH_NAME}.zip" } },
-                      { "name": { "\$match": "*${MATCH_NAME}-slim.zip" } },
-                      { "name": { "\$match": "*${MATCH_NAME}.tar.gz" } },
-                      { "name": { "\$match": "*${MATCH_NAME}-slim.tar.gz" } }
+                      { "name": { "$eq": "${MATCH_NAME}.zip" } },
+                      { "name": { "$eq": "${MATCH_NAME}-slim.zip" } },
+                      { "name": { "$eq": "${MATCH_NAME}.tar.gz" } },
+                      { "name": { "$eq": "${MATCH_NAME}-slim.tar.gz" } }
                     ]
                   }
                 },
@@ -156,8 +177,8 @@ runs:
           EOF
             )
 
-            # All AQLs are aggregated into a single indepedent output. Unfortunaly, this cannot be added 
-            # to the main matrix JSON which trips GitHub workflow parser and results in (mapping) error.
+            # All AQLs are aggregated into a single indepedent output. Unfortunately, this cannot be delivered
+            # with the main matrix JSON which trips GitHub workflow parser and results in (mapping) error.
             # This is likely becasue AQL includes characters e.g. '\$' which breaks the parser. 
             #
             echo "jfrog-aql-json=$(echo "${aql_aggregated_json}" | jq --compact-output '.')" >> "${GITHUB_OUTPUT}"
