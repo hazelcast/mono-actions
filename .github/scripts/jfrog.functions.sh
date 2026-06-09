@@ -90,7 +90,13 @@ function __execute_jf_command() {
   local expected_count="$3"
   shift 3
 
-  # Passing AQL spec via STDIN is safer - gaurds against quoting issues etc
+  # The 'stdin_payload' has been named generically to allow AQL or file spec.
+  #
+  # Passing AQL spec via STDIN is safer - guards against quoting issues etc.
+  # If the payload is empty (e.g. when a spec is not needed/supplied), 'jf' will
+  # simply not read from STDIN and continue with the command by virtue of not
+  # supplying '/dev/stdin' (see __get_jf_options())
+
   local jf_output
   jf_output=$(echo "${stdin_payload}" | jf rt "${cmd_type}" "$@")
 
