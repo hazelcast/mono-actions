@@ -58,8 +58,8 @@ runs:
 
         MC_NAME="hazelcast-management-center-${LATEST_MC_VER}"
         echo "Found ManCenter version: '${MC_NAME}'"
-        echo "name=${MC_NAME}" >> "${GITHUB_OUTPUT}"
-        echo "name-zip=${MC_NAME}.zip" >> "${GITHUB_OUTPUT}"
+        echo "name=${MC_NAME}" >> ${GITHUB_OUTPUT}
+        echo "name-zip=${MC_NAME}.zip" >> ${GITHUB_OUTPUT}
       env:
         GH_TOKEN: ${{ inputs.github-token }}
 
@@ -88,9 +88,9 @@ runs:
             ;;
         esac
 
-        echo "url=${DOWNLOAD_URL}" >> "${GITHUB_OUTPUT}"
-        echo "local-zip-name=${LOCAL_ZIP_NAME}" >> "${GITHUB_OUTPUT}"
-        echo "unzip-folder=${UNZIP_FOLDER}/${MC_NAME}" >> "${GITHUB_OUTPUT}"
+        echo "url=${DOWNLOAD_URL}" >> ${GITHUB_OUTPUT}
+        echo "local-zip-name=${LOCAL_ZIP_NAME}" >> ${GITHUB_OUTPUT}
+        echo "unzip-folder=${UNZIP_FOLDER}/${MC_NAME}" >> ${GITHUB_OUTPUT}
         echo "unzip-folder-root=${UNZIP_FOLDER}" >> ${GITHUB_OUTPUT}
       env:
         MC_NAME: ${{ steps.resolve-latest-mc-zip.outputs.name }}

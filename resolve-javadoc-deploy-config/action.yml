@@ -75,7 +75,7 @@ runs:
           fi
 
           json="[$(IFS=,; echo "${matrix[*]}")]"
-          echo "json=${json}" >> "${GITHUB_OUTPUT}"
+          echo "json=${json}" >> ${GITHUB_OUTPUT}
         env:
           RELEASE_VERSION: ${{ inputs.release-version }}
           JFROG_REPO: ${{ inputs.jfrog-repo }}

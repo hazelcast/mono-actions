@@ -127,7 +127,7 @@ runs:
             [[ -n "${frag_ee}" ]]  && matrix+=("${frag_ee}")
 
             local json="[$(IFS=,; echo "${matrix[*]}")]"
-            echo "json=${json}" >> "${GITHUB_OUTPUT}"
+            echo "json=${json}" >> ${GITHUB_OUTPUT}
           }
 
           generate_config_aql() {
@@ -181,7 +181,7 @@ runs:
             # with the main matrix JSON which trips GitHub workflow parser and results in (mapping) error.
             # This is likely becasue AQL includes characters e.g. '\$' which breaks the parser. 
             #
-            echo "jfrog-aql-json=$(echo "${aql_aggregated_json}" | jq --compact-output '.')" >> "${GITHUB_OUTPUT}"
+            echo "jfrog-aql-json=$(echo "${aql_aggregated_json}" | jq --compact-output '.')" >> ${GITHUB_OUTPUT}
           }
 
           generate_config_matrix
