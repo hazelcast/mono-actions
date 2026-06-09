@@ -1,3 +1,5 @@
+source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
+
 # Default 'jf' cli thread count for concurrency. Use different thread count
 # before calling any functions (where applicable):
 #
@@ -59,17 +61,25 @@ function __get_jf_options() {
   opts+=("--format=json")
   opts+=("--threads" "${thread_count}")
 
-  if [ "${mode}" = "aql" ]; then
-    opts+=("--spec" "/dev/stdin")
-    opts+=("--spec-vars=${spec_vars}")
-  elif [ "${mode}" = "upload" ]; then
-    opts+=("--flat")
-  else
-    opts+=("--build-name=false")
-    opts+=("--build-number=false")
-    opts+=("--flat")
-    opts+=("--explode")
-  fi
+  case "${mode}" in
+    "aql")
+      opts+=("--spec" "/dev/stdin")
+      opts+=("--spec-vars=${spec_vars}")
+      ;;
+    "upload")
+      opts+=("--flat")
+      ;;
+    "file")
+      opts+=("--build-name=false")
+      opts+=("--build-number=false")
+      opts+=("--flat")
+      opts+=("--explode")
+      ;;
+    *)
+      echoerr "❌ Error: Unknown JFrog CLI option mode passed: ${mode}"
+      exit 1
+      ;;
+  esac
 
   echo "${opts[@]}"
 }
@@ -78,8 +88,6 @@ function __execute_jf_command() {
   local cmd_type="$1"
   local expected_count="$2"
   shift 2
-
-  source /dev/stdin <<< "$(curl --silent https://githubusercontent.com)"
 
   local stdin_payload
   stdin_payload=$(cat)
