@@ -76,10 +76,10 @@ runs:
                     "repo": "${JFROG_REPO}",
                     "path": { "\$match": "${REPO_PATH}" },
                     "\$or": [
-                      { "name": { "$eq": "${MATCH_NAME}.zip" } },
-                      { "name": { "$eq": "${MATCH_NAME}-slim.zip" } },
-                      { "name": { "$eq": "${MATCH_NAME}.tar.gz" } },
-                      { "name": { "$eq": "${MATCH_NAME}-slim.tar.gz" } }
+                      { "name": { "\$eq": "${MATCH_NAME}.zip" } },
+                      { "name": { "\$eq": "${MATCH_NAME}-slim.zip" } },
+                      { "name": { "\$eq": "${MATCH_NAME}.tar.gz" } },
+                      { "name": { "\$eq": "${MATCH_NAME}-slim.tar.gz" } }
                     ]
                   }
                 },
