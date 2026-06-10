@@ -110,7 +110,7 @@ runs:
       if: ${{ inputs.license-type == 'LICENSED' }}
       shell: bash
       run: |
-        source ${GITHUB_ACTION_PATH}/.github/scripts/jfrog.functions.sh
+        source "${GITHUB_ACTION_PATH}/../.github/scripts/jfrog.functions.sh"
         jfrog_cli_download_by_file "${UNZIP_FOLDER}" "${DOWNLOAD_URL}" 1
       env:
         GH_TOKEN: ${{ inputs.github-token }}
