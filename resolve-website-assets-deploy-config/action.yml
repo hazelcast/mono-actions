@@ -111,20 +111,15 @@ runs:
           }
 
           generate_config_matrix() {
-            local frag_oss=""
-            local frag_ee=""
+            local matrix=()
 
             if [[ "${{ steps.resolve-editions.outputs.should_build_oss }}" == "true" ]]; then
-              frag_oss=$(generate_config_matrix_fragment "oss" "hazelcast-distribution" "hazelcast" "${RELEASE_VERSION}" | jq --compact-output '.')
+              matrix+=($(generate_config_matrix_fragment "oss" "hazelcast-distribution" "hazelcast" "${RELEASE_VERSION}" | jq --compact-output '.'))
             fi
 
             if [[ "${{ steps.resolve-editions.outputs.should_build_ee }}" == "true" ]]; then
-              frag_ee=$(generate_config_matrix_fragment "ee" "hazelcast-enterprise-distribution" "hazelcast-enterprise" "${RELEASE_VERSION}" | jq --compact-output '.')
+              matrix+=($(generate_config_matrix_fragment "ee" "hazelcast-enterprise-distribution" "hazelcast-enterprise" "${RELEASE_VERSION}" | jq --compact-output '.'))
             fi
-
-            local matrix=()
-            [[ -n "${frag_oss}" ]] && matrix+=("${frag_oss}")
-            [[ -n "${frag_ee}" ]]  && matrix+=("${frag_ee}")
 
             local json="[$(IFS=,; echo "${matrix[*]}")]"
             echo "json=${json}" >> ${GITHUB_OUTPUT}
