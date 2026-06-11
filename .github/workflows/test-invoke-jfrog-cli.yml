@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: AQL files download
-        uses: ./execute-jfrog-cli
+        uses: ./invoke-jfrog-cli
         with:
           command: 'download'
           aql: |
@@ -42,7 +42,7 @@ jobs:
           aws-role-to-assume: ${{ env.AWS_ROLE }}
 
       - name: Direct File download
-        uses: ./execute-jfrog-cli
+        uses: ./invoke-jfrog-cli
         with:
           command: 'download'
           src-pattern: 'download/hazelcast-enterprise/hazelcast-enterprise-5.0.1-slim.zip'
@@ -56,7 +56,7 @@ jobs:
           echo "Test content created on $(date)" > /tmp/local-upload-source/test-upload-artifact-${{ github.run_id }}.txt
 
       - name: Upload file
-        uses: ./execute-jfrog-cli
+        uses: ./invoke-jfrog-cli
         with:
           command: 'upload'
           src-pattern: '/tmp/local-upload-source/test-upload-artifact-${{ github.run_id }}.txt'
@@ -65,7 +65,7 @@ jobs:
           aws-role-to-assume: ${{ env.AWS_ROLE }}
 
       - name: Copy file via AQL
-        uses: ./execute-jfrog-cli
+        uses: ./invoke-jfrog-cli
         with:
           command: 'copy'
           aql: |

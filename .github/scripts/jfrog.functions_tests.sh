@@ -7,7 +7,7 @@ SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
 # source script under test
-source "${SCRIPT_DIR}/../../execute-jfrog-cli/scripts/jfrog.functions.sh"
+source "${SCRIPT_DIR}/../../invoke-jfrog-cli/scripts/jfrog.functions.sh"
 
 # Temp files to save mocked 'jf' inputs/outputs
 MOCK_ARGS_FILE="${SCRIPT_DIR}/.mock_args"
@@ -180,13 +180,11 @@ function test_jfrog_thread_count_env_override() {
   local payload='{"items": []}'
   export DEFAULT_JF_CLI_THREAD_COUNT=16
 
-  source "$(readlink -f "${SCRIPT_DIR}/../../execute-jfrog-cli/scripts/jfrog.functions.sh")"
-
   jfrog_cli_download_by_aql "${payload}" "" ""
 
   local actual_args=$(cat "${MOCK_ARGS_FILE}")
   local msg="Global environment variable definitions override fallback default constants"
-  assert_eq "rt download --fail-no-op --format=json --threads 16 --spec /dev/stdin --spec-vars=" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  assert_eq "rt download --fail-no-op --format=json --threads ${DEFAULT_JF_CLI_THREAD_COUNT} --spec /dev/stdin --spec-vars=" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 }
 
 # --- Execution Entrypoint ---
