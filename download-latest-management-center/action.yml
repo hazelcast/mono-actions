@@ -108,14 +108,13 @@ runs:
 
     - name: Download ManCenter from JFrog
       if: ${{ inputs.license-type == 'LICENSED' }}
-      shell: bash
-      run: |
-        source "${GITHUB_ACTION_PATH}/../.github/scripts/jfrog.functions.sh"
-        jfrog_cli_download_by_file "${UNZIP_FOLDER}" "${DOWNLOAD_URL}" 1
-      env:
-        GH_TOKEN: ${{ inputs.github-token }}
-        DOWNLOAD_URL: ${{ steps.get-mc-download-vars.outputs.url }}
-        UNZIP_FOLDER: ${{ steps.get-mc-download-vars.outputs.unzip-folder-root }}
+      uses: hazelcast/mono-actions/execute-jfrog-cli@DI-792-website-assets-jfrog-test-jf-action
+      with:
+        command: 'download'
+        src-pattern: ${{ steps.get-mc-download-vars.outputs.url }}
+        target-dir: ${{ steps.get-mc-download-vars.outputs.unzip-folder-root }}
+        expected-count: '1'
+        aws-role-to-assume: ${{ inputs.aws-role-to-assume }}
 
     - name: Configure AWS credentials
       if: ${{ inputs.license-type == 'NLC' }}
