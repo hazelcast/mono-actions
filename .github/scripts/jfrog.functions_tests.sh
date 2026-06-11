@@ -4,7 +4,7 @@ set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 
 # Source the latest version of assert.sh unit testing library and include in current shell
-source /dev/stdin <<< "$(curl --silent https://githubusercontent.com)"
+source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
 # source script under test
 source "${SCRIPT_DIR}/../../execute-jfrog-cli/scripts/jfrog.functions.sh"
@@ -204,8 +204,6 @@ function test_jfrog_thread_count_env_override() {
   local actual_args=$(cat "${MOCK_ARGS_FILE}")
   local msg="Global environment variable definitions override fallback default constants"
   assert_eq "rt download --fail-no-op --format=json --threads 16 --spec /dev/stdin --spec-vars=" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-  
-  unset DEFAULT_JF_CLI_THREAD_COUNT
 }
 
 # --- Execution Entrypoint ---
