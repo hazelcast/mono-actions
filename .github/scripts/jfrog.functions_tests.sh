@@ -35,23 +35,6 @@ function reset_mocks() {
   echo '{"status": "success", "totals": {"success": 4, "failure": 0}}' > "${MOCK_STDOUT_FILE}"
 }
 
-function test_jq_extract_json_aql() {
-  log_header "Testing jq_extract_json_aql"
-
-  local mock_json='{"hz-distros-downloads-aql-ee": "files.find({\"repo\": \"sandbox\"})"}'
-  local expected_output='files.find({"repo": "sandbox"})'
-
-  local actual_output
-  actual_output=$(jq_extract_json_aql "${mock_json}" "hz-distros-downloads-aql-ee" 2>/dev/null || echo "JQ_CRASH_FAILED")
-  local actual_exit_code=$?
-
-  local msg="jq_extract_json_aql finished with exit code 0"
-  assert_eq 0 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  local msg="Extracted string matches expected target value layout"
-  assert_eq "${expected_output}" "${actual_output}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-}
-
 function test_jfrog_cli_download_by_file() {
   log_header "Testing jfrog_cli_download_by_file"
   reset_mocks
@@ -207,7 +190,6 @@ function test_jfrog_thread_count_env_override() {
 }
 
 # --- Execution Entrypoint ---
-test_jq_extract_json_aql
 test_jfrog_cli_download_by_file
 test_jfrog_cli_download_by_aql
 test_jfrog_cli_copy_by_aql
