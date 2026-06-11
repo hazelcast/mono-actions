@@ -27,7 +27,7 @@ jobs:
           EOF
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: AQL files Download
+      - name: AQL files download
         uses: ./execute-jfrog-cli
         with:
           command: 'download'
@@ -35,7 +35,7 @@ jobs:
           target-dir: '/tmp/aql-download'
           expected-count: '2'
 
-      - name: Direct File Download
+      - name: Direct File download
         uses: ./execute-jfrog-cli
         with:
           command: 'download'
@@ -56,7 +56,7 @@ jobs:
           target-dir: 'sandbox-files-preprod/hazelcast-enterprise'
           expected-count: '1'
 
-      - name: Copy via AQL
+      - name: Copy file via AQL
         uses: ./execute-jfrog-cli
         with:
           command: 'copy'
