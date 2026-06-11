@@ -27,8 +27,6 @@ function jf() {
 # Mock 'jf' client which overrides the 'jf' command
 export -f jf
 
-. "${SCRIPT_DIR}"/jfrog.functions.sh
-
 TESTS_RESULT=0
 
 function reset_mocks() {
