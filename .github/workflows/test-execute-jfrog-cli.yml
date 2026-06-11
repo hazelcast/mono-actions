@@ -14,28 +14,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Generate AQL
-        id: generate-aql
-        run: |
-          cat << 'EOF' >> $GITHUB_OUTPUT
-          query<<AQL_EOF
-          items.find({
-            "repo": "download",
-            "path": "hazelcast-enterprise",
-            "\$or": [
-              {"name": "hazelcast-enterprise-5.0.1-slim.zip"},
-              {"name": "hazelcast-enterprise-5.0.2-slim.zip"}
-            ]
-          })
-          AQL_EOF
-          EOF
-
       - name: AQL files download
         uses: ./execute-jfrog-cli
         with:
           command: 'download'
-          aql: ${{ steps.generate-aql.outputs.query }}
-          target-dir: '/tmp/aql-download'
+          aql: |
+            {
+              "files": [
+                {
+                  "aql": {
+                    "items.find": {
+                      "repo": "${REPO}",
+                      "path": "${DOWNLOAD_PATH}",
+                      "$or": [
+                        {"name": "hazelcast-enterprise-5.0.1-slim.zip"},
+                        {"name": "hazelcast-enterprise-5.0.2-slim.zip"}
+                      ]
+                    }
+                  },
+                  "target": "${DOWNLOAD_FOLDER}/",
+                  "flat": "true"
+                }
+              ]
+            }
+          spec-vars: 'REPO=download;DOWNLOAD_PATH=hazelcast-enterprise;DOWNLOAD_FOLDER=/tmp/aql-download'
           expected-count: '2'
           aws-role-to-assume: ${{ env.AWS_ROLE }}
 
@@ -66,7 +68,20 @@ jobs:
         uses: ./execute-jfrog-cli
         with:
           command: 'copy'
-          aql: 'items.find({"repo": "sandbox-files-preprod", "path": "hazelcast-enterprise", "name": "test-upload-artifact.txt"})'
+          aql: |
+            {
+              "files": [
+                {
+                  "aql": {
+                    "items.find": {
+                      "repo": "sandbox-files-preprod",
+                      "path": "hazelcast-enterprise",
+                      "name": "test-upload-artifact.txt"
+                    }
+                  }
+                }
+              ]
+            }
           spec-vars: 'target=sandbox-files-preprod/hazelcast-enterprise/copied-folder/'
           expected-count: '1'
           aws-role-to-assume: ${{ env.AWS_ROLE }}
