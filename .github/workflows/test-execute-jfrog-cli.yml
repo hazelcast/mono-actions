@@ -53,13 +53,13 @@ jobs:
       - name: Create local temporary file for upload
         run: |
           mkdir -p /tmp/local-upload-source
-          echo "Test content created on $(date)" > /tmp/local-upload-source/test-upload-artifact.txt
+          echo "Test content created on $(date)" > /tmp/local-upload-source/test-upload-artifact-${{ github.run_id }}.txt
 
       - name: Upload file
         uses: ./execute-jfrog-cli
         with:
           command: 'upload'
-          src-pattern: '/tmp/local-upload-source/test-upload-artifact.txt'
+          src-pattern: '/tmp/local-upload-source/test-upload-artifact-${{ github.run_id }}.txt'
           target-dir: 'sandbox-files-preprod/hazelcast-enterprise'
           expected-count: '1'
           aws-role-to-assume: ${{ env.AWS_ROLE }}
@@ -76,7 +76,7 @@ jobs:
                     "items.find": {
                       "repo": "sandbox-files-preprod",
                       "path": "hazelcast-enterprise",
-                      "name": "test-upload-artifact.txt"
+                      "name": "test-upload-artifact-${{ github.run_id }}.txt"
                     }
                   }
                 }
@@ -88,7 +88,7 @@ jobs:
 
       - name: Test outputs
         run: |
-          source /dev/stdin <<< "$(curl --silent https://githubusercontent.com)"
+          source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
           TESTS_RESULT=0
 
