@@ -79,7 +79,7 @@ jobs:
                       "name": "test-upload-artifact-${{ github.run_id }}.txt"
                     }
                   },
-                  "target": "sandbox-files-preprod/hazelcast-enterprise/copied-folder/"
+                  "target": "sandbox-files-preprod/hazelcast-enterprise/temp-testing-folder/"
                 }
               ]
             }
