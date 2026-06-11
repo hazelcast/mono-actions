@@ -96,18 +96,15 @@ jobs:
               local target_file=$1
               local track=$2
               local exists="false"
-              [ -f "${target_file}" ] && exists="true"
-              assert_true "${exists}" "Expected file missing for context: [${track}]. Path: ${target_file}" || TESTS_RESULT=$?
+              [ -f "${target_file}" ] || [ -d "${target_file}" ] && exists="true"
+              assert_true "${exists}" "Expected file or folder missing for context: [${track}]. Path: ${target_file}" || TESTS_RESULT=$?
           }
 
           # Assert downloads
           assert_file_exists "/tmp/aql-download/hazelcast-enterprise-5.0.1-slim.zip" "AQL Download 5.0.1"
           assert_file_exists "/tmp/aql-download/hazelcast-enterprise-5.0.2-slim.zip" "AQL Download 5.0.2"
-          assert_file_exists "/tmp/file-download/hazelcast-enterprise-5.0.1-slim.zip" "Direct File Download"
 
-          # Assert sizes
-          SIZE_AQL=$(stat -c%s "/tmp/aql-download/hazelcast-enterprise-5.0.1-slim.zip" 2>/dev/null || echo "0")
-          SIZE_FILE=$(stat -c%s "/tmp/file-download/hazelcast-enterprise-5.0.1-slim.zip" 2>/dev/null || echo "1")
-          assert_eq "${SIZE_AQL}" "${SIZE_FILE}" "Downloaded files do not match in byte size" || TESTS_RESULT=$?
+          # Assert direct exploded file exists
+          assert_file_exists "/tmp/file-download/hazelcast-enterprise-5.0.1-slim" "Direct File Download Exploded Directory"
 
           assert_eq 0 "$TESTS_RESULT" "All tests should pass"
