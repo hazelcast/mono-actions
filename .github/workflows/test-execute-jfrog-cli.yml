@@ -8,6 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+    env:
+      AWS_ROLE: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -35,6 +37,7 @@ jobs:
           aql: ${{ steps.generate-aql.outputs.query }}
           target-dir: '/tmp/aql-download'
           expected-count: '2'
+          aws-role-to-assume: ${{ env.AWS_ROLE }}
 
       - name: Direct File download
         uses: ./execute-jfrog-cli
@@ -43,6 +46,7 @@ jobs:
           src-pattern: 'download/hazelcast-enterprise/hazelcast-enterprise-5.0.1-slim.zip'
           target-dir: '/tmp/file-download'
           expected-count: '1'
+          aws-role-to-assume: ${{ env.AWS_ROLE }}
 
       - name: Create local temporary file for upload
         run: |
@@ -56,6 +60,7 @@ jobs:
           src-pattern: '/tmp/local-upload-source/test-upload-artifact.txt'
           target-dir: 'sandbox-files-preprod/hazelcast-enterprise'
           expected-count: '1'
+          aws-role-to-assume: ${{ env.AWS_ROLE }}
 
       - name: Copy file via AQL
         uses: ./execute-jfrog-cli
@@ -64,6 +69,7 @@ jobs:
           aql: 'items.find({"repo": "sandbox-files-preprod", "path": "hazelcast-enterprise", "name": "test-upload-artifact.txt"})'
           spec-vars: 'target=sandbox-files-preprod/hazelcast-enterprise/copied-folder/'
           expected-count: '1'
+          aws-role-to-assume: ${{ env.AWS_ROLE }}
 
       - name: Test outputs
         run: |

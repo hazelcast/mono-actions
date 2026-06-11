@@ -22,10 +22,18 @@ inputs:
     description: 'Verify if the processed files match this count'
   thread-count:
     description: 'Number of parallel threads for the JFrog CLI operation'
+  aws-role-to-assume:
+    description: 'AWS IAM Role ARN to assume via OIDC'
 
 runs:
   using: 'composite'
   steps:
+    - name: Get JFrog credentials
+      uses: hazelcast/docker-actions/get-jfrog-credentials@master
+      with:
+        aws-role-to-assume: ${{ inputs.aws-role-to-assume }}
+        jfrog-oidc-provider-name: ${{ github.repository_owner }}-snapshot-internal
+
     - name: Run JFrog CLI Command
       shell: bash
       env:
