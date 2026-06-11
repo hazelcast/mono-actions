@@ -36,8 +36,8 @@ jobs:
     uses: ./.github/workflows/test-download-latest-management-center.yml
     secrets: inherit
 
-  test-execute-jfrog-cli:
-    uses: ./.github/workflows/test-execute-jfrog-cli.yml
+  test-invoke-jfrog-cli:
+    uses: ./.github/workflows/test-invoke-jfrog-cli.yml
     secrets: inherit
 
   assert-all-jobs-succeeded:
@@ -47,7 +47,7 @@ jobs:
       - test-resolve-javadoc-deploy-config
       - test-resolve-website-assets-deploy-config
       - test-download-latest-management-center
-      - test-execute-jfrog-cli
+      - test-invoke-jfrog-cli
     if: always()
     steps:
       - name: Check all jobs succeeded

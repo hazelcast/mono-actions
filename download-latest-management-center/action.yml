@@ -108,7 +108,7 @@ runs:
 
     - name: Download ManCenter from JFrog
       if: ${{ inputs.license-type == 'LICENSED' }}
-      uses: hazelcast/mono-actions/execute-jfrog-cli@DI-792-website-assets-jfrog
+      uses: hazelcast/mono-actions/invoke-jfrog-cli@DI-792-website-assets-jfrog-test-jf-action
       with:
         command: 'download'
         src-pattern: ${{ steps.get-mc-download-vars.outputs.url }}
