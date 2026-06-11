@@ -78,11 +78,11 @@ jobs:
                       "path": "hazelcast-enterprise",
                       "name": "test-upload-artifact-${{ github.run_id }}.txt"
                     }
-                  }
+                  },
+                  "target": "sandbox-files-preprod/hazelcast-enterprise/copied-folder/"
                 }
               ]
             }
-          spec-vars: 'target=sandbox-files-preprod/hazelcast-enterprise/copied-folder/'
           expected-count: '1'
           aws-role-to-assume: ${{ env.AWS_ROLE }}
 
