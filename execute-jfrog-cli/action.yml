@@ -39,14 +39,6 @@ runs:
 
     - name: Run JFrog CLI Command
       shell: bash
-      env:
-        CMD: ${{ inputs.command }}
-        AQL: ${{ inputs.aql }}
-        SPEC_VARS: ${{ inputs.spec-vars }}
-        SRC_PATTERN: ${{ inputs.src-pattern }}
-        TARGET_DIR: ${{ inputs.target-dir }}
-        EXPECTED_COUNT: ${{ inputs.expected-count }}
-        THREADS: ${{ inputs.thread-count }}
       run: |
         set -o errexit -o pipefail ${RUNNER_DEBUG:+-x}
 
@@ -94,3 +86,11 @@ runs:
           echoerr "❌ ${ERROR_MSG}"
           exit 1
         fi
+      env:
+        CMD: ${{ inputs.command }}
+        AQL: ${{ inputs.aql }}
+        SPEC_VARS: ${{ inputs.spec-vars }}
+        SRC_PATTERN: ${{ inputs.src-pattern }}
+        TARGET_DIR: ${{ inputs.target-dir }}
+        EXPECTED_COUNT: ${{ inputs.expected-count }}
+        THREADS: ${{ inputs.thread-count }}
