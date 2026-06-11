@@ -60,7 +60,7 @@ jobs:
         with:
           command: 'upload'
           src-pattern: '/tmp/local-upload-source/test-upload-artifact-${{ github.run_id }}.txt'
-          target-dir: 'sandbox-files-preprod/hazelcast-enterprise'
+          target-dir: 'sandbox-files-preprod/hazelcast-enterprise/temp-testing-folder'
           expected-count: '1'
           aws-role-to-assume: ${{ env.AWS_ROLE }}
 
