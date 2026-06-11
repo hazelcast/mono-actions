@@ -15,7 +15,8 @@ jobs:
       - name: Generate AQL
         id: generate-aql
         run: |
-          echo "query<<EOF" >> $GITHUB_OUTPUT
+          cat << 'EOF' >> $GITHUB_OUTPUT
+          query<<AQL_EOF
           items.find({
             "repo": "download",
             "path": "hazelcast-enterprise",
@@ -24,8 +25,8 @@ jobs:
               {"name": "hazelcast-enterprise-5.0.2-slim.zip"}
             ]
           })
+          AQL_EOF
           EOF
-          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: AQL files download
         uses: ./execute-jfrog-cli
@@ -66,7 +67,7 @@ jobs:
 
       - name: Test outputs
         run: |
-          source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+          source /dev/stdin <<< "$(curl --silent https://githubusercontent.com)"
 
           TESTS_RESULT=0
 
