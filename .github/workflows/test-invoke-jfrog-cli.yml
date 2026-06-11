@@ -75,7 +75,7 @@ jobs:
                   "aql": {
                     "items.find": {
                       "repo": "sandbox-files-preprod",
-                      "path": "hazelcast-enterprise",
+                      "path": "hazelcast-enterprise/temp-testing-folder",
                       "name": "test-upload-artifact-${{ github.run_id }}.txt"
                     }
                   },
