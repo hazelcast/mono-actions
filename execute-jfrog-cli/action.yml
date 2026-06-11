@@ -1,0 +1,83 @@
+name: 'JFrog CLI Helper Utilities'
+description: 'Wraps JFrog download, upload, and copy operations'
+
+inputs:
+  command:
+    description: 'The operation type'
+    type: choice
+    required: true
+    options:
+      - copy
+      - download
+      - upload
+  aql:
+    description: 'The raw AQL string (if omitted, `src-pattern` used)'
+  spec-vars:
+    description: 'Key-value mapping for variable replacements in AQL'
+  src-pattern:
+    description: 'JFrog repo path (DOWNLOAD) or local file path/pattern (UPLOAD). Use with non-AQL file-based commands'
+  target-dir:
+    description: 'Local folder (DOWNLOAD) or remote repository path (UPLOAD). Use with non-AQL file-based commands'
+  expected-count:
+    description: 'Verify if the processed files match this count'
+  thread-count:
+    description: 'Number of parallel threads for the JFrog CLI operation'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run JFrog CLI Command
+      shell: bash
+      env:
+        CMD: ${{ inputs.command }}
+        AQL: ${{ inputs.aql }}
+        SPEC_VARS: ${{ inputs.spec-vars }}
+        SRC_PATTERN: ${{ inputs.src-pattern }}
+        TARGET_DIR: ${{ inputs.target-dir }}
+        EXPECTED_COUNT: ${{ inputs.expected-count }}
+        THREADS: ${{ inputs.thread-count }}
+      run: |
+        source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
+        source "${GITHUB_ACTION_PATH}/scripts/jfrog.functions.sh"
+
+        ERROR_MSG=""
+
+        case "${CMD}" in
+          "download")
+            if [[ -n "${AQL}" ]]; then
+              jfrog_cli_download_by_aql "${AQL}" "${SPEC_VARS}" "${EXPECTED_COUNT}" "${THREADS}"
+            else
+              if [[ -z "${TARGET_DIR}" || -z "${SRC_PATTERN}" ]]; then 
+                ERROR_MSG="'target-dir' and 'src-pattern' are required for file downloads"
+              else
+                jfrog_cli_download_by_file "${TARGET_DIR}" "${SRC_PATTERN}" "${EXPECTED_COUNT}" "${THREADS}"
+              fi
+            fi
+            ;;
+          "upload")
+            if [[ -n "${AQL}" ]]; then
+              ERROR_MSG="AQL uploads are not supported. Use 'src-pattern' instead"
+            else
+              if [[ -z "${TARGET_DIR}" || -z "${SRC_PATTERN}" ]]; then 
+                ERROR_MSG="'target-dir' and 'src-pattern' are required for uploads"
+              else
+                jfrog_cli_upload_by_file "${TARGET_DIR}" "${SRC_PATTERN}" "${EXPECTED_COUNT}" "${THREADS}"
+              fi
+            fi
+            ;;
+          "copy")
+            if [[ -z "${AQL}" ]]; then 
+              ERROR_MSG="copy requires 'aql' input"
+            else
+              jfrog_cli_copy_by_aql "${AQL}" "${SPEC_VARS}" "${EXPECTED_COUNT}" "${THREADS}"
+            fi
+            ;;
+          *)
+            ERROR_MSG="Invalid action command choice '${CMD}'."
+            ;;
+        esac
+
+        if [[ -n "${ERROR_MSG}" ]]; then
+          echoerr "❌ ${ERROR_MSG}"
+          exit 1
+        fi

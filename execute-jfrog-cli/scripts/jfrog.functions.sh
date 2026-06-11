@@ -17,10 +17,9 @@ function jfrog_cli_download_by_aql() {
   local aql_payload="$1"
   local spec_vars="$2"
   local expected_count="${3:-}"
-  local cmd_type="${4:-download}"
-  local thread_count="${5:-$DEFAULT_JF_CLI_THREAD_COUNT}"
+  local thread_count="${4:-$DEFAULT_JF_CLI_THREAD_COUNT}"
 
-  __execute_jf_command "${aql_payload}" "${cmd_type}" "${expected_count}" $(__get_jf_options "aql" "${spec_vars}" "${thread_count}")
+  __execute_jf_command "${aql_payload}" "download" "${expected_count}" $(__get_jf_options "aql" "${spec_vars}" "${thread_count}")
 }
 
 # Downloads one or more files depending on 'file_payload'. This can be an exact filename or pattern
@@ -45,7 +44,7 @@ function jfrog_cli_copy_by_aql() {
   local expected_count="${3:-}"
   local thread_count="${4:-$DEFAULT_JF_CLI_THREAD_COUNT}"
 
-  jfrog_cli_download_by_aql "${aql_payload}" "${spec_vars}" "${expected_count}" "copy" "${thread_count}"
+  __execute_jf_command "${aql_payload}" "copy" "${expected_count}" $(__get_jf_options "aql" "${spec_vars}" "${thread_count}")
 }
 
 # Uploads one or more local files to a target JFrog repository path. Use 'source_file_pattern'
@@ -100,7 +99,7 @@ function __get_jf_options() {
       opts+=("--explode")
       ;;
     *)
-      echoerr "❌ Error: Unknown JFrog CLI option mode passed: ${mode}"
+      echoerr "❌ Unknown JFrog CLI option mode passed: ${mode}"
       exit 1
       ;;
   esac

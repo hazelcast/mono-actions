@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
 
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+
 # Source the latest version of assert.sh unit testing library and include in current shell
 source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
-SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+# source script under test
+source "${SCRIPT_DIR}/../../execute-jfrog-cli/scripts/jfrog.functions.sh"
 
 # Temp files to save mocked 'jf' inputs/outputs
 MOCK_ARGS_FILE="${SCRIPT_DIR}/.mock_args"
