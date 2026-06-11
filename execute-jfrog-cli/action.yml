@@ -48,7 +48,7 @@ runs:
         EXPECTED_COUNT: ${{ inputs.expected-count }}
         THREADS: ${{ inputs.thread-count }}
       run: |
-        source /dev/stdin <<< "$(curl --silent https://githubusercontent.com)"
+        source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
         source "${GITHUB_ACTION_PATH}/scripts/jfrog.functions.sh"
 
         ERROR_MSG=""
