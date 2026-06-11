@@ -41,13 +41,15 @@ runs:
       shell: bash
       env:
         CMD: ${{ inputs.command }}
-        AQL: ${{ inputs.aql }}
-        SPEC_VARS: ${{ inputs.spec-vars }}
-        SRC_PATTERN: ${{ inputs.src-pattern }}
-        TARGET_DIR: ${{ inputs.target-dir }}
-        EXPECTED_COUNT: ${{ inputs.expected-count }}
-        THREADS: ${{ inputs.thread-count }}
+        AQL: ${{ inputs.aql || '' }}
+        SPEC_VARS: ${{ inputs.spec-vars || '' }}
+        SRC_PATTERN: ${{ inputs.src-pattern || '' }}
+        TARGET_DIR: ${{ inputs.target-dir || '' }}
+        EXPECTED_COUNT: ${{ inputs.expected-count || '' }}
+        THREADS: ${{ inputs.thread-count || '' }}
       run: |
+        set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
+
         source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
         source "${GITHUB_ACTION_PATH}/scripts/jfrog.functions.sh"
 
