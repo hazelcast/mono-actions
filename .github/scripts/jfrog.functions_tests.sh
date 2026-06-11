@@ -4,7 +4,7 @@ set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 
 # Source the latest version of assert.sh unit testing library and include in current shell
-source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+source /dev/stdin <<< "$(curl --silent https://githubusercontent.com)"
 
 # source script under test
 source "${SCRIPT_DIR}/../../execute-jfrog-cli/scripts/jfrog.functions.sh"
@@ -181,10 +181,9 @@ function test_jfrog_thread_count_parameter_override() {
   local payload='{"items": []}'
   local spec_vars=""
   local expected_count=""
-  local cmd_type="download"
   local custom_threads=8
 
-  jfrog_cli_download_by_aql "${payload}" "${spec_vars}" "${expected_count}" "${cmd_type}" "${custom_threads}"
+  jfrog_cli_download_by_aql "${payload}" "${spec_vars}" "${expected_count}" "${custom_threads}"
 
   local actual_args=$(cat "${MOCK_ARGS_FILE}")
   local msg="Explicit thread count parameter overrides default value"
@@ -195,19 +194,21 @@ function test_jfrog_thread_count_env_override() {
   log_header "Testing DEFAULT_JF_CLI_THREAD_COUNT environment variable override"
   reset_mocks
 
-  (
-    export DEFAULT_JF_CLI_THREAD_COUNT=16
-    . "${SCRIPT_DIR}"/jfrog.functions.sh
+  local payload='{"items": []}'
+  export DEFAULT_JF_CLI_THREAD_COUNT=16
 
-    local payload='{"items": []}'
-    jfrog_cli_download_by_aql "${payload}" "" ""
+  source "$(readlink -f "${SCRIPT_DIR}/../../execute-jfrog-cli/scripts/jfrog.functions.sh")"
 
-    local actual_args=$(cat "${MOCK_ARGS_FILE}")
-    local msg="Global environment variable definitions override fallback default constants"
-    assert_eq "rt download --fail-no-op --format=json --threads ${DEFAULT_JF_CLI_THREAD_COUNT} --spec /dev/stdin --spec-vars=" "${actual_args}" "${msg}" && log_success "${msg}"
-  ) || TESTS_RESULT=$?
+  jfrog_cli_download_by_aql "${payload}" "" ""
+
+  local actual_args=$(cat "${MOCK_ARGS_FILE}")
+  local msg="Global environment variable definitions override fallback default constants"
+  assert_eq "rt download --fail-no-op --format=json --threads 16 --spec /dev/stdin --spec-vars=" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  
+  unset DEFAULT_JF_CLI_THREAD_COUNT
 }
 
+# --- Execution Entrypoint ---
 test_jq_extract_json_aql
 test_jfrog_cli_download_by_file
 test_jfrog_cli_download_by_aql
