@@ -32,10 +32,9 @@ runs:
       uses: hazelcast/docker-actions/get-jfrog-credentials@master
       env:
         IS_DL: ${{ inputs.command == 'download' }}
-        OWNER: ${{ github.repository_owner }}
       with:
         aws-role-to-assume: ${{ inputs.aws-role-to-assume }}
-        jfrog-oidc-provider-name: ${{ env.IS_DL == 'true' && format('{0}-snapshot-internal', env.OWNER) || format('{0}-write-dev-account', env.OWNER) }}
+        jfrog-oidc-provider-name: ${{ env.IS_DL == 'true' && format('{0}-snapshot-internal', github.repository_owner) || format('{0}-write-dev-account', github.repository_owner) }}
 
     - name: Run JFrog CLI Command
       shell: bash
