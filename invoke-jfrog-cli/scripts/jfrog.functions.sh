@@ -5,6 +5,8 @@ source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelca
 #
 #  1. Pass in the value (thread_count) to the function, or
 #  2. Set environment variable 'DEFAULT_JF_CLI_THREAD_COUNT'.
+#
+# Note: Custom default tailored for website assets handling. JFrog CLI default is 3
 
 : "${DEFAULT_JF_CLI_THREAD_COUNT:=4}"
 
