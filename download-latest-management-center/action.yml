@@ -21,7 +21,7 @@ inputs:
     required: false
   github-token:
     description: "The GitHub Token used to query the repository tags"
-    required: false
+    required: true
 
 outputs:
   name:
