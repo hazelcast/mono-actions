@@ -22,6 +22,7 @@ function jfrog_cli_download_by_aql() {
   local thread_count="${4:-}"
 
   __execute_jf_command "${aql_payload}" "download" "${expected_count}" $(__get_jf_options "aql" "${spec_vars}" "${thread_count}")
+  return $?
 }
 
 # Downloads one or more files depending on 'file_payload'. This can be an exact filename or pattern
@@ -35,6 +36,7 @@ function jfrog_cli_download_by_file() {
   local thread_count="${4:-}"
 
   __execute_jf_command "" "download" "${expected_count}" $(__get_jf_options "file" "" "${thread_count}") "${file_payload}" "${target_dir}/"
+  return $?
 }
 
 # Copies repository files directly on the server side using AQL. This is more efficient compared to
@@ -47,6 +49,7 @@ function jfrog_cli_copy_by_aql() {
   local thread_count="${4:-}"
 
   __execute_jf_command "${aql_payload}" "copy" "${expected_count}" $(__get_jf_options "aql" "${spec_vars}" "${thread_count}")
+  return $?
 }
 
 # Uploads one or more local files to a target JFrog repository path. Use 'source_file_pattern'
@@ -66,6 +69,7 @@ function jfrog_cli_upload_by_file() {
   local thread_count="${4:-}"
 
   __execute_jf_command "" "upload" "${expected_count}" $(__get_jf_options "upload" "" "${thread_count}") "${source_file_pattern}" "${target_repo_path}/"
+  return $?
 }
 
 # Internal function to get 'jf' options based on the supplied command mode.
@@ -100,6 +104,7 @@ function __get_jf_options() {
   esac
 
   echo "${opts[@]}"
+  return 0
 }
 
 # Internal function to execute the JFrog CLI command
@@ -123,10 +128,12 @@ function __execute_jf_command() {
     local actual_count
     actual_count=$(echo "${jf_output}" | jq '.totals.success')
 
-    if [ "${actual_count}" -ne "${expected_count}" ]; then
+    if [[ "${actual_count}" -ne "${expected_count}" ]]; then
       echoerr "❌ Expected ${expected_count} files for ${cmd_type}, but completed: ${actual_count}"
       echoerr "${jf_output}"
       exit 1
     fi
   fi
+
+  return 0
 }
