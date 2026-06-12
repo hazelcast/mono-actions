@@ -172,5 +172,3 @@ jobs:
           assert_field_aql_json "${FIELD}" "${assets_ee_expected_all}" "${AQL_ALL}"
 
           assert_eq 0 "$TESTS_RESULT" "All tests should pass"
-        env:
-          RELEASE_VERSION:  ${{ env.RELEASE_VERSION }}
