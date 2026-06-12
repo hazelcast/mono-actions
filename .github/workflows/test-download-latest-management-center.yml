@@ -1,0 +1,78 @@
+name: Test download-management-center action
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Download Management Center (JFROG)
+        id: test-mc-jfrog
+        uses: ./download-latest-management-center
+        with:
+          license-type: 'LICENSED'
+          aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+          github-token: ${{ secrets.GH_TOKEN }}
+
+      - name: Download Management Center (S3)
+        id: test-mc-s3
+        uses: ./download-latest-management-center
+        with:
+          license-type: 'NLC'
+          aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-s3-path: ${{ vars.S3_MANCENTER_NLC_PATH }}
+          unzip-folder: '/tmp/custom-mc-unzip-dir'
+          github-token: ${{ secrets.GH_TOKEN }}
+
+      - name: Test outputs
+        run: |
+          source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+
+          TESTS_RESULT=0
+
+          MC_NAME_JFROG="${{ steps.test-mc-jfrog.outputs.name }}"
+          UNZIP_DIR_JFROG="${{ steps.test-mc-jfrog.outputs.unzip-folder }}"
+          MC_NAME_S3="${{ steps.test-mc-s3.outputs.name }}"
+          UNZIP_DIR_S3="${{ steps.test-mc-s3.outputs.unzip-folder }}"
+
+          assert_valid_mc_name() {
+              local mc_name=$1
+              local track=$2
+
+              local is_valid="false"
+              [[ "${mc_name}" =~ ^hazelcast-management-center-[0-9]+\.[0-9]+\.[0-9]+$ ]] && is_valid="true"
+              assert_true "${is_valid}" "MC name '${mc_name}' for track '${track}' has an invalid format layout" || TESTS_RESULT=$?
+          }
+
+          assert_download_dir() {
+              local target_dir=$1
+              local expected_dir=$2
+              local track=$3
+
+              assert_not_empty "${target_dir}" "Unzip directory path string for '${track}' is empty" || TESTS_RESULT=$?
+
+              if [ -n "${expected_dir}" ]; then
+                  assert_eq "${expected_dir}" "${target_dir}" "Unzip folder path mismatch on track '${track}'" || TESTS_RESULT=$?
+              fi
+
+              local dir_exists="false"
+              [ -d "${target_dir}" ] && dir_exists="true"
+              assert_true "${dir_exists}" "The extracted directory folder '${target_dir}' (${track}) does not exist on disk" || TESTS_RESULT=$?
+          }
+
+          # Assert MC name
+          assert_valid_mc_name "${MC_NAME_JFROG}" "JFROG"
+          assert_valid_mc_name "${MC_NAME_S3}" "S3"
+          assert_eq "${MC_NAME_JFROG}" "${MC_NAME_S3}" "Mismatch MC_NAME_JFROG=${MC_NAME_JFROG} MC_NAME_S3=${MC_NAME_S3}" || TESTS_RESULT=$?
+
+          # Assert folders
+          assert_download_dir "${UNZIP_DIR_JFROG}" "" "JFROG"
+          assert_download_dir "${UNZIP_DIR_S3}" "/tmp/custom-mc-unzip-dir/${MC_NAME_JFROG}" "S3"
+
+          assert_eq 0 "$TESTS_RESULT" "All Management Center deployment validation steps should complete successfully"

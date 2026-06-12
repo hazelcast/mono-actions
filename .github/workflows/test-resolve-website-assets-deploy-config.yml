@@ -1,0 +1,174 @@
+name: Test resolve-website-assets-deploy-config action
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_VERSION: '3.11.0'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup website assets deploy config (ALL)
+        id: resolve-website-assets-deploy-config-all
+        uses: ./resolve-website-assets-deploy-config
+        with:
+          release-version: ${{ env.RELEASE_VERSION }}
+          release-type: 'ALL'
+          jfrog-download-repo: 'preprod'
+
+      - name: Setup website assets deploy config (OSS)
+        id: resolve-website-assets-deploy-config-oss
+        uses: ./resolve-website-assets-deploy-config
+        with:
+          release-version:  ${{ env.RELEASE_VERSION }}
+          release-type: 'OSS'
+          jfrog-download-repo: 'preprod'
+
+      - name: Setup website assets deploy config (EE)
+        id: resolve-website-assets-deploy-config-ee
+        uses: ./resolve-website-assets-deploy-config
+        with:
+          release-version:  ${{ env.RELEASE_VERSION }}
+          release-type: 'EE'
+          jfrog-download-repo: 'preprod'
+
+      - name: Test outputs
+        run: |
+          source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+
+          TESTS_RESULT=0
+
+          assert_field() {
+              local label=$1
+              local field=$2
+              local field_value=$3
+              local matrix_json=$4
+
+              local has_field=$(echo "${matrix_json}" | jq \
+                  --arg field "${field}" \
+                  --arg fieldVal "${field_value}" \
+                  --arg lbl "${label}" \
+                  'any(.[]; .[$field] == $fieldVal and .label == $lbl)')
+
+              assert_true "${has_field}" "'${field}=${field_value}' is missing/incorrect for label '${label}'" || TESTS_RESULT=$?
+          }
+
+          assert_label() {
+              local label=$1
+              local actual_matrix_json=$2
+              local has_label=$(echo "${actual_matrix_json}" | jq --arg lbl "${label}" 'any(.[]; .label == $lbl)')
+              assert_true "${has_label}" "label '${label}' is missing" || TESTS_RESULT=$?
+          }
+
+          get_expected_aql_json() {
+            local repo_path=$1
+            local match_name=$2
+
+            cat << EOF | jq --compact-output '.'
+          {
+            "files": [
+              {
+                "aql": {
+                  "items.find": {
+                    "repo": "preprod",
+                    "path": { "\$match": "${repo_path}" },
+                    "\$or": [
+                      { "name": { "\$eq": "${match_name}.zip" } },
+                      { "name": { "\$eq": "${match_name}-slim.zip" } },
+                      { "name": { "\$eq": "${match_name}.tar.gz" } },
+                      { "name": { "\$eq": "${match_name}-slim.tar.gz" } }
+                    ]
+                  }
+                },
+                "target": "\${DOWNLOAD_FOLDER}/",
+                "flat": "true"
+              }
+            ]
+          }
+          EOF
+          }
+
+          assert_field_aql_json() {
+              local aql_key=$1
+              local expected_json_block=$2
+              local aql_json=$3
+
+              local extracted_aql_json
+              extracted_aql_json=$(echo "${aql_json}" | jq --compact-output --arg key "${aql_key}" '.[$key]')
+
+              local expected_json
+              expected_json=$(echo "${expected_json_block}" | jq --compact-output '.')
+
+              assert_eq "${expected_json}" "${extracted_aql_json}" "Full block comparison for key target '${aql_key}' failed matching expected curated object" || TESTS_RESULT=$?
+          }
+
+          assert_field_oss() {
+              assert_field 'oss' "$@"
+          }
+
+          assert_field_ee() {
+              assert_field 'ee' "$@"
+          }
+
+          JSON_ALL='${{ steps.resolve-website-assets-deploy-config-all.outputs.json }}'
+          JSON_OSS='${{ steps.resolve-website-assets-deploy-config-oss.outputs.json }}'
+          JSON_EE='${{ steps.resolve-website-assets-deploy-config-ee.outputs.json }}'
+
+          AQL_ALL='${{ steps.resolve-website-assets-deploy-config-all.outputs.jfrog-aql-json }}'
+          AQL_OSS='${{ steps.resolve-website-assets-deploy-config-oss.outputs.jfrog-aql-json }}'
+          AQL_EE='${{ steps.resolve-website-assets-deploy-config-ee.outputs.jfrog-aql-json }}'
+
+          assert_label 'oss' "${JSON_OSS}"
+          assert_label 'oss' "${JSON_ALL}"
+          assert_label 'ee' "${JSON_ALL}"
+          assert_label 'ee' "${JSON_EE}"
+
+          FIELD="hz-distros-root-name"
+          ASSET_UNZIPPED_ROOT_NAME_OSS="hazelcast-${RELEASE_VERSION}"
+          ASSET_UNZIPPED_ROOT_NAME_EE="hazelcast-enterprise-${RELEASE_VERSION}"
+          assert_field_oss "${FIELD}" "${ASSET_UNZIPPED_ROOT_NAME_OSS}" "${JSON_OSS}"
+          assert_field_oss "${FIELD}" "${ASSET_UNZIPPED_ROOT_NAME_OSS}" "${JSON_ALL}"
+          assert_field_ee "${FIELD}" "${ASSET_UNZIPPED_ROOT_NAME_EE}" "${JSON_EE}"
+          assert_field_ee "${FIELD}" "${ASSET_UNZIPPED_ROOT_NAME_EE}" "${JSON_ALL}"
+
+          FIELD="hz-assets-jfrog-path"
+          ASSETS_JFROG_PATH_OSS="hazelcast"
+          ASSETS_JFROG_PATH_EE="hazelcast-enterprise"
+          assert_field_oss "${FIELD}" "${ASSETS_JFROG_PATH_OSS}" "${JSON_OSS}"
+          assert_field_oss "${FIELD}" "${ASSETS_JFROG_PATH_OSS}" "${JSON_ALL}"
+          assert_field_ee "${FIELD}" "${ASSETS_JFROG_PATH_EE}" "${JSON_EE}"
+          assert_field_ee "${FIELD}" "${ASSETS_JFROG_PATH_EE}" "${JSON_ALL}"
+
+          FIELD="hz-distros-downloads-aql-oss"
+          DISTRO_ARCHIVE_FILE_NAME_OSS="hazelcast-distribution-${RELEASE_VERSION}"
+          DISTRO_ARCHIVE_FILE_NAME_EE="hazelcast-enterprise-distribution-${RELEASE_VERSION}"
+          HZ_DISTRO_PATH_OSS="com/hazelcast/hazelcast-distribution/${RELEASE_VERSION}"
+          hz_oss_expected_oss=$(get_expected_aql_json "${HZ_DISTRO_PATH_OSS}" "${DISTRO_ARCHIVE_FILE_NAME_OSS}")
+          hz_oss_expected_all=$(get_expected_aql_json "${HZ_DISTRO_PATH_OSS}" "${DISTRO_ARCHIVE_FILE_NAME_OSS}")
+          assert_field_aql_json "${FIELD}" "${hz_oss_expected_oss}" "${AQL_OSS}"
+          assert_field_aql_json "${FIELD}" "${hz_oss_expected_all}" "${AQL_ALL}"
+
+          FIELD="hz-distros-downloads-aql-ee"
+          HZ_DISTRO_PATH_EE="com/hazelcast/hazelcast-enterprise-distribution/${RELEASE_VERSION}"
+          hz_ee_expected_ee=$(get_expected_aql_json "${HZ_DISTRO_PATH_EE}" "${DISTRO_ARCHIVE_FILE_NAME_EE}")
+          hz_ee_expected_all=$(get_expected_aql_json "${HZ_DISTRO_PATH_EE}" "${DISTRO_ARCHIVE_FILE_NAME_EE}")
+          assert_field_aql_json "${FIELD}" "${hz_ee_expected_ee}" "${AQL_EE}"
+          assert_field_aql_json "${FIELD}" "${hz_ee_expected_all}" "${AQL_ALL}"
+
+          FIELD="hz-assets-downloads-aql-oss"
+          assets_oss_expected_oss=$(get_expected_aql_json "hazelcast" "hazelcast-${RELEASE_VERSION}")
+          assets_oss_expected_all=$(get_expected_aql_json "hazelcast" "hazelcast-${RELEASE_VERSION}")
+          assert_field_aql_json "${FIELD}" "${assets_oss_expected_oss}" "${AQL_OSS}"
+          assert_field_aql_json "${FIELD}" "${assets_oss_expected_all}" "${AQL_ALL}"
+
+          FIELD="hz-assets-downloads-aql-ee"
+          assets_ee_expected_ee=$(get_expected_aql_json "hazelcast-enterprise" "hazelcast-enterprise-${RELEASE_VERSION}")
+          assets_ee_expected_all=$(get_expected_aql_json "hazelcast-enterprise" "hazelcast-enterprise-${RELEASE_VERSION}")
+          assert_field_aql_json "${FIELD}" "${assets_ee_expected_ee}" "${AQL_EE}"
+          assert_field_aql_json "${FIELD}" "${assets_ee_expected_all}" "${AQL_ALL}"
+
+          assert_eq 0 "$TESTS_RESULT" "All tests should pass"
