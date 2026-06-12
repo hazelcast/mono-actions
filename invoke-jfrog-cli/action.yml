@@ -44,38 +44,37 @@ runs:
         source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
         source "${GITHUB_ACTION_PATH}/scripts/jfrog.functions.sh"
 
-        ERROR_MSG=""
+        function exit_with_err() {
+          local msg="$1"
+          echoerr "❌ ${msg}"
+          exit 1
+        }
 
         case "${CMD}" in
           "download"|"upload")
             if [[ -n "${AQL}" ]]; then
               if [[ "${CMD}" == "upload" ]]; then
-                ERROR_MSG="AQL uploads are not supported. Use 'src-pattern' instead"
+                exit_with_err "AQL uploads are not supported. Use 'src-pattern' instead"
               else
                 jfrog_cli_download_by_aql "${AQL}" "${SPEC_VARS}" "${EXPECTED_COUNT}" "${THREADS}"
               fi
             elif [[ -z "${TARGET_DIR}" || -z "${SRC_PATTERN}" ]]; then
-              ERROR_MSG="'target-dir' and 'src-pattern' are required for file ${CMD}s"
+              exit_with_err "'target-dir' and 'src-pattern' are required for file ${CMD}s"
             else
               "jfrog_cli_${CMD}_by_file" "${TARGET_DIR}" "${SRC_PATTERN}" "${EXPECTED_COUNT}" "${THREADS}"
             fi
             ;;
           "copy")
             if [[ -z "${AQL}" ]]; then 
-              ERROR_MSG="copy requires 'aql' input"
+              exit_with_err "copy requires 'aql' input"
             else
               jfrog_cli_copy_by_aql "${AQL}" "${SPEC_VARS}" "${EXPECTED_COUNT}" "${THREADS}"
             fi
             ;;
           *)
-            ERROR_MSG="Invalid action command choice '${CMD}'."
+            exit_with_err "Invalid action command choice '${CMD}'."
             ;;
         esac
-
-        if [[ -n "${ERROR_MSG}" ]]; then
-          echoerr "❌ ${ERROR_MSG}"
-          exit 1
-        fi
       env:
         CMD: ${{ inputs.command }}
         AQL: ${{ inputs.aql }}
