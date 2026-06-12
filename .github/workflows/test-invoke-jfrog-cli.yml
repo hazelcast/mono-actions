@@ -1,0 +1,110 @@
+name: Test execute-jfrog-cli action
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    env:
+      AWS_ROLE: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: AQL files download
+        uses: ./invoke-jfrog-cli
+        with:
+          command: 'download'
+          aql: |
+            {
+              "files": [
+                {
+                  "aql": {
+                    "items.find": {
+                      "repo": "${REPO}",
+                      "path": "${DOWNLOAD_PATH}",
+                      "$or": [
+                        {"name": "hazelcast-enterprise-5.0.1-slim.zip"},
+                        {"name": "hazelcast-enterprise-5.0.2-slim.zip"}
+                      ]
+                    }
+                  },
+                  "target": "${DOWNLOAD_FOLDER}/",
+                  "flat": "true"
+                }
+              ]
+            }
+          spec-vars: 'REPO=download;DOWNLOAD_PATH=hazelcast-enterprise;DOWNLOAD_FOLDER=/tmp/aql-download'
+          expected-count: '2'
+          aws-role-to-assume: ${{ env.AWS_ROLE }}
+
+      - name: Direct File download
+        uses: ./invoke-jfrog-cli
+        with:
+          command: 'download'
+          src-pattern: 'download/hazelcast-enterprise/hazelcast-enterprise-5.0.1-slim.zip'
+          target-dir: '/tmp/file-download'
+          expected-count: '1'
+          aws-role-to-assume: ${{ env.AWS_ROLE }}
+
+      - name: Create local temporary file for upload
+        run: |
+          mkdir -p /tmp/local-upload-source
+          echo "Test content created on $(date)" > /tmp/local-upload-source/test-upload-artifact-${{ github.run_id }}.txt
+
+      - name: Upload file
+        uses: ./invoke-jfrog-cli
+        with:
+          command: 'upload'
+          src-pattern: '/tmp/local-upload-source/test-upload-artifact-${{ github.run_id }}.txt'
+          target-dir: 'sandbox-files-preprod/hazelcast-enterprise/temp-testing-folder'
+          expected-count: '1'
+          aws-role-to-assume: ${{ env.AWS_ROLE }}
+
+      - name: Copy file via AQL
+        uses: ./invoke-jfrog-cli
+        with:
+          command: 'copy'
+          aql: |
+            {
+              "files": [
+                {
+                  "aql": {
+                    "items.find": {
+                      "repo": "sandbox-files-preprod",
+                      "path": "hazelcast-enterprise/temp-testing-folder",
+                      "name": "test-upload-artifact-${{ github.run_id }}.txt"
+                    }
+                  },
+                  "target": "sandbox-files-preprod/hazelcast-enterprise/temp-testing-folder/"
+                }
+              ]
+            }
+          expected-count: '1'
+          aws-role-to-assume: ${{ env.AWS_ROLE }}
+
+      - name: Test outputs
+        run: |
+          source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+
+          TESTS_RESULT=0
+
+          assert_file_exists() {
+              local target_file=$1
+              local track=$2
+              local exists="false"
+              [ -f "${target_file}" ] || [ -d "${target_file}" ] && exists="true"
+              assert_true "${exists}" "Expected file or folder missing for context: [${track}]. Path: ${target_file}" || TESTS_RESULT=$?
+          }
+
+          # Assert downloads
+          assert_file_exists "/tmp/aql-download/hazelcast-enterprise-5.0.1-slim.zip" "AQL Download 5.0.1"
+          assert_file_exists "/tmp/aql-download/hazelcast-enterprise-5.0.2-slim.zip" "AQL Download 5.0.2"
+
+          # Assert direct exploded file exists
+          assert_file_exists "/tmp/file-download/hazelcast-enterprise-5.0.1-slim" "Direct File Download Exploded Directory"
+
+          assert_eq 0 "$TESTS_RESULT" "All tests should pass"

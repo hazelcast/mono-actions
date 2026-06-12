@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
 
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+
 # Source the latest version of assert.sh unit testing library and include in current shell
 source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
-SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+# source script under test
+source "${SCRIPT_DIR}/../../invoke-jfrog-cli/scripts/jfrog.functions.sh"
 
 # Temp files to save mocked 'jf' inputs/outputs
 MOCK_ARGS_FILE="${SCRIPT_DIR}/.mock_args"
@@ -24,31 +27,12 @@ function jf() {
 # Mock 'jf' client which overrides the 'jf' command
 export -f jf
 
-. "${SCRIPT_DIR}"/jfrog.functions.sh
-
 TESTS_RESULT=0
 
 function reset_mocks() {
   echo -n "" > "${MOCK_ARGS_FILE}"
   echo -n "" > "${MOCK_STDIN_FILE}"
   echo '{"status": "success", "totals": {"success": 4, "failure": 0}}' > "${MOCK_STDOUT_FILE}"
-}
-
-function test_jq_extract_json_aql() {
-  log_header "Testing jq_extract_json_aql"
-
-  local mock_json='{"hz-distros-downloads-aql-ee": "files.find({\"repo\": \"sandbox\"})"}'
-  local expected_output='files.find({"repo": "sandbox"})'
-
-  local actual_output
-  actual_output=$(jq_extract_json_aql "${mock_json}" "hz-distros-downloads-aql-ee" 2>/dev/null || echo "JQ_CRASH_FAILED")
-  local actual_exit_code=$?
-
-  local msg="jq_extract_json_aql finished with exit code 0"
-  assert_eq 0 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  local msg="Extracted string matches expected target value layout"
-  assert_eq "${expected_output}" "${actual_output}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 }
 
 function test_jfrog_cli_download_by_file() {
@@ -180,10 +164,9 @@ function test_jfrog_thread_count_parameter_override() {
   local payload='{"items": []}'
   local spec_vars=""
   local expected_count=""
-  local cmd_type="download"
   local custom_threads=8
 
-  jfrog_cli_download_by_aql "${payload}" "${spec_vars}" "${expected_count}" "${cmd_type}" "${custom_threads}"
+  jfrog_cli_download_by_aql "${payload}" "${spec_vars}" "${expected_count}" "${custom_threads}"
 
   local actual_args=$(cat "${MOCK_ARGS_FILE}")
   local msg="Explicit thread count parameter overrides default value"
@@ -194,20 +177,17 @@ function test_jfrog_thread_count_env_override() {
   log_header "Testing DEFAULT_JF_CLI_THREAD_COUNT environment variable override"
   reset_mocks
 
-  (
-    export DEFAULT_JF_CLI_THREAD_COUNT=16
-    . "${SCRIPT_DIR}"/jfrog.functions.sh
+  local payload='{"items": []}'
+  export DEFAULT_JF_CLI_THREAD_COUNT=16
 
-    local payload='{"items": []}'
-    jfrog_cli_download_by_aql "${payload}" "" ""
+  jfrog_cli_download_by_aql "${payload}" "" ""
 
-    local actual_args=$(cat "${MOCK_ARGS_FILE}")
-    local msg="Global environment variable definitions override fallback default constants"
-    assert_eq "rt download --fail-no-op --format=json --threads ${DEFAULT_JF_CLI_THREAD_COUNT} --spec /dev/stdin --spec-vars=" "${actual_args}" "${msg}" && log_success "${msg}"
-  ) || TESTS_RESULT=$?
+  local actual_args=$(cat "${MOCK_ARGS_FILE}")
+  local msg="Global environment variable definitions override fallback default constants"
+  assert_eq "rt download --fail-no-op --format=json --threads ${DEFAULT_JF_CLI_THREAD_COUNT} --spec /dev/stdin --spec-vars=" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 }
 
-test_jq_extract_json_aql
+# --- Execution Entrypoint ---
 test_jfrog_cli_download_by_file
 test_jfrog_cli_download_by_aql
 test_jfrog_cli_copy_by_aql
