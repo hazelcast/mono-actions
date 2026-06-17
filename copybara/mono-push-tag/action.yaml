@@ -11,8 +11,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Create temporary branch from tag
-      shell: bash
+    - shell: bash
       run: |
         gh api \
           --method POST \
