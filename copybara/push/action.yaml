@@ -36,7 +36,7 @@ runs:
     - name: Handle new branch in OS if needed
       shell: bash
       run: |
-        ${GITHUB_ACTION_PATH}/mono-create-subrepo-branch-if-missing.sh \
+        ${GITHUB_ACTION_PATH}/create-subrepo-branch-if-missing.sh \
           "${{ steps.config.outputs.destination_os_repo }}" \
           "${GITHUB_REF_NAME}"
       env:
@@ -46,7 +46,7 @@ runs:
       id: os-latest-rev-option
       shell: bash
       run: |
-        REV=$(${GITHUB_ACTION_PATH}/mono-find-last-rev.sh "${{ steps.config.outputs.destination_os_repo }}" "${GITHUB_REF_NAME}")
+        REV=$(${GITHUB_ACTION_PATH}/find-last-rev.sh "${{ steps.config.outputs.destination_os_repo }}" "${GITHUB_REF_NAME}")
         echo "rev=--last-rev ${REV}" >> ${GITHUB_OUTPUT}
       env:
         GH_TOKEN: ${{ inputs.token }}
