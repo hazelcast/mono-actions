@@ -1,4 +1,4 @@
-name: Create temporary branch from tag
+name: Copy Monorepo Commit to OS
 
 inputs:
   token:
