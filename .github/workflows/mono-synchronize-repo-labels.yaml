@@ -1,0 +1,30 @@
+name: Synchronize Repo Labels
+on:
+  workflow_call:
+
+jobs:
+  update-labels:
+    name: Update labels in ${{ matrix.repository }}
+    strategy:
+      fail-fast: false
+      matrix:
+        repository:
+          - ${{ github.repository_owner }}/hazelcast
+    runs-on: ubicloud-standard-2
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: hazelcast/mono-actions
+          ref: add-copybara-workflows
+          path: .mono-actions
+      - name: Update labels in ${{ matrix.repository }}
+        run: |
+           LABELS=$(.mono-actions/.github/workflows/mono-get-repo-labels.sh "${{ github.repository_owner }}/hazelcast-mono")
+           echo $LABELS | .mono-actions/.github/workflows/mono-synchronize-repo-labels.sh ${{ matrix.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.DEVOPSHAZELCAST_PAT_FOR_MONOREPO }}
+      - uses: hazelcast/docker-actions/slack-notification@master
+        if: failure()
+        with:
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_MONOREPO }}
+          slack-channel: ${{ vars.MONOREPO_SLACK_CHANNEL }}

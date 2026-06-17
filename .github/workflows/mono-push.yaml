@@ -1,0 +1,62 @@
+name: Copy Monorepo Commit to OS
+on:
+  workflow_call:
+env:
+  sot_repo: ${{ github.repository_owner }}/hazelcast-mono
+  destination_os_repo: ${{ github.repository_owner }}/hazelcast
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.ref_name}}'
+
+jobs:
+  copybara-mono-push:
+    # we need to use GH runners for now as there's a GH issue with triggering jobs on ubicloud in a private sandbox fork
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.DEVOPSHAZELCAST_PAT_FOR_MONOREPO }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v6
+        with:
+          repository: hazelcast/mono-actions
+          ref: add-copybara-workflows
+          path: .mono-actions
+      - name: Generate copybara OS config file
+        run: |
+          sed -e "s#<branch_to_sync>#${GITHUB_REF_NAME}#" \
+              -e "s#<sot_repo>#${sot_repo}#" \
+              -e "s#<destination_repo>#${destination_os_repo}#" \
+              .mono-actions/.github/workflows/common-copybara.bara.sky.template > .github/workflows/common-copybara.bara.sky
+      - name: Handle new branch in OS if needed
+        run: |
+          .mono-actions/.github/workflows/mono-create-subrepo-branch-if-missing.sh "${destination_os_repo}" "${GITHUB_REF_NAME}"
+      - name: Find copybara last rev for OS
+        run: |
+          OS_LAST_REV_OPTION=$(.mono-actions/.github/workflows/mono-find-last-rev.sh "${destination_os_repo}" "${GITHUB_REF_NAME}")
+          echo "OS_LAST_REV_OPTION=--last-rev $OS_LAST_REV_OPTION" >> "$GITHUB_ENV"
+      - uses: hazelcast/copybara-action@main
+        name: Copybara push ${{ github.ref_name }} to OS
+        with:
+          ssh_key: ${{ secrets.GH_DEVOPSHAZELCAST_SSH_KEY }}
+          access_token: ${{ env.GH_TOKEN }}
+          sot_repo: ${{ env.sot_repo }}
+          sot_branch: ${{ github.ref_name }}
+          destination_repo: ${{ env.destination_os_repo }}
+          copybara_options: "--nogit-destination-rebase ${{ env.OS_LAST_REV_OPTION }}"
+          custom_config: .mono-actions/.github/workflows/mono-push-os.sky
+      - name: Mark OS tag branch ready if needed
+        if: startsWith(github.ref_name, 'tag-in-creation-')
+        run: |
+          NEW_BRANCH_NAME="tag-${GITHUB_REF_NAME#tag-in-creation-}"
+          gh api --method POST /repos/${destination_os_repo}/branches/${GITHUB_REF_NAME}/rename -f new_name="${NEW_BRANCH_NAME}"
+      - name: Delete temporary tag branch
+        if: startsWith(github.ref_name, 'tag-in-creation-')
+        run: |
+          gh api --method DELETE /repos/${sot_repo}/git/refs/heads/${GITHUB_REF_NAME}
+      - uses: hazelcast/docker-actions/slack-notification@master
+        if: failure()
+        with:
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_MONOREPO }}
+          slack-channel: ${{ vars.MONOREPO_SLACK_CHANNEL }}
