@@ -4,6 +4,7 @@ inputs:
   token:
     required: true
   repository:
+    description: 'Repository to delete from'
     required: true
   slack-webhook-url:
     required: true

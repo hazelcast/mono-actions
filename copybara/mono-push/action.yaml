@@ -4,6 +4,7 @@ inputs:
   token:
     required: true
   ssh-key:
+    description: 'GitHub SSH key to use'
     required: true
   slack-webhook-url:
     required: true
