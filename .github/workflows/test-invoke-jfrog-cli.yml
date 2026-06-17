@@ -64,7 +64,7 @@ jobs:
           expected-count: '1'
           aws-role-to-assume: ${{ env.AWS_ROLE }}
 
-      - name: Copy file via AQL TEST
+      - name: Copy file via AQL TESTS
         uses: ./invoke-jfrog-cli
         with:
           command: 'copy'
