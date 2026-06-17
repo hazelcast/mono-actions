@@ -81,6 +81,7 @@ function __get_jf_options() {
 
   opts+=("--fail-no-op")
   opts+=("--format=json")
+  opts+=("--flat")
   opts+=("--threads" "${thread_count}")
 
   case "${mode}" in
@@ -88,14 +89,12 @@ function __get_jf_options() {
       opts+=("--spec" "/dev/stdin")
       opts+=("--spec-vars=${spec_vars}")
       ;;
-    "upload")
-      opts+=("--flat")
-      ;;
     "file")
       opts+=("--build-name=false")
       opts+=("--build-number=false")
-      opts+=("--flat")
       opts+=("--explode")
+      ;;
+    "upload")
       ;;
     *)
       echoerr "❌ Unknown JFrog CLI option mode passed: ${mode}"

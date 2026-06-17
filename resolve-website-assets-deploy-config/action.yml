@@ -66,7 +66,7 @@ runs:
             local MATCH_NAME=$2
             local JFROG_REPO=$3
 
-            # note: 'DOWNLOAD_FOLDER' should be passed in when calling 'jf rt download --spec-vars ...'
+            # note: 'TARGET_PATH' should be passed in when calling 'jf rt download --spec-vars ...'
             cat << EOF
           {
             "files": [
@@ -83,7 +83,7 @@ runs:
                     ]
                   }
                 },
-                "target": "\${DOWNLOAD_FOLDER}/",
+                "target": "\${TARGET_PATH}/",
                 "flat": "true"
               }
             ]
@@ -103,7 +103,6 @@ runs:
             cat << EOF
           {
               "label": "${LABEL}",
-              "hz-distros-archive-name": "${ARCHIVE_PREFIX}",
               "hz-distros-root-name": "${DIRECTORY_PREFIX}",
               "hz-assets-jfrog-path": "${REPO_PATH_ASSETS}"
           }
@@ -166,7 +165,6 @@ runs:
           {
               "hz-distros-downloads-aql-oss": ${distro_oss_aql},
               "hz-distros-downloads-aql-ee": ${distro_ee_aql},
-              "hz-assets-downloads-aql-oss": ${asset_oss_aql},
               "hz-assets-downloads-aql-ee": ${asset_ee_aql}
           }
           EOF
