@@ -12,7 +12,7 @@ jobs:
       AWS_ROLE: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: AQL files download
         uses: ./invoke-jfrog-cli
