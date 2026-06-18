@@ -1,4 +1,6 @@
 name: Delete tag
+description: |
+  Deletes version tags (vX.Y.Z and vX.Y.Z-BETA-N) from the specified repository.
 
 inputs:
   token:

@@ -1,4 +1,6 @@
 name: Copy Monorepo Commit to OS
+description: |
+  Copies commits from the monorepo to the OS repository using Copybara, continuing from the last synced revision and creating missing branches when necessary.
 
 inputs:
   token:
