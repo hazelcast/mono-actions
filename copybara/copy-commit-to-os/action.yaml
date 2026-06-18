@@ -65,6 +65,7 @@ runs:
         custom_config: .github/workflows/mono-push-os.sky
 
     - name: Mark OS tag branch ready if needed
+      if: startsWith(github.ref_name, 'tag-in-creation-')
       shell: bash
       run: |
         gh api \
@@ -75,6 +76,7 @@ runs:
         GH_TOKEN: ${{ inputs.token }}
 
     - name: Delete temporary tag branch
+      if: startsWith(github.ref_name, 'tag-in-creation-')
       shell: bash
       run: |
         gh api \
