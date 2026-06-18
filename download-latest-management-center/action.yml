@@ -128,10 +128,11 @@ runs:
       if: ${{ inputs.license-type == 'NLC' }}
       shell: bash
       run: |
-        mkdir -p "${UNZIP_FOLDER}"
-        aws s3 cp "${DOWNLOAD_URL}" . --no-progress
-        unzip -q "${LOCAL_ZIP_NAME}" -d "${UNZIP_FOLDER}"
-        rm "${LOCAL_ZIP_NAME}"
+        mkdir --parents "${UNZIP_FOLDER}"
+        local target_zip_path="${UNZIP_FOLDER}/${LOCAL_ZIP_NAME}"
+        aws s3 cp "${DOWNLOAD_URL}" "${target_zip_path}" --no-progress
+        unzip --quiet "${target_zip_path}" --dir "${UNZIP_FOLDER}"
+        rm "${target_zip_path}"
       env:
         LOCAL_ZIP_NAME: ${{ steps.get-mc-download-vars.outputs.local-zip-name }}
         DOWNLOAD_URL: ${{ steps.get-mc-download-vars.outputs.url }}
