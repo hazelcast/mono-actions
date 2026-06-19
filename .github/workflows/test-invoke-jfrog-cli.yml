@@ -13,7 +13,7 @@ jobs:
       TEST_ARTIFACT_NAME: test-upload-artifact-${{ github.run_id }}-${{ github.run_attempt }}.txt
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: AQL files download
         uses: ./invoke-jfrog-cli
