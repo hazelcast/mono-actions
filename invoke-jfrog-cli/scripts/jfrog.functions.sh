@@ -94,22 +94,14 @@ function __get_jf_options() {
     opts+=("--explode")
   fi
 
-  case "${mode}" in
-    "aql")
-      opts+=("--spec" "/dev/stdin")
-      opts+=("--spec-vars=${spec_vars}")
-      ;;
-    "file")
-      opts+=("--build-name=false")
-      opts+=("--build-number=false")
-      ;;
-    "upload")
-      ;;
-    *)
-      echoerr "❌ Unknown JFrog CLI option mode passed: ${mode}"
-      exit 1
-      ;;
-  esac
+  # Replaced case statement with if/elif logic
+  if [[ "${mode}" == "aql" ]]; then
+    opts+=("--spec" "/dev/stdin")
+    opts+=("--spec-vars=${spec_vars}")
+  elif [[ "${mode}" == "file" ]]; then
+    opts+=("--build-name=false")
+    opts+=("--build-number=false")
+  fi
 
   echo "${opts[@]}"
   return 0
