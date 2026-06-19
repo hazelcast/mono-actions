@@ -90,17 +90,16 @@ function __get_jf_options() {
   opts+=("--flat")
   opts+=("--threads" "${thread_count}")
 
-  if [[ "${explode}" == "true" && "${cmd_type}" =~ download|upload ]]; then
-    opts+=("--explode")
-  fi
-
-  # Replaced case statement with if/elif logic
   if [[ "${mode}" == "aql" ]]; then
     opts+=("--spec" "/dev/stdin")
     opts+=("--spec-vars=${spec_vars}")
   elif [[ "${mode}" == "file" ]]; then
     opts+=("--build-name=false")
     opts+=("--build-number=false")
+  fi
+
+  if [[ "${explode}" == "true" && "${cmd_type}" =~ download|upload ]]; then
+    opts+=("--explode")
   fi
 
   echo "${opts[@]}"
