@@ -11,7 +11,6 @@ source "${SCRIPT_DIR}/../../invoke-jfrog-cli/scripts/jfrog.functions.sh"
 
 # Global test constant to eliminate Sonar duplication warnings
 readonly EMPTY_ITEMS_PAYLOAD='{"items": []}'
-readonly CMD_DOWNLOAD='download'
 
 # Temp files to save mocked 'jf' inputs/outputs
 MOCK_ARGS_FILE="${SCRIPT_DIR}/.mock_args"
