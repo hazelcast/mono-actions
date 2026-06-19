@@ -10,6 +10,9 @@ source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelca
 
 : "${DEFAULT_JF_CLI_THREAD_COUNT:=4}"
 
+# For Sonar
+readonly CMD_DOWNLOAD='download'
+
 # Downloads multiple files using supplied JSON AQL. The caller should ensure AQL
 # is correctly formatted. Supply 'spec_vars' for variable replacements in the AQL.
 # See:
@@ -22,7 +25,7 @@ function jfrog_cli_download_by_aql() {
   local thread_count="${4:-}"
   local explode="${5:-false}"
 
-  __execute_jf_command "${aql_payload}" "download" "${expected_count}" $(__get_jf_options "aql" "download" "${spec_vars}" "${thread_count}" "${explode}")
+  __execute_jf_command "${aql_payload}" "${CMD_DOWNLOAD}" "${expected_count}" $(__get_jf_options "aql" "${CMD_DOWNLOAD}" "${spec_vars}" "${thread_count}" "${explode}")
   return $?
 }
 
@@ -37,7 +40,7 @@ function jfrog_cli_download_by_file() {
   local thread_count="${4:-}"
   local explode="${5:-false}"
 
-  __execute_jf_command "" "download" "${expected_count}" $(__get_jf_options "file" "download" "" "${thread_count}" "${explode}") "${file_payload}" "${target_dir}/"
+  __execute_jf_command "" "${CMD_DOWNLOAD}" "${expected_count}" $(__get_jf_options "file" "${CMD_DOWNLOAD}" "" "${thread_count}" "${explode}") "${file_payload}" "${target_dir}/"
   return $?
 }
 
@@ -98,7 +101,8 @@ function __get_jf_options() {
     opts+=("--build-number=false")
   fi
 
-  if [[ "${explode}" == "true" && "${cmd_type}" =~ download|upload ]]; then
+  local match_pattern="^(${CMD_DOWNLOAD}|upload)$"
+  if [[ "${explode}" == "true" && "${cmd_type}" =~ ${match_pattern} ]]; then
     opts+=("--explode")
   fi
 
