@@ -130,7 +130,7 @@ runs:
       run: |
         mkdir --parents "${UNZIP_FOLDER}"
         aws s3 cp "${DOWNLOAD_URL}" . --no-progress
-        unzip --quiet "${LOCAL_ZIP_NAME}" --dir "${UNZIP_FOLDER}"
+        unzip --quiet "${LOCAL_ZIP_NAME}" -d "${UNZIP_FOLDER}"
         rm "${LOCAL_ZIP_NAME}"
       env:
         LOCAL_ZIP_NAME: ${{ steps.get-mc-download-vars.outputs.local-zip-name }}
