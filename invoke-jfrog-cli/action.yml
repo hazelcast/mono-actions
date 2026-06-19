@@ -64,7 +64,7 @@ runs:
             elif [[ -z "${TARGET_PATH}" || -z "${SRC_PATTERN}" ]]; then
               exit_with_err "'target-path' and 'src-pattern' are required for file ${CMD}s"
             else
-              "jfrog_cli_${CMD}_by_file" "${TARGET_DIR}" "${SRC_PATTERN}" "${EXPECTED_COUNT}" "${THREADS}" "${EXPLODE}"
+              "jfrog_cli_${CMD}_by_file" "${TARGET_PATH}" "${SRC_PATTERN}" "${EXPECTED_COUNT}" "${THREADS}" "${EXPLODE}"
             fi
             ;;
           "copy")
