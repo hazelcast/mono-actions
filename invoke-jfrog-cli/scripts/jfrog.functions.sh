@@ -20,8 +20,9 @@ function jfrog_cli_download_by_aql() {
   local spec_vars="$2"
   local expected_count="${3:-}"
   local thread_count="${4:-}"
+  local explode="${5:-false}"
 
-  __execute_jf_command "${aql_payload}" "download" "${expected_count}" $(__get_jf_options "aql" "${spec_vars}" "${thread_count}")
+  __execute_jf_command "${aql_payload}" "download" "${expected_count}" $(__get_jf_options "aql" "download" "${spec_vars}" "${thread_count}" "${explode}")
   return $?
 }
 
@@ -34,8 +35,9 @@ function jfrog_cli_download_by_file() {
   local file_payload="$2"
   local expected_count="${3:-}"
   local thread_count="${4:-}"
+  local explode="${5:-false}"
 
-  __execute_jf_command "" "download" "${expected_count}" $(__get_jf_options "file" "" "${thread_count}") "${file_payload}" "${target_dir}/"
+  __execute_jf_command "" "download" "${expected_count}" $(__get_jf_options "file" "download" "" "${thread_count}" "${explode}") "${file_payload}" "${target_dir}/"
   return $?
 }
 
@@ -47,8 +49,9 @@ function jfrog_cli_copy_by_aql() {
   local spec_vars="$2"
   local expected_count="${3:-}"
   local thread_count="${4:-}"
+  local explode="${5:-false}"
 
-  __execute_jf_command "${aql_payload}" "copy" "${expected_count}" $(__get_jf_options "aql" "${spec_vars}" "${thread_count}")
+  __execute_jf_command "${aql_payload}" "copy" "${expected_count}" $(__get_jf_options "aql" "copy" "${spec_vars}" "${thread_count}" "${explode}")
   return $?
 }
 
@@ -67,22 +70,29 @@ function jfrog_cli_upload_by_file() {
   local source_file_pattern="$2"
   local expected_count="${3:-}"
   local thread_count="${4:-}"
+  local explode="${5:-false}"
 
-  __execute_jf_command "" "upload" "${expected_count}" $(__get_jf_options "upload" "" "${thread_count}") "${source_file_pattern}" "${target_repo_path}/"
+  __execute_jf_command "" "upload" "${expected_count}" $(__get_jf_options "upload" "upload" "" "${thread_count}" "${explode}") "${source_file_pattern}" "${target_repo_path}/"
   return $?
 }
 
 # Internal function to get 'jf' options based on the supplied command mode.
 function __get_jf_options() {
   local mode="$1"
-  local spec_vars="${2:-}"
-  local thread_count="${3:-$DEFAULT_JF_CLI_THREAD_COUNT}"
+  local cmd_type="$2"
+  local spec_vars="${3:-}"
+  local thread_count="${4:-$DEFAULT_JF_CLI_THREAD_COUNT}"
+  local explode="${5:-false}"
   local opts=()
 
   opts+=("--fail-no-op")
   opts+=("--format=json")
   opts+=("--flat")
   opts+=("--threads" "${thread_count}")
+
+  if [[ "${explode}" == "true" && "${cmd_type}" =~ download|upload ]]; then
+    opts+=("--explode")
+  fi
 
   case "${mode}" in
     "aql")
@@ -92,7 +102,6 @@ function __get_jf_options() {
     "file")
       opts+=("--build-name=false")
       opts+=("--build-number=false")
-      opts+=("--explode")
       ;;
     "upload")
       ;;

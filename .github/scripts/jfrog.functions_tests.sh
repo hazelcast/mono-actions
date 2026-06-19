@@ -56,7 +56,7 @@ function test_jfrog_cli_download_by_file() {
   local target_dir="tmp/downloads"
   local url="https://example.com"
   
-  jfrog_cli_download_by_file "${target_dir}" "${url}" 1
+  jfrog_cli_download_by_file "${target_dir}" "${url}" 1 "" "true"
   local actual_exit_code=$?
 
   local actual_args=$(cat "${MOCK_ARGS_FILE}")
