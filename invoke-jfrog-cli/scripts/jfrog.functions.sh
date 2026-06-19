@@ -101,8 +101,7 @@ function __get_jf_options() {
     opts+=("--build-number=false")
   fi
 
-  local match_pattern="^(${CMD_DOWNLOAD}|upload)$"
-  if [[ "${explode}" == "true" && "${cmd_type}" =~ ${match_pattern} ]]; then
+  if [[ "${explode}" == "true" && "${cmd_type}" =~ ^(${CMD_DOWNLOAD}|upload)$ ]]; then
     opts+=("--explode")
   fi
 
