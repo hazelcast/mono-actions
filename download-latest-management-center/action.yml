@@ -108,11 +108,12 @@ runs:
 
     - name: Download ManCenter from JFrog
       if: ${{ inputs.license-type == 'LICENSED' }}
-      uses: hazelcast/mono-actions/invoke-jfrog-cli@master
+      uses: hazelcast/mono-actions/invoke-jfrog-cli@DI-723-package-nlc-pr
       with:
         command: 'download'
         src-pattern: ${{ steps.get-mc-download-vars.outputs.url }}
         target-path: ${{ steps.get-mc-download-vars.outputs.unzip-folder-root }}
+        explode: true
         expected-count: '1'
         aws-role-to-assume: ${{ inputs.aws-role-to-assume }}
 
@@ -127,7 +128,7 @@ runs:
       if: ${{ inputs.license-type == 'NLC' }}
       shell: bash
       run: |
-        mkdir -p "${UNZIP_FOLDER}"
+        mkdir --parents "${UNZIP_FOLDER}"
         aws s3 cp "${DOWNLOAD_URL}" . --no-progress
         unzip -q "${LOCAL_ZIP_NAME}" -d "${UNZIP_FOLDER}"
         rm "${LOCAL_ZIP_NAME}"

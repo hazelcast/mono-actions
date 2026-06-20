@@ -11,7 +11,6 @@ source "${SCRIPT_DIR}/../../invoke-jfrog-cli/scripts/jfrog.functions.sh"
 
 # Global test constant to eliminate Sonar duplication warnings
 readonly EMPTY_ITEMS_PAYLOAD='{"items": []}'
-readonly CMD_DOWNLOAD='download'
 
 # Temp files to save mocked 'jf' inputs/outputs
 MOCK_ARGS_FILE="${SCRIPT_DIR}/.mock_args"
@@ -44,8 +43,72 @@ function reset_mocks() {
 function get_jfrog_cli_default_options() {
   local cmd="$1"
   local threads="${2:-4}"
-  echo "rt ${cmd} --fail-no-op --format=json --flat --threads ${threads}"
+  local explode="${3:-false}"
+  local base_opts="rt ${cmd} --fail-no-op --format=json --flat --threads ${threads}"
+
+  if [[ "${explode}" == "true" && "${cmd}" =~ ^(${CMD_DOWNLOAD}|upload)$ ]]; then
+    base_opts="${base_opts} --explode"
+  fi
+
+  echo "${base_opts}"
   return 0
+}
+
+function test_get_jf_options_common() {
+  log_header "Testing __get_jf_options_common output parameters"
+  reset_mocks
+
+  local actual_opts
+  actual_opts=$(__get_jf_options_common "copy" "6" "false")
+
+  local expected_opts="--fail-no-op --format=json --flat --threads 6"
+  local msg="Common options compile with custom thread configurations without explode options"
+  assert_eq "${expected_opts}" "${actual_opts}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  actual_opts=$(__get_jf_options_common "${CMD_DOWNLOAD}" "4" "true")
+  expected_opts="--fail-no-op --format=json --flat --threads 4 --explode"
+  local msg="Explode string option parameter successfully appends into common options stack"
+  assert_eq "${expected_opts}" "${actual_opts}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  return "${TESTS_RESULT}"
+}
+
+function test_get_jf_options() {
+  log_header "Testing __get_jf_options structural success paths"
+  reset_mocks
+
+  local actual_opts
+  actual_opts=$(__get_jf_options "aql" "${CMD_DOWNLOAD}" "VER=1.0" "2" "false")
+  local expected_opts="--fail-no-op --format=json --flat --threads 2 --spec /dev/stdin --spec-vars=VER=1.0"
+  local msg="__get_jf_options properly compiles aql option arrays"
+  assert_eq "${expected_opts}" "${actual_opts}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  actual_opts=$(__get_jf_options "file" "${CMD_DOWNLOAD}" "" "4" "true")
+  expected_opts="--fail-no-op --format=json --flat --threads 4 --explode --build-name=false --build-number=false"
+  local msg="__get_jf_options properly compiles file options containing common explode elements"
+  assert_eq "${expected_opts}" "${actual_opts}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  return "${TESTS_RESULT}"
+}
+
+function test_get_jf_options_error_flow() {
+  log_header "Testing unknown JFrog CLI option mode error handling"
+  reset_mocks
+
+  # note: use of '&& true' to trap the exit to ensure this test does not exit prematurely
+  local actual_stderr
+  actual_stderr=$(__get_jf_options "invalid-mode" "download" 2>&1) && true
+  local actual_exit_code=$?
+
+  local msg="Function returns exit status code 1 for unsupported modes"
+  assert_eq 1 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  # Account for GitHub logging text added by 'echoerr'
+  local expected_err="::error::ERROR - ❌ Unknown JFrog CLI option mode passed: invalid-mode"
+  local msg="Error string printed to stderr matches formatting parameters layout"
+  assert_eq "${expected_err}" "${actual_stderr}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  return "${TESTS_RESULT}"
 }
 
 function test_jfrog_cli_download_by_file() {
@@ -56,7 +119,7 @@ function test_jfrog_cli_download_by_file() {
   local target_dir="tmp/downloads"
   local url="https://example.com"
   
-  jfrog_cli_download_by_file "${target_dir}" "${url}" 1
+  jfrog_cli_download_by_file "${target_dir}" "${url}" 1 "" "true"
   local actual_exit_code=$?
 
   local actual_args=$(cat "${MOCK_ARGS_FILE}")
@@ -65,7 +128,7 @@ function test_jfrog_cli_download_by_file() {
   local msg="jfrog_cli_download_by_file finished with exit code 0"
   assert_eq 0 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
   
-  local expected_args="$(get_jfrog_cli_default_options "${CMD_DOWNLOAD}") --build-name=false --build-number=false --explode ${url} ${target_dir}/"
+  local expected_args="$(get_jfrog_cli_default_options "${CMD_DOWNLOAD}" "4" "true") --build-name=false --build-number=false ${url} ${target_dir}/"
   local msg="Direct file options formatting parameters match"
   assert_eq "${expected_args}" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
   
@@ -223,6 +286,9 @@ function test_jfrog_thread_count_env_override() {
 }
 
 # --- Execution Entrypoint ---
+test_get_jf_options_common
+test_get_jf_options
+test_get_jf_options_error_flow
 test_jfrog_cli_download_by_file
 test_jfrog_cli_download_by_aql
 test_jfrog_cli_copy_by_aql

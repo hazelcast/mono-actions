@@ -18,6 +18,9 @@ inputs:
     description: 'JFrog repo path (DOWNLOAD) or local file path/pattern (UPLOAD). Use with non-AQL file-based commands'
   target-path:
     description: 'Local folder path (DOWNLOAD) or remote repository path (UPLOAD). Use with non-AQL file-based commands'
+  explode:
+    description: 'Extract archives (DOWNLOAD) or extract deployed files (UPLOAD)'
+    type: boolean
   expected-count:
     description: 'Verify if the processed files match this count'
   thread-count:
@@ -56,12 +59,12 @@ runs:
               if [[ "${CMD}" == "upload" ]]; then
                 exit_with_err "AQL uploads are not supported. Use 'src-pattern' instead"
               else
-                jfrog_cli_download_by_aql "${AQL}" "${SPEC_VARS}" "${EXPECTED_COUNT}" "${THREADS}"
+                jfrog_cli_download_by_aql "${AQL}" "${SPEC_VARS}" "${EXPECTED_COUNT}" "${THREADS}" "${EXPLODE}"
               fi
             elif [[ -z "${TARGET_PATH}" || -z "${SRC_PATTERN}" ]]; then
               exit_with_err "'target-path' and 'src-pattern' are required for file ${CMD}s"
             else
-              "jfrog_cli_${CMD}_by_file" "${TARGET_PATH}" "${SRC_PATTERN}" "${EXPECTED_COUNT}" "${THREADS}"
+              "jfrog_cli_${CMD}_by_file" "${TARGET_PATH}" "${SRC_PATTERN}" "${EXPECTED_COUNT}" "${THREADS}" "${EXPLODE}"
             fi
             ;;
           "copy")
@@ -81,5 +84,6 @@ runs:
         SPEC_VARS: ${{ inputs.spec-vars }}
         SRC_PATTERN: ${{ inputs.src-pattern }}
         TARGET_PATH: ${{ inputs.target-path }}
+        EXPLODE: ${{ inputs.explode }}
         EXPECTED_COUNT: ${{ inputs.expected-count }}
         THREADS: ${{ inputs.thread-count }}
