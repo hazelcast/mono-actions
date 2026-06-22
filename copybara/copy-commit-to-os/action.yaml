@@ -23,7 +23,7 @@ runs:
         echo "sot_repo=${GITHUB_REPOSITORY_OWNER}/hazelcast-mono" >> ${GITHUB_OUTPUT}
         echo "destination_os_repo=${GITHUB_REPOSITORY_OWNER}/hazelcast" >> ${GITHUB_OUTPUT}
 
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
 
