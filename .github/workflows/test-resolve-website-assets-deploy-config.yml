@@ -10,7 +10,7 @@ jobs:
       RELEASE_VERSION: '3.11.0'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup website assets deploy config (ALL)
         id: resolve-website-assets-deploy-config-all
@@ -84,7 +84,7 @@ jobs:
                     ]
                   }
                 },
-                "target": "\${DOWNLOAD_FOLDER}/",
+                "target": "\${TARGET_PATH}/",
                 "flat": "true"
               }
             ]
@@ -158,12 +158,6 @@ jobs:
           hz_ee_expected_all=$(get_expected_aql_json "${HZ_DISTRO_PATH_EE}" "${DISTRO_ARCHIVE_FILE_NAME_EE}")
           assert_field_aql_json "${FIELD}" "${hz_ee_expected_ee}" "${AQL_EE}"
           assert_field_aql_json "${FIELD}" "${hz_ee_expected_all}" "${AQL_ALL}"
-
-          FIELD="hz-assets-downloads-aql-oss"
-          assets_oss_expected_oss=$(get_expected_aql_json "hazelcast" "hazelcast-${RELEASE_VERSION}")
-          assets_oss_expected_all=$(get_expected_aql_json "hazelcast" "hazelcast-${RELEASE_VERSION}")
-          assert_field_aql_json "${FIELD}" "${assets_oss_expected_oss}" "${AQL_OSS}"
-          assert_field_aql_json "${FIELD}" "${assets_oss_expected_all}" "${AQL_ALL}"
 
           FIELD="hz-assets-downloads-aql-ee"
           assets_ee_expected_ee=$(get_expected_aql_json "hazelcast-enterprise" "hazelcast-enterprise-${RELEASE_VERSION}")

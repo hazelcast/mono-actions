@@ -112,7 +112,7 @@ runs:
       with:
         command: 'download'
         src-pattern: ${{ steps.get-mc-download-vars.outputs.url }}
-        target-dir: ${{ steps.get-mc-download-vars.outputs.unzip-folder-root }}
+        target-path: ${{ steps.get-mc-download-vars.outputs.unzip-folder-root }}
         expected-count: '1'
         aws-role-to-assume: ${{ inputs.aws-role-to-assume }}
 

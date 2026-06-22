@@ -10,9 +10,10 @@ jobs:
       id-token: write
     env:
       AWS_ROLE: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+      TEST_ARTIFACT_NAME: test-upload-artifact-${{ github.run_id }}-${{ github.run_attempt }}.txt
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: AQL files download
         uses: ./invoke-jfrog-cli
@@ -32,12 +33,12 @@ jobs:
                       ]
                     }
                   },
-                  "target": "${DOWNLOAD_FOLDER}/",
+                  "target": "${TARGET_PATH}/",
                   "flat": "true"
                 }
               ]
             }
-          spec-vars: 'REPO=download;DOWNLOAD_PATH=hazelcast-enterprise;DOWNLOAD_FOLDER=/tmp/aql-download'
+          spec-vars: 'REPO=download;DOWNLOAD_PATH=hazelcast-enterprise;TARGET_PATH=/tmp/aql-download'
           expected-count: '2'
           aws-role-to-assume: ${{ env.AWS_ROLE }}
 
@@ -46,21 +47,21 @@ jobs:
         with:
           command: 'download'
           src-pattern: 'download/hazelcast-enterprise/hazelcast-enterprise-5.0.1-slim.zip'
-          target-dir: '/tmp/file-download'
+          target-path: '/tmp/file-download'
           expected-count: '1'
           aws-role-to-assume: ${{ env.AWS_ROLE }}
 
       - name: Create local temporary file for upload
         run: |
           mkdir -p /tmp/local-upload-source
-          echo "Test content created on $(date)" > /tmp/local-upload-source/test-upload-artifact-${{ github.run_id }}.txt
+          echo "Test content created on $(date)" > /tmp/local-upload-source/${TEST_ARTIFACT_NAME}
 
       - name: Upload file
         uses: ./invoke-jfrog-cli
         with:
           command: 'upload'
-          src-pattern: '/tmp/local-upload-source/test-upload-artifact-${{ github.run_id }}.txt'
-          target-dir: 'sandbox-files-preprod/hazelcast-enterprise/temp-testing-folder'
+          src-pattern: '/tmp/local-upload-source/${{ env.TEST_ARTIFACT_NAME }}'
+          target-path: 'sandbox-files-preprod/hazelcast-enterprise/testing-folder-upload/'
           expected-count: '1'
           aws-role-to-assume: ${{ env.AWS_ROLE }}
 
@@ -75,11 +76,12 @@ jobs:
                   "aql": {
                     "items.find": {
                       "repo": "sandbox-files-preprod",
-                      "path": "hazelcast-enterprise/temp-testing-folder",
-                      "name": "test-upload-artifact-${{ github.run_id }}.txt"
+                      "path": "hazelcast-enterprise/testing-folder-upload",
+                      "name": "${{ env.TEST_ARTIFACT_NAME }}"
                     }
                   },
-                  "target": "sandbox-files-preprod/hazelcast-enterprise/temp-testing-folder/"
+                  "target": "sandbox-files-preprod/hazelcast-enterprise/testing-folder-copied/",
+                  "flat": "true"
                 }
               ]
             }

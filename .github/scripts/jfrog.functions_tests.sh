@@ -11,6 +11,7 @@ source "${SCRIPT_DIR}/../../invoke-jfrog-cli/scripts/jfrog.functions.sh"
 
 # Global test constant to eliminate Sonar duplication warnings
 readonly EMPTY_ITEMS_PAYLOAD='{"items": []}'
+readonly CMD_DOWNLOAD='download'
 
 # Temp files to save mocked 'jf' inputs/outputs
 MOCK_ARGS_FILE="${SCRIPT_DIR}/.mock_args"
@@ -40,6 +41,13 @@ function reset_mocks() {
   return 0
 }
 
+function get_jfrog_cli_default_options() {
+  local cmd="$1"
+  local threads="${2:-4}"
+  echo "rt ${cmd} --fail-no-op --format=json --flat --threads ${threads}"
+  return 0
+}
+
 function test_jfrog_cli_download_by_file() {
   log_header "Testing jfrog_cli_download_by_file"
   reset_mocks
@@ -57,8 +65,9 @@ function test_jfrog_cli_download_by_file() {
   local msg="jfrog_cli_download_by_file finished with exit code 0"
   assert_eq 0 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
   
+  local expected_args="$(get_jfrog_cli_default_options "${CMD_DOWNLOAD}") --build-name=false --build-number=false --explode ${url} ${target_dir}/"
   local msg="Direct file options formatting parameters match"
-  assert_eq "rt download --fail-no-op --format=json --threads 4 --build-name=false --build-number=false --flat --explode ${url} ${target_dir}/" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  assert_eq "${expected_args}" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
   
   local msg="Passed empty payload via stdin channel"
   assert_eq "" "${actual_stdin}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
@@ -82,8 +91,9 @@ function test_jfrog_cli_download_by_aql() {
   local msg="jfrog_cli_download_by_aql finished with exit code 0"
   assert_eq 0 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
   
+  local expected_args="$(get_jfrog_cli_default_options "${CMD_DOWNLOAD}") --spec /dev/stdin --spec-vars=${spec_vars}"
   local msg="AQL specification options structural parameters match"
-  assert_eq "rt download --fail-no-op --format=json --threads 4 --spec /dev/stdin --spec-vars=${spec_vars}" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  assert_eq "${expected_args}" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
   
   local msg="Piped explicit AQL payload directly to standard input channel"
   assert_eq "${payload}" "${actual_stdin}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
@@ -107,8 +117,9 @@ function test_jfrog_cli_copy_by_aql() {
   local msg="jfrog_cli_copy_by_aql finished with exit code 0"
   assert_eq 0 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
   
+  local expected_args="$(get_jfrog_cli_default_options 'copy') --spec /dev/stdin --spec-vars=${spec_vars}"
   local msg="Copy operational specification formatting layout matches"
-  assert_eq "rt copy --fail-no-op --format=json --threads 4 --spec /dev/stdin --spec-vars=${spec_vars}" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  assert_eq "${expected_args}" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
   
   local msg="Mirrored explicit target payload layout"
   assert_eq "${payload}" "${actual_stdin}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
@@ -133,8 +144,9 @@ function test_jfrog_cli_upload_by_file() {
   local msg="jfrog_cli_upload_by_file finished with exit code 0"
   assert_eq 0 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
+  local expected_args="$(get_jfrog_cli_default_options 'upload') ${source_pattern} ${target_repo_path}/"
   local msg="Upload file options formatting parameters match"
-  assert_eq "rt upload --fail-no-op --format=json --threads 4 --flat ${source_pattern} ${target_repo_path}/" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  assert_eq "${expected_args}" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   local msg="Passed empty payload via stdin channel for file upload"
   assert_eq "" "${actual_stdin}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
@@ -186,8 +198,9 @@ function test_jfrog_thread_count_parameter_override() {
   jfrog_cli_download_by_aql "${payload}" "${spec_vars}" "${expected_count}" "${custom_threads}"
 
   local actual_args=$(cat "${MOCK_ARGS_FILE}")
+  local expected_args="$(get_jfrog_cli_default_options "${CMD_DOWNLOAD}" "${custom_threads}") --spec /dev/stdin --spec-vars="
   local msg="Explicit thread count parameter overrides default value"
-  assert_eq "rt download --fail-no-op --format=json --threads ${custom_threads} --spec /dev/stdin --spec-vars=" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  assert_eq "${expected_args}" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
 }
@@ -202,8 +215,9 @@ function test_jfrog_thread_count_env_override() {
   jfrog_cli_download_by_aql "${payload}" "" ""
 
   local actual_args=$(cat "${MOCK_ARGS_FILE}")
+  local expected_args="$(get_jfrog_cli_default_options "${CMD_DOWNLOAD}" "${DEFAULT_JF_CLI_THREAD_COUNT}") --spec /dev/stdin --spec-vars="
   local msg="Global environment variable definitions override fallback default constants"
-  assert_eq "rt download --fail-no-op --format=json --threads ${DEFAULT_JF_CLI_THREAD_COUNT} --spec /dev/stdin --spec-vars=" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  assert_eq "${expected_args}" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
 }
