@@ -137,7 +137,6 @@ function __get_jf_options() {
   return 0
 }
 
-
 # Internal function to execute the JFrog CLI command
 function __execute_jf_command() {
   local stdin_payload="$1"
