@@ -19,7 +19,7 @@ inputs:
   target-path:
     description: 'Local folder path (DOWNLOAD) or remote repository path (UPLOAD). Use with non-AQL file-based commands'
   explode:
-    description: 'Extract archives (DOWNLOAD) or extract deployed files (UPLOAD)'
+    description: 'Use with `download|upload` to auto-unzip files. For `upload`, the files are extracted and contents saved on the server under `target-path`'
     type: boolean
   expected-count:
     description: 'Verify if the processed files match this count'
