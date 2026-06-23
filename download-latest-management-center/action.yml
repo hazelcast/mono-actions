@@ -108,7 +108,7 @@ runs:
 
     - name: Download ManCenter from JFrog
       if: ${{ inputs.license-type == 'LICENSED' }}
-      uses: hazelcast/mono-actions/invoke-jfrog-cli@DI-723-package-nlc-pr
+      uses: hazelcast/mono-actions/invoke-jfrog-cli@main
       with:
         command: 'download'
         src-pattern: ${{ steps.get-mc-download-vars.outputs.url }}
