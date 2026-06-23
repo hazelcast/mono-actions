@@ -48,6 +48,7 @@ jobs:
           command: 'download'
           src-pattern: 'download/hazelcast-enterprise/hazelcast-enterprise-5.0.1-slim.zip'
           target-path: '/tmp/file-download'
+          explode: true
           expected-count: '1'
           aws-role-to-assume: ${{ env.AWS_ROLE }}
 

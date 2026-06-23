@@ -10,6 +10,9 @@ source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelca
 
 : "${DEFAULT_JF_CLI_THREAD_COUNT:=4}"
 
+# For Sonar
+readonly CMD_DOWNLOAD='download'
+
 # Downloads multiple files using supplied JSON AQL. The caller should ensure AQL
 # is correctly formatted. Supply 'spec_vars' for variable replacements in the AQL.
 # See:
@@ -20,8 +23,11 @@ function jfrog_cli_download_by_aql() {
   local spec_vars="$2"
   local expected_count="${3:-}"
   local thread_count="${4:-}"
+  local explode="${5:-false}"
 
-  __execute_jf_command "${aql_payload}" "download" "${expected_count}" $(__get_jf_options "aql" "${spec_vars}" "${thread_count}")
+  local opts=()
+  opts+=($(__get_jf_options "aql" "${CMD_DOWNLOAD}" "${spec_vars}" "${thread_count}" "${explode}"))
+  __execute_jf_command "${aql_payload}" "${CMD_DOWNLOAD}" "${expected_count}" "${opts[@]}"
   return $?
 }
 
@@ -34,8 +40,11 @@ function jfrog_cli_download_by_file() {
   local file_payload="$2"
   local expected_count="${3:-}"
   local thread_count="${4:-}"
+  local explode="${5:-false}"
 
-  __execute_jf_command "" "download" "${expected_count}" $(__get_jf_options "file" "" "${thread_count}") "${file_payload}" "${target_dir}/"
+  local opts=()
+  opts+=($(__get_jf_options "file" "${CMD_DOWNLOAD}" "" "${thread_count}" "${explode}"))
+  __execute_jf_command "" "${CMD_DOWNLOAD}" "${expected_count}" "${opts[@]}" "${file_payload}" "${target_dir}/"
   return $?
 }
 
@@ -47,8 +56,11 @@ function jfrog_cli_copy_by_aql() {
   local spec_vars="$2"
   local expected_count="${3:-}"
   local thread_count="${4:-}"
+  local explode="${5:-false}"
 
-  __execute_jf_command "${aql_payload}" "copy" "${expected_count}" $(__get_jf_options "aql" "${spec_vars}" "${thread_count}")
+  local opts=()
+  opts+=($(__get_jf_options "aql" "copy" "${spec_vars}" "${thread_count}" "${explode}"))
+  __execute_jf_command "${aql_payload}" "copy" "${expected_count}" "${opts[@]}"
   return $?
 }
 
@@ -63,26 +75,48 @@ function jfrog_cli_copy_by_aql() {
 #
 # See https://docs.jfrog.com/artifactory/docs/generic-files#uploading-files
 function jfrog_cli_upload_by_file() {
-  local target_repo_path="$1"
-  local source_file_pattern="$2"
+  local target_path="$1"
+  local local_path="$2"
   local expected_count="${3:-}"
-  local thread_count="${4:-}"
+  local thread_count="${4:-$DEFAULT_JF_CLI_THREAD_COUNT}"
+  local explode="${5:-false}"
 
-  __execute_jf_command "" "upload" "${expected_count}" $(__get_jf_options "upload" "" "${thread_count}") "${source_file_pattern}" "${target_repo_path}/"
+  local opts=()
+  opts+=($(__get_jf_options_common "upload" "${thread_count}" "${explode}"))
+  __execute_jf_command "" "upload" "${expected_count}" "${opts[@]}" "${local_path}" "${target_path}/"
   return $?
 }
 
-# Internal function to get 'jf' options based on the supplied command mode.
-function __get_jf_options() {
-  local mode="$1"
-  local spec_vars="${2:-}"
-  local thread_count="${3:-$DEFAULT_JF_CLI_THREAD_COUNT}"
+# Internal function to return common 'jf' options
+function __get_jf_options_common() {
+  local cmd_type="$1"
+  local thread_count="${2:-$DEFAULT_JF_CLI_THREAD_COUNT}"
+  local explode="${3:-false}"
   local opts=()
 
   opts+=("--fail-no-op")
   opts+=("--format=json")
   opts+=("--flat")
   opts+=("--threads" "${thread_count}")
+
+  if [[ "${explode}" == "true" && "${cmd_type}" =~ ^(${CMD_DOWNLOAD}|upload)$ ]]; then
+    opts+=("--explode")
+  fi
+
+  echo "${opts[@]}"
+  return 0
+}
+
+# Internal function to get 'jf' options based on the supplied command mode.
+function __get_jf_options() {
+  local mode="$1"
+  local cmd_type="$2"
+  local spec_vars="${3:-}"
+  local thread_count="${4:-$DEFAULT_JF_CLI_THREAD_COUNT}"
+  local explode="${5:-false}"
+  local opts=()
+
+  opts+=($(__get_jf_options_common "${cmd_type}" "${thread_count}" "${explode}"))
 
   case "${mode}" in
     "aql")
@@ -92,13 +126,10 @@ function __get_jf_options() {
     "file")
       opts+=("--build-name=false")
       opts+=("--build-number=false")
-      opts+=("--explode")
-      ;;
-    "upload")
       ;;
     *)
       echoerr "❌ Unknown JFrog CLI option mode passed: ${mode}"
-      exit 1
+      return 1
       ;;
   esac
 
