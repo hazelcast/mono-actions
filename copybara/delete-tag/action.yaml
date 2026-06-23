@@ -20,7 +20,7 @@ runs:
       shell: bash
       run: |
         # Remove only well known tags, the regex below covers the following patterns:
-        #  - "v[0-9]+.[0-9]+.[0-9]"
+        #  - "v[0-9]+.[0-9]+.[0-9]+"
         #  - "v[0-9]+.[0-9]+.[0-9]+-BETA-[0-9]+"
         if [[ ${TAG_NAME} =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-BETA-[0-9]+)?$ ]]; then
           if gh api "repos/${REPOSITORY}/git/refs/tags/${TAG_NAME}" >/dev/null 2>&1; then
