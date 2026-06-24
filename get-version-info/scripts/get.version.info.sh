@@ -36,22 +36,22 @@ function is_latest_stable_release() {
   local major_minor
   major_minor=$(__get_major_minor_parts "${release_ver}")
 
-  local latest_branch
-  latest_branch=$( \
+  local latest_tag
+  latest_tag=$( \
     gh api \
-      "repos/${repo_owner}/hazelcast-mono/branches" \
+      "repos/${repo_owner}/hazelcast-mono/tags" \
       --paginate \
-      --jq '.[] | select(.name | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) | .name' | \
+      --jq '.[] | select(.name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) | .name | ltrimstr("v")' | \
     sort --version-sort --reverse | \
     head --lines 1 \
   )
 
-  if [[ -z ${latest_branch} ]]; then
+  if [[ -z ${latest_tag} ]]; then
     echoerr "❌ Failed to resolve 'latest_stable' from repository '${repo_owner}/hazelcast-mono'."
     exit 1
   fi
 
-  if [[ ${major_minor} = $(__get_major_minor_parts "${latest_branch}") ]]; then
+  if [[ ${major_minor} = $(__get_major_minor_parts "${latest_tag}") ]]; then
     echo "true"
   else
     echo "false"
@@ -85,4 +85,3 @@ function __get_major_minor_parts() {
   echo ${version_parts[0]}.${version_parts[1]}
   return 0
 }
-
