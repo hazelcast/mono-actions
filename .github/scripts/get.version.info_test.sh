@@ -5,7 +5,7 @@ SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 
 source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
-source "${SCRIPT_DIR}/../../scripts/get.version.info.sh"
+source "${SCRIPT_DIR}/../../get-version-info/scripts/get.version.info.sh"
 
 MOCK_GH_ARGS_FILE="${SCRIPT_DIR}/.mock_gh_args"
 MOCK_GH_STDOUT_FILE="${SCRIPT_DIR}/.mock_gh_stdout"
