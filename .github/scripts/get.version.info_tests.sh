@@ -32,7 +32,7 @@ function get_project_version() {
 export -f get_project_version
 
 function curl() {
-  echo "# Skipped downloading external script asset"
+  echo "# MOCK - Skipped downloading external script asset"
 }
 export -f curl
 
@@ -137,7 +137,7 @@ function test_is_latest_stable_release() {
   log_header "Testing is_latest_stable_release"
   reset_mocks
 
-  printf '%s\n' '[{"name": "5.3.0"}, {"name": "5.4.0"}, {"name": "5.4.1"}, {"name": "master"}]' > "${MOCK_GH_STDOUT_FILE}"
+  printf '%s\n' "5.3.0" "5.4.0" "5.4.1" > "${MOCK_GH_STDOUT_FILE}"
 
   local actual msg
 
