@@ -74,16 +74,16 @@ function test_is_beta_release() {
 }
 
 function test_get_version_parts() {
-  log_header "Testing get_version_parts"
+  log_header "Testing __get_version_parts"
   reset_mocks
 
   local actual msg
 
-  actual=$(get_version_parts "5.4.3")
+  actual=$(__get_version_parts "5.4.3")
   msg="Extracts components cleanly into space separated items"
   assert_eq "5 4 3" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  actual=$(get_version_parts "5.4.0-BETA-1")
+  actual=$(__get_version_parts "5.4.0-BETA-1")
   msg="Strips off beta suffix elements completely"
   assert_eq "5 4 0" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
@@ -91,16 +91,16 @@ function test_get_version_parts() {
 }
 
 function test_get_major_minor_parts() {
-  log_header "Testing get_major_minor_parts"
+  log_header "Testing __get_major_minor_parts"
   reset_mocks
 
   local actual msg
 
-  actual=$(get_major_minor_parts "5.4.3")
+  actual=$(__get_major_minor_parts "5.4.3")
   msg="Isolates and outputs exactly major.minor layout"
   assert_eq "5.4" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  actual=$(get_major_minor_parts "6.0.0-BETA-2")
+  actual=$(__get_major_minor_parts "6.0.0-BETA-2")
   msg="Discards metadata segments safely during layout mapping"
   assert_eq "6.0" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
