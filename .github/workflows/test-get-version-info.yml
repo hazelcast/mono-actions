@@ -26,7 +26,7 @@ jobs:
           mono-repo-path: './hazelcast-mono'
           github-token: ${{ secrets.GH_TOKEN }}
 
-      - name: Validate Basic Step Outputs
+      - name: Validate outputs
         run: |
           source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
@@ -37,7 +37,7 @@ jobs:
           assert_not_empty "${SUITE_LATEST_STABLE}" "is-latest-stable-release should be populated" || TESTS_RESULT=$?
           assert_not_empty "${SUITE_BETA_RELEASE}" "is-beta-release should be populated" || TESTS_RESULT=$?
 
-          assert_eq 0 "$TESTS_RESULT" "Action manifest and execution smoke tests passed successfully"
+          assert_eq 0 "$TESTS_RESULT" "All tests should pass"
         env:
           SUITE_NEXT_MAJOR: ${{ steps.test-action.outputs.is-next-release-major }}
           SUITE_LATEST_STABLE: ${{ steps.test-action.outputs.is-latest-stable-release }}

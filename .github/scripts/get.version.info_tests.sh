@@ -130,12 +130,12 @@ function test_is_release_next_major() {
 
   MOCK_POM_VERSION="100.0.0"
   actual=$(is_release_next_major "${TEST_REPO}" "99.1.0")
-  msg="Migrated YML Suite 1: Returns true when pom version is 100.0.0 and release version is 99.1.0"
+  msg="Returns true when pom version is 100.0.0 and release version is 99.1.0"
   assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   MOCK_POM_VERSION="5.6.0"
   actual=$(is_release_next_major "${TEST_REPO}" "3.2.1")
-  msg="Migrated YML Suite 2: Returns false when pom version is 5.6.0 and release version is 3.2.1"
+  msg="Returns false when pom version is 5.6.0 and release version is 3.2.1"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
@@ -147,7 +147,7 @@ function test_is_latest_stable_release() {
 
   local actual msg
 
-  printf '%s\n' "v5.3.0" "v5.4.0" "v5.4.1" > "${MOCK_GH_STDOUT_FILE}"
+  echo '[{"name": "v5.3.0"}, {"name": "v5.4.0"}, {"name": "v5.4.1"}]' > "${MOCK_GH_STDOUT_FILE}"
 
   actual=$(is_latest_stable_release "5.4.0" "${TEST_REPO}")
   msg="Returns true when passed version matches highest stable branch minor layout"
@@ -157,14 +157,14 @@ function test_is_latest_stable_release() {
   msg="Returns false when evaluating older stable branch targets"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  printf '%s\n' "v5.3.0" "v5.4.0" "v5.4.1" "v99.1.0" > "${MOCK_GH_STDOUT_FILE}"
+  echo '[{"name": "v5.3.0"}, {"name": "v5.4.0"}, {"name": "v5.4.1"}, {"name": "v99.1.0"}]' > "${MOCK_GH_STDOUT_FILE}"
   actual=$(is_latest_stable_release "99.1.0" "${TEST_REPO}")
-  msg="Migrated YML Suite 1: Returns true when passed version major.minor matches highest stable tag"
+  msg="Returns true when passed version major.minor matches highest stable tag"
   assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  printf '%s\n' "v5.6.0" "v5.5.0" > "${MOCK_GH_STDOUT_FILE}"
+  echo '[{"name": "v5.6.0"}, {"name": "v5.5.0"}]' > "${MOCK_GH_STDOUT_FILE}"
   actual=$(is_latest_stable_release "3.2.1" "${TEST_REPO}")
-  msg="Migrated YML Suite 2: Returns false when passed version major.minor does not match highest stable tag"
+  msg="Returns false when passed version major.minor does not match highest stable tag"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
@@ -183,7 +183,6 @@ function test_is_latest_stable_release_error() {
   assert_eq 1 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   local msg="Error string printed to stderr matches formatting parameters layout"
-  # Updated to expect the precise hardcoded suffix output format
   local expected_err="::error::ERROR - ❌ Failed to resolve 'latest_stable' from repository '${TEST_REPO}/hazelcast-mono'."
   assert_eq "${expected_err}" "${actual_stderr}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
