@@ -43,6 +43,7 @@ jobs:
         with:
           release-version: '99.1.0'
           mono-repo-path: ${{ steps.setup-test.outputs.repo-1-path }}
+          github-token: ${{ secrets.GH_TOKEN }}
 
       - name: Run Evaluation Test Suite 2
         id: test-suite-2
@@ -50,6 +51,7 @@ jobs:
         with:
           release-version: '3.2.1'
           mono-repo-path: ${{ steps.setup-test.outputs.repo-2-path }}
+          github-token: ${{ secrets.GH_TOKEN }}
 
       - name: Validate Action Output Assertions
         run: |

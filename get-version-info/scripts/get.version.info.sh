@@ -31,15 +31,15 @@ function is_release_next_major() {
 
 function is_latest_stable_release() {
   local release_ver=$1
-  local mono_repo=$2
+  local repo_owner=$2
 
   local major_minor
-  major_minor=$(__get_major_minor_parts $release_ver)
+  major_minor=$(get_major_minor_parts "${release_ver}")
 
   local latest_branch
   latest_branch=$( \
     gh api \
-      "repos/${mono_repo}/branches" \
+      "repos/${repo_owner}/hazelcast-mono/branches" \
       --paginate \
       --jq '.[] | select(.name | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) | .name' | \
     sort --version-sort --reverse | \
@@ -47,11 +47,11 @@ function is_latest_stable_release() {
   )
 
   if [[ -z ${latest_branch} ]]; then
-    echoerr "❌ Failed to resolve 'latest_stable' from repository '${mono_repo}'."
+    echoerr "❌ Failed to resolve 'latest_stable' from repository '${repo_owner}/hazelcast-mono'."
     exit 1
   fi
 
-  if [[ ${major_minor} = $(__get_major_minor_parts ${latest_branch}) ]]; then
+  if [[ ${major_minor} = $(get_major_minor_parts "${latest_branch}") ]]; then
     echo "true"
   else
     echo "false"
