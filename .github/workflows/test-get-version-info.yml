@@ -29,6 +29,11 @@ jobs:
           sed "s/VERSION_TOKEN/100.0.0/" "${TEMPLATE_DIR}/pom.xml.template" > "${REPO_1_DIR}/pom.xml"
           sed "s/VERSION_TOKEN/5.6.0/" "${TEMPLATE_DIR}/pom.xml.template" > "${REPO_2_DIR}/pom.xml"
 
+          # Mock `mvnw`
+          echo -e '#!/usr/bin/env bash\necho "100.0.0"' > "${REPO_1_DIR}/mvnw"
+          echo -e '#!/usr/bin/env bash\necho "5.6.0"' > "${REPO_2_DIR}/mvnw"
+          chmod +x "${REPO_1_DIR}/mvnw" "${REPO_2_DIR}/mvnw"
+
           echo "repo-1-path=${REPO_1_DIR}" >> "${GITHUB_OUTPUT}"
           echo "repo-2-path=${REPO_2_DIR}" >> "${GITHUB_OUTPUT}"
 
