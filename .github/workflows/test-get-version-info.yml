@@ -13,6 +13,7 @@ jobs:
       - name: Setup test environments
         id: setup-test
         run: |
+          MOCK_BIN_DIR=$(mktemp -d)
           TEMPLATE_DIR=$(mktemp -d)
           REPO_1_DIR=$(mktemp -d)
           REPO_2_DIR=$(mktemp -d)
@@ -29,13 +30,16 @@ jobs:
           sed "s/VERSION_TOKEN/100.0.0/" "${TEMPLATE_DIR}/pom.xml.template" > "${REPO_1_DIR}/pom.xml"
           sed "s/VERSION_TOKEN/5.6.0/" "${TEMPLATE_DIR}/pom.xml.template" > "${REPO_2_DIR}/pom.xml"
 
-          # Mock `mvnw`
           echo -e '#!/usr/bin/env bash\necho "100.0.0"' > "${REPO_1_DIR}/mvnw"
           echo -e '#!/usr/bin/env bash\necho "5.6.0"' > "${REPO_2_DIR}/mvnw"
           chmod +x "${REPO_1_DIR}/mvnw" "${REPO_2_DIR}/mvnw"
 
-          echo "repo-1-path=${REPO_1_DIR}" >> "${GITHUB_OUTPUT}"
-          echo "repo-2-path=${REPO_2_DIR}" >> "${GITHUB_OUTPUT}"
+          echo -e '#!/usr/bin/env bash\necho "[{\\"name\\": \\"99.1.0\\"}]"' > "${MOCK_BIN_DIR}/gh"
+          chmod +x "${MOCK_BIN_DIR}/gh"
+
+          echo "repo-1-path=${REPO_1_DIR}" >> ${GITHUB_OUTPUT}
+          echo "repo-2-path=${REPO_2_DIR}" >> ${GITHUB_OUTPUT}
+          echo "mock-bin-path=${MOCK_BIN_DIR}" >> ${GITHUB_OUTPUT}
 
       - name: Run Evaluation Test Suite 1
         id: test-suite-1
@@ -43,7 +47,13 @@ jobs:
         with:
           release-version: '99.1.0'
           mono-repo-path: ${{ steps.setup-test.outputs.repo-1-path }}
-          github-token: ${{ secrets.GH_TOKEN }}
+          github-token: 'mock-test-token-string'
+        env:
+          PATH: ${{ steps.setup-test.outputs.mock-bin-path }}:${{ env.PATH }}
+
+      - name: Adjust gh mock for Test Suite 2
+        run: |
+          echo -e '#!/usr/bin/env bash\necho "[{\\"name\\": \\"5.5.0\\"}]"' > ${{ steps.setup-test.outputs.mock-bin-path }}/gh
 
       - name: Run Evaluation Test Suite 2
         id: test-suite-2
@@ -51,7 +61,9 @@ jobs:
         with:
           release-version: '3.2.1'
           mono-repo-path: ${{ steps.setup-test.outputs.repo-2-path }}
-          github-token: ${{ secrets.GH_TOKEN }}
+          github-token: 'mock-test-token-string'
+        env:
+          PATH: ${{ steps.setup-test.outputs.mock-bin-path }}:${{ env.PATH }}
 
       - name: Validate Action Output Assertions
         run: |
