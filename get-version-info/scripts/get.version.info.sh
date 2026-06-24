@@ -30,10 +30,12 @@ function is_release_next_major() {
 }
 
 function is_latest_stable_release() {
-  local major_minor
-  major_minor=$(get_major_minor_parts "$1")
+  local release_ver=$1
   local mono_repo="$2"
-  
+
+  local major_minor
+  major_minor=$(get_major_minor_parts $release_ver)
+
   local latest_branch
   latest_branch=$( \
     gh api \
