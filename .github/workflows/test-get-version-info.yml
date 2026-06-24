@@ -13,12 +13,12 @@ jobs:
       - name: Setup test environments
         id: setup-test
         run: |
-          MOCK_BIN_DIR=$(mktemp -d)
-          TEMPLATE_DIR=$(mktemp -d)
-          REPO_1_DIR=$(mktemp -d)
-          REPO_2_DIR=$(mktemp -d)
+          mock_bin_dir=$(mktemp -d)
+          template_dir=$(mktemp -d)
+          repo_1_dir=$(mktemp -d)
+          repo_2_dir=$(mktemp -d)
 
-          cat << 'EOF' > "${TEMPLATE_DIR}/pom.xml.template"
+          cat << 'EOF' > "${template_dir}/pom.xml.template"
           <project xmlns="http://apache.org">
             <modelVersion>4.0.0</modelVersion>
             <groupId>com.hazelcast</groupId>
@@ -27,19 +27,19 @@ jobs:
           </project>
           EOF
 
-          sed "s/VERSION_TOKEN/100.0.0/" "${TEMPLATE_DIR}/pom.xml.template" > "${REPO_1_DIR}/pom.xml"
-          sed "s/VERSION_TOKEN/5.6.0/" "${TEMPLATE_DIR}/pom.xml.template" > "${REPO_2_DIR}/pom.xml"
+          sed "s/VERSION_TOKEN/100.0.0/" "${template_dir}/pom.xml.template" > "${repo_1_dir}/pom.xml"
+          sed "s/VERSION_TOKEN/5.6.0/" "${template_dir}/pom.xml.template" > "${repo_2_dir}/pom.xml"
 
-          echo -e '#!/usr/bin/env bash\necho "100.0.0"' > "${REPO_1_DIR}/mvnw"
-          echo -e '#!/usr/bin/env bash\necho "5.6.0"' > "${REPO_2_DIR}/mvnw"
-          chmod +x "${REPO_1_DIR}/mvnw" "${REPO_2_DIR}/mvnw"
+          echo -e '#!/usr/bin/env bash\necho "100.0.0"' > "${repo_1_dir}/mvnw"
+          echo -e '#!/usr/bin/env bash\necho "5.6.0"' > "${repo_2_dir}/mvnw"
+          chmod +x "${repo_1_dir}/mvnw" "${repo_2_dir}/mvnw"
 
-          echo -e '#!/usr/bin/env bash\necho "[{\\"name\\": \\"99.1.0\\"}]"' > "${MOCK_BIN_DIR}/gh"
-          chmod +x "${MOCK_BIN_DIR}/gh"
+          echo -e '#!/usr/bin/env bash\necho "[{\\"name\\": \\"99.1.0\\"}]"' > "${mock_bin_dir}/gh"
+          chmod +x "${mock_bin_dir}/gh"
 
-          echo "repo-1-path=${REPO_1_DIR}" >> ${GITHUB_OUTPUT}
-          echo "repo-2-path=${REPO_2_DIR}" >> ${GITHUB_OUTPUT}
-          echo "mock-bin-path=${MOCK_BIN_DIR}" >> ${GITHUB_OUTPUT}
+          echo "repo-1-path=${repo_1_dir}" >> ${GITHUB_OUTPUT}
+          echo "repo-2-path=${repo_2_dir}" >> ${GITHUB_OUTPUT}
+          echo "mock-bin-path=${mock_bin_dir}" >> ${GITHUB_OUTPUT}
 
       - name: Run Evaluation Test Suite 1
         id: test-suite-1
@@ -49,7 +49,7 @@ jobs:
           mono-repo-path: ${{ steps.setup-test.outputs.repo-1-path }}
           github-token: 'mock-test-token-string'
         env:
-          PATH: ${{ steps.setup-test.outputs.mock-bin-path }}:${{ env.PATH }}
+          PATH: ${{ steps.setup-test.outputs.mock-bin-path }}:$PATH
 
       - name: Adjust gh mock for Test Suite 2
         run: |
@@ -63,7 +63,7 @@ jobs:
           mono-repo-path: ${{ steps.setup-test.outputs.repo-2-path }}
           github-token: 'mock-test-token-string'
         env:
-          PATH: ${{ steps.setup-test.outputs.mock-bin-path }}:${{ env.PATH }}
+          PATH: ${{ steps.setup-test.outputs.mock-bin-path }}:$PATH
 
       - name: Validate Action Output Assertions
         run: |
