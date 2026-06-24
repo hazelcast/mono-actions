@@ -1,0 +1,30 @@
+name: Create temporary branch from tag
+description: |
+  Creates a temporary branch from the current tag commit for processing releases, prefixed with `tag-in-creation-`
+
+inputs:
+  token:
+    required: true
+  slack-webhook-url:
+    required: true
+  slack-channel:
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        gh api \
+          --method POST \
+          repos/${GITHUB_REPOSITORY}/git/refs \
+          -f ref="refs/heads/tag-in-creation-${GITHUB_REF_NAME}" \
+          -f sha="${GITHUB_SHA}"
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+
+    - uses: hazelcast/docker-actions/slack-notification@master
+      if: failure()
+      with:
+        slack-webhook-url: ${{ inputs.slack-webhook-url }}
+        slack-channel: ${{ inputs.slack-channel }}

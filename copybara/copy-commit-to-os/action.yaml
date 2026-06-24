@@ -1,0 +1,92 @@
+name: Copy Monorepo Commit to OS
+description: |
+  Copies commits from the monorepo to the OS repository using Copybara, continuing from the last synced revision and creating missing branches when necessary.
+
+inputs:
+  token:
+    required: true
+  ssh-key:
+    description: 'GitHub SSH key to use'
+    required: true
+  slack-webhook-url:
+    required: true
+  slack-channel:
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set config
+      shell: bash
+      id: config
+      run: |
+        echo "sot_repo=${GITHUB_REPOSITORY_OWNER}/hazelcast-mono" >> ${GITHUB_OUTPUT}
+        echo "destination_os_repo=${GITHUB_REPOSITORY_OWNER}/hazelcast" >> ${GITHUB_OUTPUT}
+
+    - uses: actions/checkout@v7
+      with:
+        fetch-depth: 0
+
+    - name: Generate copybara OS config file
+      shell: bash
+      run: |
+        sed -e "s#<branch_to_sync>#${GITHUB_REF_NAME}#" \
+            -e "s#<sot_repo>#${{ steps.config.outputs.sot_repo }}#" \
+            -e "s#<destination_repo>#${{ steps.config.outputs.destination_os_repo }}#" \
+            ${GITHUB_ACTION_PATH}/common-copybara.bara.sky.template > .github/workflows/common-copybara.bara.sky
+
+    - name: Handle new branch in OS if needed
+      shell: bash
+      run: |
+        ${GITHUB_ACTION_PATH}/create-subrepo-branch-if-missing.sh \
+          "${{ steps.config.outputs.destination_os_repo }}" \
+          "${GITHUB_REF_NAME}"
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+
+    - name: Find copybara last rev for OS
+      id: os-latest-rev-option
+      shell: bash
+      run: |
+        REV=$(${GITHUB_ACTION_PATH}/find-last-rev.sh "${{ steps.config.outputs.destination_os_repo }}" "${GITHUB_REF_NAME}")
+        echo "rev=--last-rev ${REV}" >> ${GITHUB_OUTPUT}
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+
+    - uses: hazelcast/copybara-action@main
+      name: Copybara push ${{ github.ref_name }} to OS
+      with:
+        ssh_key: ${{ inputs.ssh-key }}
+        access_token: ${{ inputs.token }}
+        sot_repo: ${{ steps.config.outputs.sot_repo }}
+        sot_branch: ${{ github.ref_name }}
+        destination_repo: ${{ steps.config.outputs.destination_os_repo }}
+        copybara_options: "--nogit-destination-rebase ${{ steps.os-latest-rev-option.outputs.rev }}"
+        custom_config: .github/workflows/mono-push-os.sky
+
+    - name: Mark OS tag branch ready if needed
+      if: startsWith(github.ref_name, 'tag-in-creation-')
+      shell: bash
+      run: |
+        gh api \
+          --method POST \
+          /repos/${{ steps.config.outputs.destination_os_repo }}/branches/${GITHUB_REF_NAME}/rename \
+          -f new_name="tag-${GITHUB_REF_NAME#tag-in-creation-}"
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+
+    - name: Delete temporary tag branch
+      if: startsWith(github.ref_name, 'tag-in-creation-')
+      shell: bash
+      run: |
+        gh api \
+          --method DELETE \
+          /repos/${{ steps.config.outputs.sot_repo }}/git/refs/heads/${GITHUB_REF_NAME}
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+
+    - uses: hazelcast/docker-actions/slack-notification@master
+      if: failure()
+      with:
+        slack-webhook-url: ${{ inputs.slack-webhook-url }}
+        slack-channel: ${{ inputs.slack-channel }}
