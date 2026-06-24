@@ -37,6 +37,8 @@ jobs:
           echo -e '#!/usr/bin/env bash\necho "[{\\"name\\": \\"99.1.0\\"}]"' > "${mock_bin_dir}/gh"
           chmod +x "${mock_bin_dir}/gh"
 
+          echo "${mock_bin_dir}" >> "${GITHUB_PATH}"
+
           echo "repo-1-path=${repo_1_dir}" >> ${GITHUB_OUTPUT}
           echo "repo-2-path=${repo_2_dir}" >> ${GITHUB_OUTPUT}
           echo "mock-bin-path=${mock_bin_dir}" >> ${GITHUB_OUTPUT}
@@ -48,8 +50,6 @@ jobs:
           release-version: '99.1.0'
           mono-repo-path: ${{ steps.setup-test.outputs.repo-1-path }}
           github-token: 'mock-test-token-string'
-        env:
-          PATH: ${{ steps.setup-test.outputs.mock-bin-path }}:$PATH
 
       - name: Adjust gh mock for Test Suite 2
         run: |
@@ -62,8 +62,6 @@ jobs:
           release-version: '3.2.1'
           mono-repo-path: ${{ steps.setup-test.outputs.repo-2-path }}
           github-token: 'mock-test-token-string'
-        env:
-          PATH: ${{ steps.setup-test.outputs.mock-bin-path }}:$PATH
 
       - name: Validate Action Output Assertions
         run: |
