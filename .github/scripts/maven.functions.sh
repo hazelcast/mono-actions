@@ -1,4 +1,4 @@
-source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
+source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
 
 # Returns a path to a given Maven artifact, downloading if required
 # https://maven.apache.org/plugins/maven-dependency-plugin/get-mojo.html
