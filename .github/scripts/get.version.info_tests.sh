@@ -163,7 +163,8 @@ function test_is_latest_stable_release_error() {
   assert_eq 1 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   local msg="Error string printed to stderr matches formatting parameters layout"
-  local expected_err="::error::ERROR - ❌ Failed to resolve 'latest_stable' from repository '${TEST_REPO}'."
+  # Updated to expect the precise hardcoded suffix output format
+  local expected_err="::error::ERROR - ❌ Failed to resolve 'latest_stable' from repository '${TEST_REPO}/hazelcast-mono'."
   assert_eq "${expected_err}" "${actual_stderr}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
