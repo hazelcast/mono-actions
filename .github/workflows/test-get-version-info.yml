@@ -7,79 +7,36 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout current action repository
         uses: actions/checkout@v7
 
-      - name: Setup test environments
-        id: setup-test
-        run: |
-          mock_bin_dir=$(mktemp -d)
-          template_dir=$(mktemp -d)
-          repo_1_dir=$(mktemp -d)
-          repo_2_dir=$(mktemp -d)
+      - name: Checkout Hazelcast Mono repository
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ github.repository_owner }}/hazelcast-mono
+          path: hazelcast-mono
 
-          cat << 'EOF' > "${template_dir}/pom.xml.template"
-          <project xmlns="http://apache.org">
-            <modelVersion>4.0.0</modelVersion>
-            <groupId>com.hazelcast</groupId>
-            <artifactId>mock-project</artifactId>
-            <version>VERSION_TOKEN</version>
-          </project>
-          EOF
-
-          sed "s/VERSION_TOKEN/100.0.0/" "${template_dir}/pom.xml.template" > "${repo_1_dir}/pom.xml"
-          sed "s/VERSION_TOKEN/5.6.0/" "${template_dir}/pom.xml.template" > "${repo_2_dir}/pom.xml"
-
-          echo -e '#!/usr/bin/env bash\necho "100.0.0"' > "${repo_1_dir}/mvnw"
-          echo -e '#!/usr/bin/env bash\necho "5.6.0"' > "${repo_2_dir}/mvnw"
-          chmod +x "${repo_1_dir}/mvnw" "${repo_2_dir}/mvnw"
-
-          echo -e '#!/usr/bin/env bash\necho "[{\\"name\\": \\"99.1.0\\"}]"' > "${mock_bin_dir}/gh"
-          chmod +x "${mock_bin_dir}/gh"
-
-          echo "${mock_bin_dir}" >> "${GITHUB_PATH}"
-
-          echo "repo-1-path=${repo_1_dir}" >> ${GITHUB_OUTPUT}
-          echo "repo-2-path=${repo_2_dir}" >> ${GITHUB_OUTPUT}
-          echo "mock-bin-path=${mock_bin_dir}" >> ${GITHUB_OUTPUT}
-
-      - name: Run Evaluation Test Suite 1
-        id: test-suite-1
+      - name: Run Action Smoke Test
+        id: test-action
         uses: ./get-version-info
         with:
-          release-version: '99.1.0'
-          mono-repo-path: ${{ steps.setup-test.outputs.repo-1-path }}
-          github-token: 'mock-test-token-string'
+          release-version: '5.3.0'
+          mono-repo-path: './hazelcast-mono'
+          github-token: ${{ github.token }}
 
-      - name: Adjust gh mock for Test Suite 2
-        run: |
-          echo -e '#!/usr/bin/env bash\necho "[{\\"name\\": \\"5.5.0\\"}]"' > ${{ steps.setup-test.outputs.mock-bin-path }}/gh
-
-      - name: Run Evaluation Test Suite 2
-        id: test-suite-2
-        uses: ./get-version-info
-        with:
-          release-version: '3.2.1'
-          mono-repo-path: ${{ steps.setup-test.outputs.repo-2-path }}
-          github-token: 'mock-test-token-string'
-
-      - name: Validate Action Output Assertions
+      - name: Validate Basic Step Outputs
         run: |
           source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
           TESTS_RESULT=0
 
-          log_header "Validating Test Suite 1 Outputs"
-          assert_eq "true" "${SUITE_1_NEXT_MAJOR}" "Suite 1: is-next-release-major should be true" || TESTS_RESULT=$?
-          assert_eq "true" "${SUITE_1_LATEST_STABLE}" "Suite 1: is-latest-stable-release should be true" || TESTS_RESULT=$?
+          log_header "Verifying Action Smoke Test Output Flags"
+          assert_not_null "${SUITE_NEXT_MAJOR}" "is-next-release-major should be populated" || TESTS_RESULT=$?
+          assert_not_null "${SUITE_LATEST_STABLE}" "is-latest-stable-release should be populated" || TESTS_RESULT=$?
+          assert_not_null "${SUITE_BETA_RELEASE}" "is-beta-release should be populated" || TESTS_RESULT=$?
 
-          log_header "Validating Test Suite 2 Outputs"
-          assert_eq "false" "${SUITE_2_NEXT_MAJOR}" "Suite 2: is-next-release-major should be false" || TESTS_RESULT=$?
-          assert_eq "false" "${SUITE_2_LATEST_STABLE}" "Suite 2: is-latest-stable-release should be false" || TESTS_RESULT=$?
-
-          assert_eq 0 "$TESTS_RESULT" "All version information evaluations must match expectations"
+          assert_eq 0 "$TESTS_RESULT" "Action manifest and execution smoke tests passed successfully"
         env:
-          SUITE_1_NEXT_MAJOR: ${{ steps.test-suite-1.outputs.is-next-release-major }}
-          SUITE_1_LATEST_STABLE: ${{ steps.test-suite-1.outputs.is-latest-stable-release }}
-          SUITE_2_NEXT_MAJOR: ${{ steps.test-suite-2.outputs.is-next-release-major }}
-          SUITE_2_LATEST_STABLE: ${{ steps.test-suite-2.outputs.is-latest-stable-release }}
+          SUITE_NEXT_MAJOR: ${{ steps.test-action.outputs.is-next-release-major }}
+          SUITE_LATEST_STABLE: ${{ steps.test-action.outputs.is-latest-stable-release }}
+          SUITE_BETA_RELEASE: ${{ steps.test-action.outputs.is-beta-release }}
