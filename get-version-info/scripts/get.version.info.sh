@@ -34,7 +34,7 @@ function is_latest_stable_release() {
   local repo_owner=$2
 
   local major_minor
-  major_minor=$(get_major_minor_parts "${release_ver}")
+  major_minor=$(__get_major_minor_parts "${release_ver}")
 
   local latest_branch
   latest_branch=$( \
@@ -51,7 +51,7 @@ function is_latest_stable_release() {
     exit 1
   fi
 
-  if [[ ${major_minor} = $(get_major_minor_parts "${latest_branch}") ]]; then
+  if [[ ${major_minor} = $(__get_major_minor_parts "${latest_branch}") ]]; then
     echo "true"
   else
     echo "false"
