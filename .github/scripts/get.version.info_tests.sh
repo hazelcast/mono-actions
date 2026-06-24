@@ -37,11 +37,6 @@ function curl() {
 }
 export -f curl
 
-if ! command -v echoerr &> /dev/null; then
-  function echoerr() { echo "$@" 1>&2; }
-  export -f echoerr
-fi
-
 TESTS_RESULT=0
 
 function reset_mocks() {

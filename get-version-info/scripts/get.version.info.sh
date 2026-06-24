@@ -63,12 +63,14 @@ function get_version_parts() {
   local clean_version=${release_ver%%[-+]*}
 
   echo ${clean_version//./ }
+  return 0
 }
 
 function get_major_minor_parts() {
   local release_ver=$1
   local version_parts=($(get_version_parts ${release_ver}))
   echo ${version_parts[0]}.${version_parts[1]}
+  return 0
 }
 
 function is_beta_release() {
@@ -79,4 +81,5 @@ function is_beta_release() {
   else
     echo "false"
   fi
+  return 0
 }
