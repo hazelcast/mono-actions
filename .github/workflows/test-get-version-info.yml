@@ -34,14 +34,14 @@ jobs:
 
       - name: Run Evaluation Test Suite 1
         id: test-suite-1
-        uses: ./.github/actions/get-version-info
+        uses: ./get-version-info
         with:
           release-version: '99.1.0'
           mono-repo-path: ${{ steps.setup-test.outputs.repo-1-path }}
 
       - name: Run Evaluation Test Suite 2
         id: test-suite-2
-        uses: ./.github/actions/get-version-info
+        uses: ./get-version-info
         with:
           release-version: '3.2.1'
           mono-repo-path: ${{ steps.setup-test.outputs.repo-2-path }}
