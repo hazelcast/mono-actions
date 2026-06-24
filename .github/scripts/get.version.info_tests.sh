@@ -156,7 +156,7 @@ function test_is_latest_stable_release_error() {
   log_header "Testing is_latest_stable_release error handling"
   reset_mocks
 
-  echo '[]' > "${MOCK_GH_STDOUT_FILE}"
+  echo -n "" > "${MOCK_GH_STDOUT_FILE}"
 
   local actual_stderr
   actual_stderr=$( (is_latest_stable_release "5.4.0" "my-repo") 2>&1 >/dev/null ) && actual_exit_code=0 || actual_exit_code=$?
