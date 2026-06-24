@@ -71,6 +71,8 @@ function test_is_beta_release() {
   actual=$(is_beta_release "5.3.0-SNAPSHOT")
   msg="Ignores alternative release variants like SNAPSHOT as false"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  return "${TESTS_RESULT}"
 }
 
 function test_get_version_parts() {
@@ -87,9 +89,7 @@ function test_get_version_parts() {
   msg="Strips off beta suffix elements completely"
   assert_eq "5 4 0" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  actual=$(echo "6.1.2-SNAPSHOT" | get_version_parts)
-  msg="Handles stream processing via stdin pipeline input seamlessly"
-  assert_eq "6 1 2" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  return "${TESTS_RESULT}"
 }
 
 function test_get_major_minor_parts() {
@@ -105,6 +105,8 @@ function test_get_major_minor_parts() {
   actual=$(get_major_minor_parts "6.0.0-BETA-2")
   msg="Discards metadata segments safely during layout mapping"
   assert_eq "6.0" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  return "${TESTS_RESULT}"
 }
 
 function test_is_release_next_major() {
@@ -127,13 +129,15 @@ function test_is_release_next_major() {
   actual=$(is_release_next_major "my-repo" "5.4.0")
   msg="Returns false when version milestones match exactly"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  return "${TESTS_RESULT}"
 }
 
 function test_is_latest_stable_release() {
   log_header "Testing is_latest_stable_release"
   reset_mocks
 
-  echo '[{"name": "5.3.0"}, {"name": "5.4.0"}, {"name": "5.4.1"}, {"name": "master"}]' > "${MOCK_GH_STDOUT_FILE}"
+  printf '%s\n' '[{"name": "5.3.0"}, {"name": "5.4.0"}, {"name": "5.4.1"}, {"name": "master"}]' > "${MOCK_GH_STDOUT_FILE}"
 
   local actual msg
 
@@ -144,6 +148,8 @@ function test_is_latest_stable_release() {
   actual=$(is_latest_stable_release "5.3.0" "my-repo")
   msg="Returns false when evaluating older stable branch targets"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  return "${TESTS_RESULT}"
 }
 
 function test_is_latest_stable_release_error() {
@@ -153,15 +159,13 @@ function test_is_latest_stable_release_error() {
   echo '[]' > "${MOCK_GH_STDOUT_FILE}"
 
   local actual_stderr
-  actual_stderr=$(is_latest_stable_release "5.4.0" "my-repo" 2>&1 >/dev/null) && true
-  local actual_exit_code=$?
+  actual_stderr=$( (is_latest_stable_release "5.4.0" "my-repo") 2>&1 >/dev/null ) && actual_exit_code=0 || actual_exit_code=$?
 
   local msg="Function returns exit status code 1 when latest_stable cannot be resolved"
   assert_eq 1 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  # Accounted for GitHub Action logging directive strings added by 'echoerr' library
-  local expected_err="::error::ERROR - ❌ Failed to resolve 'latest_stable' from repository 'my-repo'."
   local msg="Error string printed to stderr matches formatting parameters layout"
+  local expected_err="::error::ERROR - ❌ Failed to resolve 'latest_stable' from repository 'my-repo'."
   assert_eq "${expected_err}" "${actual_stderr}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"

@@ -14,11 +14,11 @@ function is_release_next_major() {
   pom_ver=$(get_project_version)
 
   version_parts=($(get_version_parts ${release_ver}))
-  local rel_major=${version_parts[0]:-0}
+  local rel_major=${version_parts[0]}
 
   version_parts=($(get_version_parts ${pom_ver}))
-  local pom_major=${version_parts[0]:-0}
-  local pom_minor_patch=${version_parts[1]:-0}.${version_parts[2]:-0}
+  local pom_major=${version_parts[0]}
+  local pom_minor_patch=${version_parts[1]}.${version_parts[2]}
 
   if [[ ${pom_major} -gt ${rel_major} && ${pom_minor_patch} = "0.0" ]]; then
     echo "true"
@@ -34,23 +34,22 @@ function is_latest_stable_release() {
   major_minor=$(get_major_minor_parts "$1")
   local mono_repo="$2"
   
-  local latest_stable
-  latest_stable=$( \
+  local latest_branch
+  latest_branch=$( \
     gh api \
       "repos/${mono_repo}/branches" \
       --paginate \
       --jq '.[] | select(.name | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) | .name' | \
-    get_major_minor_parts | \
     sort --version-sort --reverse | \
     head --lines 1 \
   )
 
-  if [[ -z ${latest_stable} ]]; then
+  if [[ -z ${latest_branch} ]]; then
     echoerr "Failed to resolve 'latest_stable' from repository '${mono_repo}'."
     exit 1
   fi
 
-  if [[ ${major_minor} = ${latest_stable} ]]; then
+  if [[ ${major_minor} = $(get_major_minor_parts "${latest_branch}") ]]; then
     echo "true"
   else
     echo "false"
@@ -60,15 +59,16 @@ function is_latest_stable_release() {
 }
 
 function get_version_parts() {
-  local version=${1:-$(cat)}
-  local clean_version=${version%%[-+]*}
+  local release_ver=$1
+  local clean_version=${release_ver%%[-+]*}
 
   echo ${clean_version//./ }
 }
 
 function get_major_minor_parts() {
-  local version_parts=($(get_version_parts ${1:-$(cat)}))
-  echo ${version_parts[0]:-0}.${version_parts[1]:-0}
+  local release_ver=$1
+  local version_parts=($(get_version_parts ${release_ver}))
+  echo ${version_parts[0]}.${version_parts[1]}
 }
 
 function is_beta_release() {
