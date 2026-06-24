@@ -33,6 +33,7 @@ export -f get_project_version
 
 function curl() {
   echo "# MOCK - Skipped downloading external script asset"
+  return 0
 }
 export -f curl
 

@@ -45,7 +45,7 @@ function is_latest_stable_release() {
   )
 
   if [[ -z ${latest_branch} ]]; then
-    echoerr "Failed to resolve 'latest_stable' from repository '${mono_repo}'."
+    echoerr "❌ Failed to resolve 'latest_stable' from repository '${mono_repo}'."
     exit 1
   fi
 
