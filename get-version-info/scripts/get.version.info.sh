@@ -14,11 +14,11 @@ function is_release_next_major() {
   pom_ver=$(get_project_version)
 
   version_parts=($(get_version_parts ${release_ver}))
-  local rel_major=${version_parts[0]}
+  local rel_major=${version_parts[0]:-0}
 
   version_parts=($(get_version_parts ${pom_ver}))
-  local pom_major=${version_parts[0]}
-  local pom_minor_patch=${version_parts[1]}.${version_parts[2]}
+  local pom_major=${version_parts[0]:-0}
+  local pom_minor_patch=${version_parts[1]:-0}.${version_parts[2]:-0}
 
   if [[ ${pom_major} -gt ${rel_major} && ${pom_minor_patch} = "0.0" ]]; then
     echo "true"
@@ -68,7 +68,7 @@ function get_version_parts() {
 
 function get_major_minor_parts() {
   local version_parts=($(get_version_parts ${1:-$(cat)}))
-  echo ${version_parts[0]}.${version_parts[1]}
+  echo ${version_parts[0]:-0}.${version_parts[1]:-0}
 }
 
 function is_beta_release() {
