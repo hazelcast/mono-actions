@@ -10,6 +10,8 @@ source "${SCRIPT_DIR}/../../get-version-info/scripts/get.version.info.sh"
 MOCK_GH_ARGS_FILE="${SCRIPT_DIR}/.mock_gh_args"
 MOCK_GH_STDOUT_FILE="${SCRIPT_DIR}/.mock_gh_stdout"
 
+readonly TEST_REPO="my-repo"
+
 trap 'rm -f "${MOCK_GH_ARGS_FILE}" "${MOCK_GH_STDOUT_FILE}"' EXIT
 
 function gh() {
@@ -112,17 +114,17 @@ function test_is_release_next_major() {
   local actual msg
 
   MOCK_POM_VERSION="7.0.0"
-  actual=$(is_release_next_major "my-repo" "6.0.0")
+  actual=$(is_release_next_major "${TEST_REPO}" "6.0.0")
   msg="Returns true when pom major is higher (7.0.0) and minor/patch are 0.0"
   assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   MOCK_POM_VERSION="6.1.0"
-  actual=$(is_release_next_major "my-repo" "5.4.0")
+  actual=$(is_release_next_major "${TEST_REPO}" "5.4.0")
   msg="Returns false if pom major is higher but minor version is non-zero"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   MOCK_POM_VERSION="5.4.0"
-  actual=$(is_release_next_major "my-repo" "5.4.0")
+  actual=$(is_release_next_major "${TEST_REPO}" "5.4.0")
   msg="Returns false when version milestones match exactly"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
@@ -137,11 +139,11 @@ function test_is_latest_stable_release() {
 
   local actual msg
 
-  actual=$(is_latest_stable_release "5.4.0" "my-repo")
+  actual=$(is_latest_stable_release "5.4.0" "${TEST_REPO}")
   msg="Returns true when passed version matches highest stable branch minor layout"
   assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  actual=$(is_latest_stable_release "5.3.0" "my-repo")
+  actual=$(is_latest_stable_release "5.3.0" "${TEST_REPO}")
   msg="Returns false when evaluating older stable branch targets"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
@@ -155,13 +157,13 @@ function test_is_latest_stable_release_error() {
   echo -n "" > "${MOCK_GH_STDOUT_FILE}"
 
   local actual_stderr
-  actual_stderr=$( (is_latest_stable_release "5.4.0" "my-repo") 2>&1 >/dev/null ) && actual_exit_code=0 || actual_exit_code=$?
+  actual_stderr=$( (is_latest_stable_release "5.4.0" "${TEST_REPO}") 2>&1 >/dev/null ) && actual_exit_code=0 || actual_exit_code=$?
 
   local msg="Function returns exit status code 1 when latest_stable cannot be resolved"
   assert_eq 1 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   local msg="Error string printed to stderr matches formatting parameters layout"
-  local expected_err="::error::ERROR - ❌ Failed to resolve 'latest_stable' from repository 'my-repo'."
+  local expected_err="::error::ERROR - ❌ Failed to resolve 'latest_stable' from repository '${TEST_REPO}'."
   assert_eq "${expected_err}" "${actual_stderr}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
