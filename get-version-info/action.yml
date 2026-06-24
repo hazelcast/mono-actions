@@ -7,7 +7,7 @@ inputs:
     description: 'The release version in progress'
     required: true
   mono-repo-path:
-    description: 'Local checked-out Mono path (only needs *pom.xml and must be on 'master')'
+    description: "Local checked-out Mono path (only needs *pom.xml and must be on 'master')"
     required: true
 
 outputs:
