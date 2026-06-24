@@ -1,0 +1,68 @@
+name: Test get-version-info action
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup test environments
+        id: setup-test
+        run: |
+          TEMPLATE_DIR=$(mktemp -d)
+          REPO_1_DIR=$(mktemp -d)
+          REPO_2_DIR=$(mktemp -d)
+
+          cat << 'EOF' > "${TEMPLATE_DIR}/pom.xml.template"
+          <project xmlns="http://apache.org">
+            <modelVersion>4.0.0</modelVersion>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>mock-project</artifactId>
+            <version>VERSION_TOKEN</version>
+          </project>
+          EOF
+
+          sed "s/VERSION_TOKEN/100.0.0/" "${TEMPLATE_DIR}/pom.xml.template" > "${REPO_1_DIR}/pom.xml"
+          sed "s/VERSION_TOKEN/5.6.0/" "${TEMPLATE_DIR}/pom.xml.template" > "${REPO_2_DIR}/pom.xml"
+
+          echo "repo-1-path=${REPO_1_DIR}" >> "${GITHUB_OUTPUT}"
+          echo "repo-2-path=${REPO_2_DIR}" >> "${GITHUB_OUTPUT}"
+
+      - name: Run Evaluation Test Suite 1
+        id: test-suite-1
+        uses: ./.github/actions/get-version-info
+        with:
+          release-version: '99.1.0'
+          mono-repo-path: ${{ steps.setup-test.outputs.repo-1-path }}
+
+      - name: Run Evaluation Test Suite 2
+        id: test-suite-2
+        uses: ./.github/actions/get-version-info
+        with:
+          release-version: '3.2.1'
+          mono-repo-path: ${{ steps.setup-test.outputs.repo-2-path }}
+
+      - name: Validate Action Output Assertions
+        run: |
+          source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+
+          TESTS_RESULT=0
+
+          log_header "Validating Test Suite 1 Outputs"
+          assert_eq "true" "${SUITE_1_NEXT_MAJOR}" "Suite 1: is-next-release-major should be true" || TESTS_RESULT=$?
+          assert_eq "true" "${SUITE_1_LATEST_STABLE}" "Suite 1: is-latest-stable-release should be true" || TESTS_RESULT=$?
+
+          log_header "Validating Test Suite 2 Outputs"
+          assert_eq "false" "${SUITE_2_NEXT_MAJOR}" "Suite 2: is-next-release-major should be false" || TESTS_RESULT=$?
+          assert_eq "false" "${SUITE_2_LATEST_STABLE}" "Suite 2: is-latest-stable-release should be false" || TESTS_RESULT=$?
+
+          assert_eq 0 "$TESTS_RESULT" "All version information evaluations must match expectations"
+        env:
+          SUITE_1_NEXT_MAJOR: ${{ steps.test-suite-1.outputs.is-next-release-major }}
+          SUITE_1_LATEST_STABLE: ${{ steps.test-suite-1.outputs.is-latest-stable-release }}
+          SUITE_2_NEXT_MAJOR: ${{ steps.test-suite-2.outputs.is-next-release-major }}
+          SUITE_2_LATEST_STABLE: ${{ steps.test-suite-2.outputs.is-latest-stable-release }}
