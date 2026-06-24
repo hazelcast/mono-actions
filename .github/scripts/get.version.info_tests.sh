@@ -128,6 +128,16 @@ function test_is_release_next_major() {
   msg="Returns false when version milestones match exactly"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
+  MOCK_POM_VERSION="100.0.0"
+  actual=$(is_release_next_major "${TEST_REPO}" "99.1.0")
+  msg="Migrated YML Suite 1: Returns true when pom version is 100.0.0 and release version is 99.1.0"
+  assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  MOCK_POM_VERSION="5.6.0"
+  actual=$(is_release_next_major "${TEST_REPO}" "3.2.1")
+  msg="Migrated YML Suite 2: Returns false when pom version is 5.6.0 and release version is 3.2.1"
+  assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
   return "${TESTS_RESULT}"
 }
 
@@ -135,9 +145,9 @@ function test_is_latest_stable_release() {
   log_header "Testing is_latest_stable_release"
   reset_mocks
 
-  printf '%s\n' "5.3.0" "5.4.0" "5.4.1" > "${MOCK_GH_STDOUT_FILE}"
-
   local actual msg
+
+  printf '%s\n' "v5.3.0" "v5.4.0" "v5.4.1" > "${MOCK_GH_STDOUT_FILE}"
 
   actual=$(is_latest_stable_release "5.4.0" "${TEST_REPO}")
   msg="Returns true when passed version matches highest stable branch minor layout"
@@ -145,6 +155,16 @@ function test_is_latest_stable_release() {
 
   actual=$(is_latest_stable_release "5.3.0" "${TEST_REPO}")
   msg="Returns false when evaluating older stable branch targets"
+  assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  printf '%s\n' "v5.3.0" "v5.4.0" "v5.4.1" "v99.1.0" > "${MOCK_GH_STDOUT_FILE}"
+  actual=$(is_latest_stable_release "99.1.0" "${TEST_REPO}")
+  msg="Migrated YML Suite 1: Returns true when passed version major.minor matches highest stable tag"
+  assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  printf '%s\n' "v5.6.0" "v5.5.0" > "${MOCK_GH_STDOUT_FILE}"
+  actual=$(is_latest_stable_release "3.2.1" "${TEST_REPO}")
+  msg="Migrated YML Suite 2: Returns false when passed version major.minor does not match highest stable tag"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
