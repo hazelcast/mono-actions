@@ -40,6 +40,10 @@ jobs:
     uses: ./.github/workflows/test-invoke-jfrog-cli.yml
     secrets: inherit
 
+  test-get-version-info:
+    uses: ./.github/workflows/test-get-version-info.yml
+    secrets: inherit
+
   assert-all-jobs-succeeded:
     runs-on: ubuntu-latest
     needs:
@@ -48,6 +52,7 @@ jobs:
       - test-resolve-website-assets-deploy-config
       - test-download-latest-management-center
       - test-invoke-jfrog-cli
+      - test-get-version-info
     if: always()
     steps:
       - name: Check all jobs succeeded

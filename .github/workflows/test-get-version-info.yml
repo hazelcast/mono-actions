@@ -1,0 +1,35 @@
+name: Test get-version-info action
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current action repository
+        uses: actions/checkout@v7
+
+      - name: Run Action Smoke Test
+        id: test-action
+        uses: ./get-version-info
+        with:
+          release-version: '5.5.0'
+          github-token: ${{ secrets.GH_TOKEN }}
+
+      - name: Validate outputs
+        run: |
+          source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+
+          TESTS_RESULT=0
+
+          log_header "Verifying Action Smoke Test Output Flags"
+          assert_not_empty "${SUITE_NEXT_MAJOR}" "is-next-release-major should be populated" || TESTS_RESULT=$?
+          assert_not_empty "${SUITE_LATEST_STABLE}" "is-latest-stable-release should be populated" || TESTS_RESULT=$?
+          assert_not_empty "${SUITE_BETA_RELEASE}" "is-beta-release should be populated" || TESTS_RESULT=$?
+
+          assert_eq 0 "$TESTS_RESULT" "All tests should pass"
+        env:
+          SUITE_NEXT_MAJOR: ${{ steps.test-action.outputs.is-next-release-major }}
+          SUITE_LATEST_STABLE: ${{ steps.test-action.outputs.is-latest-stable-release }}
+          SUITE_BETA_RELEASE: ${{ steps.test-action.outputs.is-beta-release }}

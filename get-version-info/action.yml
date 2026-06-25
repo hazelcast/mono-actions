@@ -1,0 +1,60 @@
+name: 'Gets various Mono version info'
+description: |
+  Evaluates and outputs Mono related version info used in other workflows e.g. hazelcast 
+  version updates in docs repos. The action checkouts out Mono locally
+inputs:
+  release-version:
+    description: 'The release version in progress'
+    required: true
+  github-token:
+    description: 'The GitHub authentication token used for the GitHub CLI'
+    required: true
+
+outputs:
+  is-next-release-major:
+    description: 'Checks if next pom version (uses `mvn`) is a MAJOR e.g. 9.0.0'
+    value: ${{ steps.evaluate-version.outputs.is-next-release-major }}
+  is-latest-stable-release:
+    description: 'Returns true `release-version` (major.minor) is latest by comparing existing Mono branches'
+    value: ${{ steps.evaluate-version.outputs.is-latest-stable-release }}
+  is-beta-release:
+    description: 'Returns true if `release-version` has `*-BETA-*` in the name'
+    value: ${{ steps.evaluate-version.outputs.is-beta-release }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Generate Random Directory Name
+      id: tmpdir
+      shell: bash
+      run: |
+        echo "name=mono-temp.${RANDOM}" >> ${GITHUB_OUTPUT}
+
+    - name: Checkout Hazelcast Mono
+      uses: actions/checkout@v7
+      with:
+        repository: ${{ github.repository_owner }}/hazelcast-mono
+        path: ${{ steps.tmpdir.outputs.name }}
+        token: ${{ inputs.github-token }}
+        fetch-depth: 1
+
+    - name: Run Version Evaluations
+      id: evaluate-version
+      shell: bash
+      run: |
+        set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
+
+        source "${GITHUB_ACTION_PATH}/scripts/get.version.info.sh"
+
+        NEXT_MAJOR=$(is_release_next_major ${MONO_PATH} ${RELEASE_VERSION})
+        LATEST_STABLE=$(is_latest_stable_release ${RELEASE_VERSION} ${REPO_OWNER})
+        BETA_RELEASE=$(is_beta_release ${RELEASE_VERSION})
+
+        echo "is-next-release-major=${NEXT_MAJOR}" >> ${GITHUB_OUTPUT}
+        echo "is-latest-stable-release=${LATEST_STABLE}" >> ${GITHUB_OUTPUT}
+        echo "is-beta-release=${BETA_RELEASE}" >> ${GITHUB_OUTPUT}
+      env:
+        RELEASE_VERSION: ${{ inputs.release-version }}
+        REPO_OWNER: ${{ github.repository_owner }}
+        GH_TOKEN: ${{ inputs.github-token }}
+        MONO_PATH: ${{ steps.tmpdir.outputs.name }}
