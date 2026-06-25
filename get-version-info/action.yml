@@ -28,6 +28,7 @@ runs:
       uses: actions/checkout@v7
       with:
         repository: ${{ github.repository_owner }}/hazelcast-mono
+        path: hazelcast-mono
         token: ${{ inputs.github-token }}
         fetch-depth: 1
 
@@ -39,7 +40,7 @@ runs:
 
         source "${GITHUB_ACTION_PATH}/scripts/get.version.info.sh"
 
-        NEXT_MAJOR=$(is_release_next_major "." ${RELEASE_VERSION})
+        NEXT_MAJOR=$(is_release_next_major "hazelcast-mono" ${RELEASE_VERSION})
         LATEST_STABLE=$(is_latest_stable_release ${RELEASE_VERSION} ${REPO_OWNER})
         BETA_RELEASE=$(is_beta_release ${RELEASE_VERSION})
 
