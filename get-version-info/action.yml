@@ -11,15 +11,24 @@ inputs:
     required: true
 
 outputs:
+  master-version:
+    description: 'The version parsed from master pom'
+    value: ${{ steps.evaluate-version.outputs.master-version }}
+  major-minor-ver:
+    description: 'The major.minor parts of release-version'
+    value: ${{ steps.evaluate-version.outputs.major-minor-ver }}
   is-next-release-major:
-    description: 'Checks if next pom version (uses `mvn`) is a MAJOR e.g. 9.0.0'
+    description: 'Checks if next pom version is a MAJOR e.g. 9.0.0'
     value: ${{ steps.evaluate-version.outputs.is-next-release-major }}
   is-latest-stable-release:
-    description: 'Returns true `release-version` (major.minor) is latest by comparing existing Mono branches'
+    description: 'Returns true `release-version` (major.minor) is latest'
     value: ${{ steps.evaluate-version.outputs.is-latest-stable-release }}
   is-beta-release:
     description: 'Returns true if `release-version` has `*-BETA-*` in the name'
     value: ${{ steps.evaluate-version.outputs.is-beta-release }}
+  is-major-minor:
+    description: 'Returns true if the patch component of release-version is zero'
+    value: ${{ steps.evaluate-version.outputs.is-major-minor }}
 
 runs:
   using: 'composite'
@@ -46,19 +55,21 @@ runs:
 
         source "${GITHUB_ACTION_PATH}/scripts/get.version.info.sh"
 
-        NEXT_MAJOR=$(is_release_next_major ${MONO_PATH} ${RELEASE_VERSION})
-        LATEST_STABLE=$(is_latest_stable_release ${RELEASE_VERSION} ${REPO_OWNER})
-        BETA_RELEASE=$(is_beta_release ${RELEASE_VERSION})
-        MAJOR_MINOR=$(is_major_minor ${RELEASE_VERSION})
-        MAJOR_MINOR_PARTS=$(get_major_minor_parts ${RELEASE_VERSION})
+        master_ver=$(get_master_version ${mono_path})
+        next_major=$(is_master_version_major ${release_version} ${master_ver})
+        latest_stable=$(is_latest_stable_release ${release_version} ${repo_owner})
+        beta_release=$(is_beta_release ${release_version})
+        major_minor=$(is_major_minor ${release_version})
+        major_minor_parts=$(get_major_minor_parts ${release_version})
 
-        echo "is-next-release-major=${NEXT_MAJOR}" >> ${GITHUB_OUTPUT}
-        echo "is-latest-stable-release=${LATEST_STABLE}" >> ${GITHUB_OUTPUT}
-        echo "is-beta-release=${BETA_RELEASE}" >> ${GITHUB_OUTPUT}
-        echo "is-major-minor=${MAJOR_MINOR}" >> ${GITHUB_OUTPUT}
-        echo "major-minor-ver=${MAJOR_MINOR_PARTS}" >> ${GITHUB_OUTPUT}
+        echo "master-version=${master_ver}" >> ${GITHUB_OUTPUT}
+        echo "is-next-release-major=${next_major}" >> ${GITHUB_OUTPUT}
+        echo "is-latest-stable-release=${latest_stable}" >> ${GITHUB_OUTPUT}
+        echo "is-beta-release=${beta_release}" >> ${GITHUB_OUTPUT}
+        echo "is-major-minor=${major_minor}" >> ${GITHUB_OUTPUT}
+        echo "major-minor-ver=${major_minor_parts}" >> ${GITHUB_OUTPUT}
       env:
-        RELEASE_VERSION: ${{ inputs.release-version }}
-        REPO_OWNER: ${{ github.repository_owner }}
-        GH_TOKEN: ${{ inputs.github-token }}
-        MONO_PATH: ${{ steps.tmpdir.outputs.name }}
+        release_version: ${{ inputs.release-version }}
+        repo_owner: ${{ github.repository_owner }}
+        gh_token: ${{ inputs.github-token }}
+        mono_path: ${{ steps.tmpdir.outputs.name }}

@@ -2,30 +2,24 @@
 
 source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
 
-function is_release_next_major() {
+function get_master_version() {
   local mono_repo=$1
-  local release_ver=$2
-  local version_parts
 
   source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/mono-actions/main/.github/scripts/maven.functions.sh)"
 
-  cd ${mono_repo} || exit 1
-  local pom_ver
-  pom_ver=$(get_project_version)
+  cd "${mono_repo}" || exit 1
+  get_project_version
+  return 0
+}
 
-  version_parts=($(get_version_parts ${release_ver}))
-  local rel_major=${version_parts[0]}
+function is_master_version_major() {
+  local release_ver=$1
+  local next_ver=$2
 
-  version_parts=($(get_version_parts ${pom_ver}))
-  local pom_major=${version_parts[0]}
-  local pom_minor_patch=${version_parts[1]}.${version_parts[2]}
+  local rel_parts=($(get_version_parts "${release_ver}"))
+  local next_parts=($(get_version_parts "${next_ver}"))
 
-  if [[ ${pom_major} -gt ${rel_major} && ${pom_minor_patch} = "0.0" ]]; then
-    echo "true"
-  else
-    echo "false"
-  fi
-
+  [[ "${next_parts[0]}" -gt "${rel_parts[0]}" && "${next_parts[1]}.${next_parts[2]}" == "0.0" ]] && echo "true" || echo "false"
   return 0
 }
 
