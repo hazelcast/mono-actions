@@ -27,8 +27,9 @@ runs:
     - name: Checkout Hazelcast Mono
       uses: actions/checkout@v7
       with:
+        repository: ${{ github.repository_owner }}/hazelcast-mono
         token: ${{ inputs.github-token }}
-        depth: 1
+        fetch-depth: 1
 
     - name: Run Version Evaluations
       id: evaluate-version
