@@ -49,10 +49,14 @@ runs:
         NEXT_MAJOR=$(is_release_next_major ${MONO_PATH} ${RELEASE_VERSION})
         LATEST_STABLE=$(is_latest_stable_release ${RELEASE_VERSION} ${REPO_OWNER})
         BETA_RELEASE=$(is_beta_release ${RELEASE_VERSION})
+        MAJOR_MINOR=$(is_major_minor ${RELEASE_VERSION})
+        MAJOR_MINOR_PARTS=$(get_major_minor_parts ${RELEASE_VERSION})
 
         echo "is-next-release-major=${NEXT_MAJOR}" >> ${GITHUB_OUTPUT}
         echo "is-latest-stable-release=${LATEST_STABLE}" >> ${GITHUB_OUTPUT}
         echo "is-beta-release=${BETA_RELEASE}" >> ${GITHUB_OUTPUT}
+        echo "is-major-minor=${MAJOR_MINOR}" >> ${GITHUB_OUTPUT}
+        echo "major-minor-ver=${MAJOR_MINOR_PARTS}" >> ${GITHUB_OUTPUT}
       env:
         RELEASE_VERSION: ${{ inputs.release-version }}
         REPO_OWNER: ${{ github.repository_owner }}

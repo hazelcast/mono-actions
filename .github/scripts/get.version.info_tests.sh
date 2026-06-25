@@ -47,6 +47,48 @@ function reset_mocks() {
   return 0
 }
 
+function test_is_major_minor() {
+  log_header "Testing is_major_minor"
+  reset_mocks
+
+  local actual msg
+
+  actual=$(is_major_minor "5.4.0")
+  msg="Returns true when patch version is exactly 0"
+  assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  actual=$(is_major_minor "5.4.1")
+  msg="Returns false when patch version is greater than 0"
+  assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  actual=$(is_major_minor "6.0.0-BETA-1")
+  msg="Returns true for beta versions with a 0 patch"
+  assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  return "${TESTS_RESULT}"
+}
+
+function test_is_patch_release() {
+  log_header "Testing is_patch_release"
+  reset_mocks
+
+  local actual msg
+
+  actual=$(is_patch_release "5.4.1")
+  msg="Returns true when patch version is greater than 0"
+  assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  actual=$(is_patch_release "5.4.0")
+  msg="Returns false when patch version is exactly 0"
+  assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  actual=$(is_patch_release "5.4.3-BETA-2")
+  msg="Returns true for beta versions with a non-zero patch"
+  assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  return "${TESTS_RESULT}"
+}
+
 function test_is_beta_release() {
   log_header "Testing is_beta_release"
   reset_mocks
@@ -73,16 +115,16 @@ function test_is_beta_release() {
 }
 
 function test_get_version_parts() {
-  log_header "Testing __get_version_parts"
+  log_header "Testing get_version_parts"
   reset_mocks
 
   local actual msg
 
-  actual=$(__get_version_parts "5.4.3")
+  actual=$(get_version_parts "5.4.3")
   msg="Extracts components cleanly into space separated items"
   assert_eq "5 4 3" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  actual=$(__get_version_parts "5.4.0-BETA-1")
+  actual=$(get_version_parts "5.4.0-BETA-1")
   msg="Strips off beta suffix elements completely"
   assert_eq "5 4 0" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
@@ -90,16 +132,16 @@ function test_get_version_parts() {
 }
 
 function test_get_major_minor_parts() {
-  log_header "Testing __get_major_minor_parts"
+  log_header "Testing get_major_minor_parts"
   reset_mocks
 
   local actual msg
 
-  actual=$(__get_major_minor_parts "5.4.3")
+  actual=$(get_major_minor_parts "5.4.3")
   msg="Isolates and outputs exactly major.minor layout"
   assert_eq "5.4" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  actual=$(__get_major_minor_parts "6.0.0-BETA-2")
+  actual=$(get_major_minor_parts "6.0.0-BETA-2")
   msg="Discards metadata segments safely during layout mapping"
   assert_eq "6.0" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
@@ -188,7 +230,8 @@ function test_is_latest_stable_release_error() {
   return "${TESTS_RESULT}"
 }
 
-# --- Execute test suites ---
+test_is_major_minor
+test_is_patch_release
 test_is_beta_release
 test_get_version_parts
 test_get_major_minor_parts

@@ -13,10 +13,10 @@ function is_release_next_major() {
   local pom_ver
   pom_ver=$(get_project_version)
 
-  version_parts=($(__get_version_parts ${release_ver}))
+  version_parts=($(get_version_parts ${release_ver}))
   local rel_major=${version_parts[0]}
 
-  version_parts=($(__get_version_parts ${pom_ver}))
+  version_parts=($(get_version_parts ${pom_ver}))
   local pom_major=${version_parts[0]}
   local pom_minor_patch=${version_parts[1]}.${version_parts[2]}
 
@@ -48,7 +48,7 @@ function is_latest_stable_release() {
     exit 1
   fi
 
-  if [[ $(__get_major_minor_parts "${release_ver}") == $(__get_major_minor_parts "${latest_branch}") ]]; then
+  if [[ $(get_major_minor_parts "${release_ver}") == $(get_major_minor_parts "${latest_branch}") ]]; then
     echo "true"
   else
     echo "false"
@@ -59,26 +59,26 @@ function is_latest_stable_release() {
 
 function is_beta_release() {
   local version=$1
+  [[ "${version}" =~ -BETA-[0-9]+$ ]] && echo "true" || echo "false"
+}
 
-  if [[ ${version} =~ -BETA-[0-9]+$ ]]; then
-    echo "true"
-  else
-    echo "false"
-  fi
+function is_major_minor() {
+  local version=$1
+  local parts=($(__get_version_parts "${version}"))
+  [[ "${parts[2]}" == "0" ]] && echo "true" || echo "false"
   return 0
 }
 
-function __get_version_parts() {
+function get_version_parts() {
   local release_ver=$1
   local clean_version=${release_ver%%[-+]*}
-
   echo ${clean_version//./ }
   return 0
 }
 
-function __get_major_minor_parts() {
+function get_major_minor_parts() {
   local release_ver=$1
-  local version_parts=($(__get_version_parts ${release_ver}))
+  local version_parts=($(get_version_parts ${release_ver}))
   echo ${version_parts[0]}.${version_parts[1]}
   return 0
 }
