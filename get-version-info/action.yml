@@ -55,21 +55,15 @@ runs:
 
         source "${GITHUB_ACTION_PATH}/scripts/get.version.info.sh"
 
-        master_ver=$(get_master_version ${mono_path})
-        next_major=$(is_master_version_major ${release_version} ${master_ver})
-        latest_stable=$(is_latest_stable_release ${release_version} ${repo_owner})
-        beta_release=$(is_beta_release ${release_version})
-        major_minor=$(is_major_minor ${release_version})
-        major_minor_parts=$(get_major_minor_parts ${release_version})
-
+        master_ver=$(get_master_version $MONO_PATH)
         echo "master-version=${master_ver}" >> ${GITHUB_OUTPUT}
-        echo "is-next-release-major=${next_major}" >> ${GITHUB_OUTPUT}
-        echo "is-latest-stable-release=${latest_stable}" >> ${GITHUB_OUTPUT}
-        echo "is-beta-release=${beta_release}" >> ${GITHUB_OUTPUT}
-        echo "is-major-minor=${major_minor}" >> ${GITHUB_OUTPUT}
-        echo "major-minor-ver=${major_minor_parts}" >> ${GITHUB_OUTPUT}
+        echo "is-next-release-major=$(is_master_version_major $RELEASE_VERSION $master_ver)" >> ${GITHUB_OUTPUT}
+        echo "is-latest-stable-release=$(is_latest_stable_release $RELEASE_VERSION $REPO_OWNER)" >> ${GITHUB_OUTPUT}
+        echo "is-beta-release=$(is_beta_release $RELEASE_VERSION)" >> ${GITHUB_OUTPUT}
+        echo "is-major-minor=$(is_major_minor $RELEASE_VERSION)" >> ${GITHUB_OUTPUT}
+        echo "major-minor-ver=$(get_major_minor_parts $RELEASE_VERSION)" >> ${GITHUB_OUTPUT}
       env:
-        release_version: ${{ inputs.release-version }}
-        repo_owner: ${{ github.repository_owner }}
-        gh_token: ${{ inputs.github-token }}
-        mono_path: ${{ steps.tmpdir.outputs.name }}
+        RELEASE_VERSION: ${{ inputs.release-version }}
+        REPO_OWNER: ${{ github.repository_owner }}
+        GH_TOKEN: ${{ inputs.github-token }}
+        MONO_PATH: ${{ steps.tmpdir.outputs.name }}
