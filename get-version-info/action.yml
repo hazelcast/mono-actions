@@ -6,9 +6,6 @@ inputs:
   release-version:
     description: 'The release version in progress'
     required: true
-  mono-repo-path:
-    description: "Local checked-out Mono path (only needs *pom.xml and must be on 'master')"
-    required: true
   github-token:
     description: 'The GitHub authentication token used for the GitHub CLI'
     required: true
@@ -27,6 +24,12 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Checkout Hazelcast Mono
+      uses: actions/checkout@v7
+      with:
+        token: ${{ inputs.github-token }}
+        depth: 1
+
     - name: Run Version Evaluations
       id: evaluate-version
       shell: bash
@@ -35,7 +38,7 @@ runs:
 
         source "${GITHUB_ACTION_PATH}/scripts/get.version.info.sh"
 
-        NEXT_MAJOR=$(is_release_next_major ${MONO_REPO_PATH} ${RELEASE_VERSION})
+        NEXT_MAJOR=$(is_release_next_major "." ${RELEASE_VERSION})
         LATEST_STABLE=$(is_latest_stable_release ${RELEASE_VERSION} ${REPO_OWNER})
         BETA_RELEASE=$(is_beta_release ${RELEASE_VERSION})
 
@@ -44,6 +47,5 @@ runs:
         echo "is-beta-release=${BETA_RELEASE}" >> ${GITHUB_OUTPUT}
       env:
         RELEASE_VERSION: ${{ inputs.release-version }}
-        MONO_REPO_PATH: ${{ inputs.mono-repo-path }}
-        REPO_OWNER: ${GITHUB_REPOSITORY_OWNER}
+        REPO_OWNER: ${{ github.repository_owner }}
         GH_TOKEN: ${{ inputs.github-token }}
