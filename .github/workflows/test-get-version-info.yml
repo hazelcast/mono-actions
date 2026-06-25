@@ -15,7 +15,6 @@ jobs:
         uses: ./get-version-info
         with:
           release-version: '5.5.0'
-          mono-repo-path: './hazelcast-mono'
           github-token: ${{ secrets.GH_TOKEN }}
 
       - name: Validate outputs
