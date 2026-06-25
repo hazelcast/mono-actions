@@ -4,7 +4,6 @@ set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 
 source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
-
 source "${SCRIPT_DIR}/../../get-version-info/scripts/get.version.info.sh"
 
 MOCK_GH_ARGS_FILE="${SCRIPT_DIR}/.mock_gh_args"
@@ -147,7 +146,7 @@ function test_is_latest_stable_release() {
 
   local actual msg
 
-  printf '%s\n' "5.3.0" "5.4.0" "5.4.1" > "${MOCK_GH_STDOUT_FILE}"
+  printf '%s\n' "5.3.z" "5.4.z" "5.4.z" > "${MOCK_GH_STDOUT_FILE}"
 
   actual=$(is_latest_stable_release "5.4.0" "${TEST_REPO}")
   msg="Returns true when passed version matches highest stable branch minor layout"
@@ -157,12 +156,12 @@ function test_is_latest_stable_release() {
   msg="Returns false when evaluating older stable branch targets"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  printf '%s\n' "5.3.0" "5.4.0" "5.4.1" "99.1.0" > "${MOCK_GH_STDOUT_FILE}"
+  printf '%s\n' "5.3.z" "5.4.z" "5.4.z" "99.1.z" > "${MOCK_GH_STDOUT_FILE}"
   actual=$(is_latest_stable_release "99.1.0" "${TEST_REPO}")
   msg="Returns true when passed version major.minor matches highest stable tag"
   assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  printf '%s\n' "5.6.0" "5.5.0" > "${MOCK_GH_STDOUT_FILE}"
+  printf '%s\n' "5.6.z" "5.5.z" > "${MOCK_GH_STDOUT_FILE}"
   actual=$(is_latest_stable_release "3.2.1" "${TEST_REPO}")
   msg="Returns false when passed version major.minor does not match highest stable tag"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
