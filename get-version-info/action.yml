@@ -1,7 +1,7 @@
 name: 'Gets various Mono version info'
 description: |
   Evaluates and outputs Mono related version info used in other workflows e.g. hazelcast 
-  version updates in docs repos
+  version updates in docs repos. The action checkouts out Mono locally
 inputs:
   release-version:
     description: 'The release version in progress'
@@ -24,11 +24,17 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Generate Random Directory Name
+      id: tmpdir
+      shell: bash
+      run: |
+        echo "name=mono-temp.${RANDOM}" >> ${GITHUB_OUTPUT}
+
     - name: Checkout Hazelcast Mono
       uses: actions/checkout@v7
       with:
         repository: ${{ github.repository_owner }}/hazelcast-mono
-        path: hazelcast-mono
+        path: ${{ steps.tmpdir.outputs.name }}
         token: ${{ inputs.github-token }}
         fetch-depth: 1
 
@@ -40,7 +46,7 @@ runs:
 
         source "${GITHUB_ACTION_PATH}/scripts/get.version.info.sh"
 
-        NEXT_MAJOR=$(is_release_next_major "hazelcast-mono" ${RELEASE_VERSION})
+        NEXT_MAJOR=$(is_release_next_major ${MONO_PATH} ${RELEASE_VERSION})
         LATEST_STABLE=$(is_latest_stable_release ${RELEASE_VERSION} ${REPO_OWNER})
         BETA_RELEASE=$(is_beta_release ${RELEASE_VERSION})
 
@@ -51,3 +57,4 @@ runs:
         RELEASE_VERSION: ${{ inputs.release-version }}
         REPO_OWNER: ${{ github.repository_owner }}
         GH_TOKEN: ${{ inputs.github-token }}
+        MONO_PATH: ${{ steps.tmpdir.outputs.name }}
