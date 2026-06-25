@@ -6,7 +6,7 @@ export GH_DEBUG=${RUNNER_DEBUG:+1}
 REPO_NAME=$1
 BRANCH_NAME=$2
 
-source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
+source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
 
 find_matching_commit_in_subrepo() {
   local starting_commit=${1}

@@ -40,7 +40,7 @@ runs:
       run: |
         set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
 
-        source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
+        source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
 
         LATEST_MC_VER=$( \
           gh api \
@@ -67,7 +67,7 @@ runs:
       id: get-mc-download-vars
       shell: bash
       run: |
-        source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
+        source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
 
         if [[ -z "${UNZIP_FOLDER}" ]]; then
           UNZIP_FOLDER=$(mktemp --directory)

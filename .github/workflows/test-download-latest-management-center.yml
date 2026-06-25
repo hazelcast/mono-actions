@@ -32,7 +32,7 @@ jobs:
 
       - name: Test outputs
         run: |
-          source /dev/stdin <<< "$(curl --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+          source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
           TESTS_RESULT=0
 
