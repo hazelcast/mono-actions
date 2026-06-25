@@ -64,7 +64,7 @@ function is_beta_release() {
 
 function is_major_minor() {
   local version=$1
-  local parts=($(__get_version_parts "${version}"))
+  local parts=($(get_version_parts "${version}"))
   [[ "${parts[2]}" == "0" ]] && echo "true" || echo "false"
   return 0
 }
