@@ -10,14 +10,6 @@ jobs:
       - name: Checkout current action repository
         uses: actions/checkout@v7
 
-      - name: Checkout Hazelcast Mono repository
-        uses: actions/checkout@v7
-        with:
-          repository: ${{ github.repository_owner }}/hazelcast-mono
-          path: hazelcast-mono
-          token: ${{ secrets.GH_TOKEN }}
-          depth: 1
-
       - name: Run Action Smoke Test
         id: test-action
         uses: ./get-version-info
