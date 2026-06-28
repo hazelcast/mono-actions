@@ -12,17 +12,6 @@ function get_master_version() {
   return 0
 }
 
-function is_master_version_major() {
-  local release_ver=$1
-  local next_ver=$2
-
-  local rel_parts=($(get_version_parts "${release_ver}"))
-  local next_parts=($(get_version_parts "${next_ver}"))
-
-  [[ "${next_parts[0]}" -gt "${rel_parts[0]}" && "${next_parts[1]}.${next_parts[2]}" == "0.0" ]] && echo "true" || echo "false"
-  return 0
-}
-
 function is_latest_stable_release() {
   local release_ver=$1
   local repo_owner=$2

@@ -141,35 +141,6 @@ function test_get_major_minor_parts() {
   return "${TESTS_RESULT}"
 }
 
-function test_is_master_version_major() {
-  log_header "Testing is_master_version_major"
-  reset_mocks
-
-  local actual msg
-
-  actual=$(is_master_version_major "6.0.0" "7.0.0")
-  msg="Returns true when pom major is higher (7.0.0) and minor/patch are 0.0"
-  assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  actual=$(is_master_version_major "5.4.0" "6.1.0")
-  msg="Returns false if pom major is higher but minor version is non-zero"
-  assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  actual=$(is_master_version_major "5.4.0" "5.4.0")
-  msg="Returns false when version milestones match exactly"
-  assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  actual=$(is_master_version_major "99.1.0" "100.0.0")
-  msg="Returns true when pom version is 100.0.0 and release version is 99.1.0"
-  assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  actual=$(is_master_version_major "3.2.1" "5.6.0")
-  msg="Returns false when pom version is 5.6.0 and release version is 3.2.1"
-  assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  return "${TESTS_RESULT}"
-}
-
 function test_is_latest_stable_release() {
   log_header "Testing is_latest_stable_release"
   reset_mocks
@@ -223,7 +194,6 @@ test_is_major_minor
 test_is_beta_release
 test_get_version_parts
 test_get_major_minor_parts
-test_is_master_version_major
 test_is_latest_stable_release
 test_is_latest_stable_release_error
 

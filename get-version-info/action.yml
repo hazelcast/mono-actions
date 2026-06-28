@@ -9,61 +9,118 @@ inputs:
   github-token:
     description: 'The GitHub authentication token used for the GitHub CLI'
     required: true
+  jfrog-files-repo:
+    description: 'Jfrog preprod files repo'
+    required: true
+  aws-role-to-assume:
+    description: 'AWS IAM Role ARN to assume via OIDC'
+  skip-set-mc-version:
+    description: 'Skip downloading and setting the bundled Management Center version'
+    required: false
+    default: 'false'
+  skip-checkout-mono:
+    description: 'Bypasses the Git clone of hazelcast-mono and skips master version parsing'
+    required: false
+    default: 'false'
 
 outputs:
   master-version:
     description: 'The version parsed from master pom'
-    value: ${{ steps.evaluate-version.outputs.master-version }}
-  major-minor-ver:
-    description: 'The major.minor parts of release-version'
-    value: ${{ steps.evaluate-version.outputs.major-minor-ver }}
-  is-next-release-major:
-    description: 'Checks if next pom version is a MAJOR e.g. 9.0.0'
-    value: ${{ steps.evaluate-version.outputs.is-next-release-major }}
+    value: ${{ steps.resolve-version.outputs.master-version }}
+  master-major-minor:
+    description: 'The major.minor parts of `master-version`'
+    value: ${{ steps.resolve-version.outputs.master-major-minor }}
+  rel-major-minor:
+    description: 'The major.minor parts of `release-version`'
+    value: ${{ steps.resolve-version.outputs.rel-major-minor }}
   is-latest-stable-release:
     description: 'Returns true `release-version` (major.minor) is latest'
-    value: ${{ steps.evaluate-version.outputs.is-latest-stable-release }}
+    value: ${{ steps.resolve-version.outputs.is-latest-stable-release }}
   is-beta-release:
     description: 'Returns true if `release-version` has `*-BETA-*` in the name'
-    value: ${{ steps.evaluate-version.outputs.is-beta-release }}
-  is-major-minor:
+    value: ${{ steps.resolve-version.outputs.is-beta-release }}
+  is-rel-major-minor:
     description: 'Returns true if the patch component of release-version is zero'
-    value: ${{ steps.evaluate-version.outputs.is-major-minor }}
+    value: ${{ steps.resolve-version.outputs.is-rel-major-minor }}
+  bundled-mc-version:
+    description: 'The Management Center version extracted from the downloaded marker file'
+    value: ${{ steps.resolve-version.outputs.bundled-mc-version }}
 
 runs:
   using: 'composite'
   steps:
-    - name: Generate Random Directory Name
-      id: tmpdir
+    - name: Setup folder and vars
+      id: setup-folders-and-vars
       shell: bash
       run: |
-        echo "name=mono-temp.${RANDOM}" >> ${GITHUB_OUTPUT}
+        tmp_dir=$(mktemp -d)
+        echo "tmp-dir=${tmp_dir}" >> ${GITHUB_OUTPUT}
+
+        # MC version file
+        mc_ver_file="ee-asset-mc-version-${RELEASE_VERSION}.txt"
+
+        echo "mc-ver-file-path=${tmp_dir}/${mc_ver_file}" >> ${GITHUB_OUTPUT}
+        echo "src-pattern=${JFROG_REPO}/hazelcast-enterprise/${mc_ver_file}" >> ${GITHUB_OUTPUT}
+
+        # Internal temporary path location inside workspace
+        echo "mono-dir=mono-temp.${RANDOM}" >> ${GITHUB_OUTPUT}
+      env:
+        RELEASE_VERSION: ${{ inputs.release-version }}
+        JFROG_REPO: ${{ inputs.jfrog-files-repo }}
 
     - name: Checkout Hazelcast Mono
+      if: ${{ inputs.skip-checkout-mono == 'false' }}
       uses: actions/checkout@v7
       with:
         repository: ${{ github.repository_owner }}/hazelcast-mono
-        path: ${{ steps.tmpdir.outputs.name }}
+        path: ${{ steps.setup-folders-and-vars.outputs.mono-dir }}
         token: ${{ inputs.github-token }}
         fetch-depth: 1
 
-    - name: Run Version Evaluations
-      id: evaluate-version
+    - name: Download bundled MC version marker file
+      if: ${{ inputs.skip-set-mc-version == 'false' }}
+      uses: hazelcast/mono-actions/invoke-jfrog-cli@main
+      with:
+        command: 'download'
+        src-pattern: ${{ steps.setup-folders-and-vars.outputs.src-pattern }}
+        target-path: ${{ steps.setup-folders-and-vars.outputs.tmp-dir }}/
+        explode: false
+        expected-count: '1'
+        aws-role-to-assume: ${{ inputs.aws-role-to-assume }}
+
+    - name: Set versions
+      id: resolve-version
       shell: bash
       run: |
         set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
 
+        # Centralized script loading at the top
         source "${GITHUB_ACTION_PATH}/scripts/get.version.info.sh"
 
-        master_ver=$(get_master_version $MONO_PATH)
+        mc_ver="0.0.0"
+        if [[ "${SKIP_MC_SET}" == "false" ]]; then
+          mc_ver=$(cat "${MC_VER_FILE}")
+        fi
+
+        master_ver="0.0.0"
+        master_mm="0.0"
+        if [[ "${SKIP_MONO_CHECKOUT}" == "false" ]]; then
+          master_ver=$(get_master_version "${MONO_PATH}")
+          master_mm=$(get_major_minor_parts "${master_ver}")
+        fi
+
+        echo "bundled-mc-version=${mc_ver}" >> ${GITHUB_OUTPUT}
         echo "master-version=${master_ver}" >> ${GITHUB_OUTPUT}
-        echo "is-next-release-major=$(is_master_version_major $RELEASE_VERSION $master_ver)" >> ${GITHUB_OUTPUT}
+        echo "master-major-minor=${master_mm}" >> ${GITHUB_OUTPUT}
+        echo "rel-major-minor=$(get_major_minor_parts $RELEASE_VERSION)" >> ${GITHUB_OUTPUT}
         echo "is-latest-stable-release=$(is_latest_stable_release $RELEASE_VERSION $REPO_OWNER)" >> ${GITHUB_OUTPUT}
         echo "is-beta-release=$(is_beta_release $RELEASE_VERSION)" >> ${GITHUB_OUTPUT}
-        echo "is-major-minor=$(is_major_minor $RELEASE_VERSION)" >> ${GITHUB_OUTPUT}
-        echo "major-minor-ver=$(get_major_minor_parts $RELEASE_VERSION)" >> ${GITHUB_OUTPUT}
+        echo "is-rel-major-minor=$(is_major_minor $RELEASE_VERSION)" >> ${GITHUB_OUTPUT}
       env:
         RELEASE_VERSION: ${{ inputs.release-version }}
         REPO_OWNER: ${{ github.repository_owner }}
+        MONO_PATH: ${{ steps.setup-folders-and-vars.outputs.mono-dir }}
+        MC_VER_FILE: ${{ steps.setup-folders-and-vars.outputs.mc-ver-file-path }}
+        SKIP_MC_SET: ${{ inputs.skip-set-mc-version }}
+        SKIP_MONO_CHECKOUT: ${{ inputs.skip-checkout-mono }}
         GH_TOKEN: ${{ inputs.github-token }}
-        MONO_PATH: ${{ steps.tmpdir.outputs.name }}
