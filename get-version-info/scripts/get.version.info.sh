@@ -43,6 +43,7 @@ function is_latest_stable_release() {
 function is_beta_release() {
   local version=$1
   [[ "${version}" =~ -BETA-[0-9]+$ ]] && echo "true" || echo "false"
+  return 0
 }
 
 function is_major_minor() {
