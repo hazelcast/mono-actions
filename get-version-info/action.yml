@@ -124,3 +124,26 @@ runs:
         SKIP_MC_SET: ${{ inputs.skip-set-mc-version }}
         SKIP_MONO_CHECKOUT: ${{ inputs.skip-checkout-mono }}
         GH_TOKEN: ${{ inputs.github-token }}
+
+    - name: Log version variables
+      shell: bash
+      run: |
+        echo "========================================="
+        echo "   GET-VERSION-INFO OUTPUT VARIABLES"
+        echo "========================================="
+        echo "master-version:           ${MASTER_VERSION}"
+        echo "master-major-minor:       ${MASTER_MAJOR_MINOR}"
+        echo "rel-major-minor:          ${REL_MAJOR_MINOR}"
+        echo "bundled-mc-version:       ${BUNDLED_MC_VERSION}"
+        echo "is-beta-release:          ${IS_BETA_RELEASE}"
+        echo "is-rel-major-minor:       ${IS_REL_MAJOR_MINOR}"
+        echo "is-latest-stable-release: ${IS_LATEST_STABLE_RELEASE}"
+        echo "========================================="
+      env:
+        MASTER_VERSION: ${{ steps.resolve-version.outputs.master-version }}
+        MASTER_MAJOR_MINOR: ${{ steps.resolve-version.outputs.master-major-minor }}
+        REL_MAJOR_MINOR: ${{ steps.resolve-version.outputs.rel-major-minor }}
+        IS_LATEST_STABLE_RELEASE: ${{ steps.resolve-version.outputs.is-latest-stable-release }}
+        IS_BETA_RELEASE: ${{ steps.resolve-version.outputs.is-beta-release }}
+        IS_REL_MAJOR_MINOR: ${{ steps.resolve-version.outputs.is-rel-major-minor }}
+        BUNDLED_MC_VERSION: ${{ steps.resolve-version.outputs.bundled-mc-version }}
