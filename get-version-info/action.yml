@@ -1,27 +1,28 @@
 name: 'Gets various Mono version info'
 description: |
-  Evaluates and outputs Mono related version info used in other workflows e.g. hazelcast 
-  version updates in docs repos. The action checkouts out Mono locally
+  Resolves and outputs Mono related version info used in other workflows e.g. hazelcast
+  version updates in docs repos
+    1. checkouts out Mono locally to get project version (can be skipped)
+    2. sets the bundled MC version from JFrog downloaded `release.info-<version>.json`
+       file (can be skipped)
 inputs:
   release-version:
     description: 'The release version in progress'
     required: true
-  github-token:
-    description: 'The GitHub authentication token used for the GitHub CLI'
-    required: true
+  skip-set-mc-version:
+    description: 'Skip downloading and setting the bundled Management Center version'
+    default: 'false'
+  skip-checkout-mono:
+    description: 'Bypasses the Git clone of hazelcast-mono and skips master version parsing'
+    default: 'false'
   jfrog-files-repo:
     description: 'Jfrog preprod files repo'
     required: true
   aws-role-to-assume:
     description: 'AWS IAM Role ARN to assume via OIDC'
-  skip-set-mc-version:
-    description: 'Skip downloading and setting the bundled Management Center version'
-    required: false
-    default: 'false'
-  skip-checkout-mono:
-    description: 'Bypasses the Git clone of hazelcast-mono and skips master version parsing'
-    required: false
-    default: 'false'
+  github-token:
+    description: 'The GitHub authentication token used for the GitHub CLI'
+    required: true
 
 outputs:
   master-version:
@@ -33,18 +34,18 @@ outputs:
   rel-major-minor:
     description: 'The major.minor parts of `release-version`'
     value: ${{ steps.resolve-version.outputs.rel-major-minor }}
+  mc-version:
+    description: 'The Management Center version bundled with this release'
+    value: ${{ steps.resolve-version.outputs.mc-version }}
+  is-rel-major-minor:
+    description: 'Returns true if the patch component of release-version is zero'
+    value: ${{ steps.resolve-version.outputs.is-rel-major-minor }}
   is-latest-stable-release:
-    description: 'Returns true `release-version` (major.minor) is latest'
+    description: 'Returns true if `release-version` (major.minor) is latest'
     value: ${{ steps.resolve-version.outputs.is-latest-stable-release }}
   is-beta-release:
     description: 'Returns true if `release-version` has `*-BETA-*` in the name'
     value: ${{ steps.resolve-version.outputs.is-beta-release }}
-  is-rel-major-minor:
-    description: 'Returns true if the patch component of release-version is zero'
-    value: ${{ steps.resolve-version.outputs.is-rel-major-minor }}
-  bundled-mc-version:
-    description: 'The Management Center version extracted from the downloaded marker file'
-    value: ${{ steps.resolve-version.outputs.bundled-mc-version }}
 
 runs:
   using: 'composite'
@@ -56,13 +57,12 @@ runs:
         tmp_dir=$(mktemp -d)
         echo "tmp-dir=${tmp_dir}" >> ${GITHUB_OUTPUT}
 
-        # MC version file
-        mc_ver_file="ee-asset-mc-version-${RELEASE_VERSION}.txt"
+        # Release info json file
+        rel_info_file="release.info-${RELEASE_VERSION}.json"
+        echo "rel_info_file=${tmp_dir}/${rel_info_file}" >> ${GITHUB_OUTPUT}
+        echo "src-pattern=${JFROG_REPO}/hazelcast-enterprise/${rel_info_file}" >> ${GITHUB_OUTPUT}
 
-        echo "mc-ver-file-path=${tmp_dir}/${mc_ver_file}" >> ${GITHUB_OUTPUT}
-        echo "src-pattern=${JFROG_REPO}/hazelcast-enterprise/${mc_ver_file}" >> ${GITHUB_OUTPUT}
-
-        # Internal temporary path location inside workspace
+        # Unique folder for Mono checkout
         echo "mono-dir=mono-temp.${RANDOM}" >> ${GITHUB_OUTPUT}
       env:
         RELEASE_VERSION: ${{ inputs.release-version }}
@@ -94,25 +94,24 @@ runs:
       run: |
         set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
 
-        # Centralized script loading at the top
         source "${GITHUB_ACTION_PATH}/scripts/get.version.info.sh"
 
-        mc_ver="0.0.0"
-        if [[ "${SKIP_MC_SET}" == "false" ]]; then
-          mc_ver=$(cat "${MC_VER_FILE}")
+        mc_version="0.0.0"
+        if [[ "${SKIP_SET_MC_VERSION}" == "false" ]]; then
+          mc_version=$(jq -r '."mc-version"' ${REL_INFO_FILE})
         fi
 
         master_ver="0.0.0"
         master_mm="0.0"
-        if [[ "${SKIP_MONO_CHECKOUT}" == "false" ]]; then
+        if [[ "${SKIP_CHECKOUT_MONO}" == "false" ]]; then
           master_ver=$(get_master_version "${MONO_PATH}")
           master_mm=$(get_major_minor_parts "${master_ver}")
         fi
 
-        echo "bundled-mc-version=${mc_ver}" >> ${GITHUB_OUTPUT}
         echo "master-version=${master_ver}" >> ${GITHUB_OUTPUT}
         echo "master-major-minor=${master_mm}" >> ${GITHUB_OUTPUT}
         echo "rel-major-minor=$(get_major_minor_parts $RELEASE_VERSION)" >> ${GITHUB_OUTPUT}
+        echo "mc-version=${mc_version}" >> ${GITHUB_OUTPUT}
         echo "is-latest-stable-release=$(is_latest_stable_release $RELEASE_VERSION $REPO_OWNER)" >> ${GITHUB_OUTPUT}
         echo "is-beta-release=$(is_beta_release $RELEASE_VERSION)" >> ${GITHUB_OUTPUT}
         echo "is-rel-major-minor=$(is_major_minor $RELEASE_VERSION)" >> ${GITHUB_OUTPUT}
@@ -120,9 +119,9 @@ runs:
         RELEASE_VERSION: ${{ inputs.release-version }}
         REPO_OWNER: ${{ github.repository_owner }}
         MONO_PATH: ${{ steps.setup-folders-and-vars.outputs.mono-dir }}
-        MC_VER_FILE: ${{ steps.setup-folders-and-vars.outputs.mc-ver-file-path }}
-        SKIP_MC_SET: ${{ inputs.skip-set-mc-version }}
-        SKIP_MONO_CHECKOUT: ${{ inputs.skip-checkout-mono }}
+        REL_INFO_FILE: ${{ steps.setup-folders-and-vars.outputs.rel_info_file }}
+        SKIP_SET_MC_VERSION: ${{ inputs.skip-set-mc-version }}
+        SKIP_CHECKOUT_MONO: ${{ inputs.skip-checkout-mono }}
         GH_TOKEN: ${{ inputs.github-token }}
 
     - name: Log version variables
@@ -134,7 +133,7 @@ runs:
         echo "master-version:           ${MASTER_VERSION}"
         echo "master-major-minor:       ${MASTER_MAJOR_MINOR}"
         echo "rel-major-minor:          ${REL_MAJOR_MINOR}"
-        echo "bundled-mc-version:       ${BUNDLED_MC_VERSION}"
+        echo "mc-version:               ${MC_VERSION}"
         echo "is-beta-release:          ${IS_BETA_RELEASE}"
         echo "is-rel-major-minor:       ${IS_REL_MAJOR_MINOR}"
         echo "is-latest-stable-release: ${IS_LATEST_STABLE_RELEASE}"
@@ -143,7 +142,7 @@ runs:
         MASTER_VERSION: ${{ steps.resolve-version.outputs.master-version }}
         MASTER_MAJOR_MINOR: ${{ steps.resolve-version.outputs.master-major-minor }}
         REL_MAJOR_MINOR: ${{ steps.resolve-version.outputs.rel-major-minor }}
+        MC_VERSION: ${{ steps.resolve-version.outputs.mc-version }}
         IS_LATEST_STABLE_RELEASE: ${{ steps.resolve-version.outputs.is-latest-stable-release }}
         IS_BETA_RELEASE: ${{ steps.resolve-version.outputs.is-beta-release }}
         IS_REL_MAJOR_MINOR: ${{ steps.resolve-version.outputs.is-rel-major-minor }}
-        BUNDLED_MC_VERSION: ${{ steps.resolve-version.outputs.bundled-mc-version }}
