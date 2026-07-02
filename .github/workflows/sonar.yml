@@ -16,8 +16,6 @@ jobs:
         with:
             args: >
                 -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
-                -Dsonar.projectKey=hazelcast_mono-actions-test
-                -Dsonar.sources=.
-                -Dsonar.scm.disabled=true 
+                -Dsonar.projectKey=hazelcast_mono-actions
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
