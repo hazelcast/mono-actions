@@ -108,19 +108,19 @@ runs:
       uses: hazelcast/mono-actions/invoke-jfrog-cli@main
       with:
         command: 'upload'
-        src-pattern: ${{ steps.setup-folders-and-vars.outputs.src-pattern }}
-        target-path: ${{ inputs.jfrog-files-repo }}/hazelcast-enterprise/
+        expected-count: '1'
+        src-pattern: ${{ steps.setup-folders-and-vars.outputs.rel_info_file }}
+        target-path: ${{ steps.setup-folders-and-vars.outputs.src-pattern }}
         aws-role-to-assume: ${{ inputs.aws-role-to-assume }}
 
     - name: Download release info file from JFrog
       if: ${{ inputs.command == 'get' }}
       uses: hazelcast/mono-actions/invoke-jfrog-cli@main
       with:
-        command: 'download' 
+        command: 'download'
+        expected-count: '1'
         src-pattern: ${{ steps.setup-folders-and-vars.outputs.src-pattern }}
         target-path: ${{ steps.setup-folders-and-vars.outputs.tmp-dir }}/
-        explode: false
-        expected-count: '1'
         aws-role-to-assume: ${{ inputs.aws-role-to-assume }}
 
     - name: Export Action Outputs
