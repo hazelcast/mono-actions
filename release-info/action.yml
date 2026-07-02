@@ -62,7 +62,7 @@ runs:
         tmp_dir=$(mktemp -d)
         echo "tmp-dir=${tmp_dir}" >> ${GITHUB_OUTPUT}
 
-        rel_info_file="${CUSTOME_REL_INFO_FILE:-release.info-${RELEASE_VERSION}.json}"
+        rel_info_file="${CUSTOME_REL_INFO_FILE:-ReleaseInfo-${RELEASE_VERSION}.json}"
         echo "rel_info_file=${tmp_dir}/${rel_info_file}" >> ${GITHUB_OUTPUT}
 
         # JFrog targets
