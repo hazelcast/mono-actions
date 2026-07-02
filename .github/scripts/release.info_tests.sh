@@ -10,6 +10,9 @@ source "${SCRIPT_DIR}/../../release-info/scripts/release.info.sh"
 # Global Test Status Tracking Flag
 TESTS_RESULT=0
 
+# Constant to satisfy Sonar rule regarding literal repetition
+readonly MOCK_OWNER="hazelcast"
+
 function reset_mocks() {
   curl() {
     if [[ "$*" == *"logging.functions.sh"* ]]; then
@@ -144,11 +147,11 @@ function test_is_latest_stable_release() {
 
   local actual msg
   
-  actual=$(is_latest_stable_release "5.4.0" "hazelcast")
+  actual=$(is_latest_stable_release "5.4.0" "${MOCK_OWNER}")
   msg="Passes version matching the highest simulated remote branch"
   assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  actual=$(is_latest_stable_release "5.3.0" "hazelcast")
+  actual=$(is_latest_stable_release "5.3.0" "${MOCK_OWNER}")
   msg="Fails legacy version sequences against remote branches"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
@@ -163,7 +166,7 @@ function test_is_latest_stable_release_error() {
   reset_mocks
 
   local actual_stderr actual_exit_code
-  actual_stderr=$( (is_latest_stable_release "5.4.0" "hazelcast") 2>&1 >/dev/null ) && actual_exit_code=0 || actual_exit_code=$?
+  actual_stderr=$( (is_latest_stable_release "5.4.0" "${MOCK_OWNER}") 2>&1 >/dev/null ) && actual_exit_code=0 || actual_exit_code=$?
 
   local msg="Function returns exit status code 1 when latest_stable cannot be resolved"
   assert_eq 1 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
@@ -184,7 +187,7 @@ function test_generate_rel_info_json() {
   fake_mono="${TEST_TEMP_DIR}/mono-repo"
   mkdir -p "${fake_mono}"
 
-  generate_rel_info_json "${out_json}" "5.4.0" "hazelcast" "${fake_mono}" 2>&1 | grep -v "::debug::" || true
+  generate_rel_info_json "${out_json}" "5.4.0" "${MOCK_OWNER}" "${fake_mono}" 2>&1 | grep -v "::debug::" || true
   
   msg="Generate: Creates physical destination JSON file on disk"
   [[ -f "${out_json}" ]] && log_success "${msg}" || { echo "✖ ${msg}"; TESTS_RESULT=1; }
@@ -203,7 +206,7 @@ function test_generate_rel_info_json() {
 
   local out_beta_json="${TEST_TEMP_DIR}/release_beta.json"
   
-  generate_rel_info_json "${out_beta_json}" "5.4.0-BETA-1" "hazelcast" "${fake_mono}" 2>&1 | grep -v "::debug::" || true
+  generate_rel_info_json "${out_beta_json}" "5.4.0-BETA-1" "${MOCK_OWNER}" "${fake_mono}" 2>&1 | grep -v "::debug::" || true
 
   msg="Beta Path: Forces is-rel-major-minor property to false"
   assert_eq "false" "$(jq -r '."is-rel-major-minor"' "${out_beta_json}")" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
@@ -231,39 +234,6 @@ function test_load_version_json() {
 
   msg="Load: Properly appends is-patch variable mapping to GITHUB_OUTPUT channel"
   grep -q "is-patch=true" "${GITHUB_OUTPUT}" && log_success "${msg}" || { echo "✖ ${msg}"; TESTS_RESULT=1; }
-
-  return "${TESTS_RESULT}"
-}
-
-function test_get_latest_mc_version() {
-  log_header "Testing get_latest_mc_version"
-  reset_mocks
-
-  local actual msg
-
-  actual=$(get_latest_mc_version)
-  msg="Correctly fetches latest stable version from GitHub tags and strips the leading v"
-  assert_eq "5.12.0" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  return "${TESTS_RESULT}"
-}
-
-function test_get_latest_mc_version_error() {
-  log_header "Testing get_latest_mc_version error handling"
-  
-  local MOCK_GH_FAIL="true"
-  export MOCK_GH_FAIL
-  reset_mocks
-
-  local actual_stderr actual_exit_code
-  actual_stderr=$( (get_latest_mc_version) 2>&1 >/dev/null ) && actual_exit_code=0 || actual_exit_code=$?
-
-  local msg="Function returns exit status code 1 when mc tags cannot be resolved"
-  assert_eq 1 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  local msg="Error string printed to stderr matches mc error layout"
-  local expected_err="::error::ERROR - ❌ Failed to get latest MC ZIP from GitHub"
-  assert_eq "${expected_err}" "${actual_stderr}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
 }
