@@ -1,0 +1,137 @@
+name: 'Gets various Mono version info'
+description: |
+  Resolves and outputs Mono related version info used in other workflows e.g. hazelcast
+  version updates in docs repos
+inputs:
+  command:
+    description: 'The operation type'
+    type: choice
+    default: 'get'
+    options:
+      - generate
+      - get
+  release-version:
+    description: 'The release version in progress'
+    required: true
+  jfrog-files-repo:
+    description: 'Jfrog preprod files repo'
+    required: true
+  aws-role-to-assume:
+    description: 'AWS IAM Role ARN to assume via OIDC'
+  github-token:
+    description: 'The GitHub authentication token used for the GitHub CLI'
+    required: true
+  rel-info-file:
+    description: 'Only used for testing. Allows calling test workflow to pass custom name to avoid colliding in JFrog'
+    required: true
+
+outputs:
+  master-version:
+    description: 'The version parsed from master pom'
+    value: ${{ steps.export-versions.outputs.master-version }}
+  master-major-minor:
+    description: 'The major.minor parts of `master-version`'
+    value: ${{ steps.export-versions.outputs.master-major-minor }}
+  rel-major-minor:
+    description: 'The major.minor parts of `release-version`'
+    value: ${{ steps.export-versions.outputs.rel-major-minor }}
+  mc-version:
+    description: 'The Management Center version bundled with this release'
+    value: ${{ steps.export-versions.outputs.mc-version }}
+  is-rel-major-minor:
+    description: 'Returns true if the patch component of release-version is zero and not BETA'
+    value: ${{ steps.export-versions.outputs.is-rel-major-minor }}
+  is-patch-release:
+    description: 'Returns true if the patch component of release-version is non-zero'
+    value: ${{ steps.export-versions.outputs.is-patch-release }}
+  is-latest-stable-release:
+    description: 'Returns true if `release-version` (major.minor) is latest'
+    value: ${{ steps.export-versions.outputs.is-latest-stable-release }}
+  is-beta-release:
+    description: 'Returns true if `release-version` has `*-BETA-*` in the name'
+    value: ${{ steps.export-versions.outputs.is-beta-release }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup folder and vars
+      id: setup-folders-and-vars
+      shell: bash
+      run: |
+        set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
+        tmp_dir=$(mktemp -d)
+        echo "tmp-dir=${tmp_dir}" >> ${GITHUB_OUTPUT}
+
+        rel_info_file="${CUSTOME_REL_INFO_FILE:-ReleaseInfo-${RELEASE_VERSION}.json}"
+        echo "rel_info_file=${tmp_dir}/${rel_info_file}" >> ${GITHUB_OUTPUT}
+
+        # JFrog targets
+        jfrog_path="hazelcast-enterprise${CUSTOME_REL_INFO_FILE:+/testing-folder-upload}"
+        target_dir="${JFROG_REPO}/${jfrog_path}/"
+        echo "target-dir=${target_dir}" >> ${GITHUB_OUTPUT}
+        echo "src-pattern=${target_dir}${rel_info_file}" >> ${GITHUB_OUTPUT}
+
+        # needs to be checked out in WORKSPACE
+        echo "mono-dir=mono-temp.${RANDOM}" >> ${GITHUB_OUTPUT}
+      env:
+        RELEASE_VERSION: ${{ inputs.release-version }}
+        JFROG_REPO: ${{ inputs.jfrog-files-repo }}
+        CUSTOME_REL_INFO_FILE: ${{ inputs.rel-info-file }}
+
+    - name: Checkout Hazelcast Mono
+      if: ${{ inputs.command == 'generate' }}
+      uses: actions/checkout@v7
+      with:
+        repository: ${{ github.repository_owner }}/hazelcast-mono
+        path: ${{ steps.setup-folders-and-vars.outputs.mono-dir }}
+        token: ${{ inputs.github-token }}
+        fetch-depth: 1
+
+    - name: Execute Script Mode (Generate Json)
+      if: ${{ inputs.command == 'generate' }}
+      shell: bash
+      run: |
+        set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
+        source "${GITHUB_ACTION_PATH}/scripts/release.info.sh"
+        
+        generate_rel_info_json \
+          "${REL_INFO_FILE}" \
+          "${RELEASE_VERSION}" \
+          "${REPO_OWNER}" \
+          "${MONO_PATH}"
+      env:
+        RELEASE_VERSION: ${{ inputs.release-version }}
+        REPO_OWNER: ${{ github.repository_owner }}
+        MONO_PATH: ${{ steps.setup-folders-and-vars.outputs.mono-dir }}
+        REL_INFO_FILE: ${{ steps.setup-folders-and-vars.outputs.rel_info_file }}
+        GH_TOKEN: ${{ inputs.github-token }}
+
+    - name: Upload Finished Version JSON back to JFrog
+      if: ${{ inputs.command == 'generate' }}
+      uses: hazelcast/mono-actions/invoke-jfrog-cli@main
+      with:
+        command: 'upload'
+        expected-count: '1'
+        src-pattern: ${{ steps.setup-folders-and-vars.outputs.rel_info_file }}
+        target-path: ${{ steps.setup-folders-and-vars.outputs.target-dir }}
+        aws-role-to-assume: ${{ inputs.aws-role-to-assume }}
+
+    - name: Download release info file from JFrog
+      if: ${{ inputs.command == 'get' }}
+      uses: hazelcast/mono-actions/invoke-jfrog-cli@main
+      with:
+        command: 'download'
+        expected-count: '1'
+        src-pattern: ${{ steps.setup-folders-and-vars.outputs.src-pattern }}
+        target-path: ${{ steps.setup-folders-and-vars.outputs.tmp-dir }}/
+        aws-role-to-assume: ${{ inputs.aws-role-to-assume }}
+
+    - name: Export Action Outputs
+      id: export-versions
+      shell: bash
+      run: |
+        set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
+        source "${GITHUB_ACTION_PATH}/scripts/release.info.sh"
+        load_version_json "${REL_INFO_FILE}"
+      env:
+        REL_INFO_FILE: ${{ steps.setup-folders-and-vars.outputs.rel_info_file }}
