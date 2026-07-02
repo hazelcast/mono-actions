@@ -56,7 +56,7 @@ function is_major_minor() {
 function is_patch_release() {
   local version=$1
   local parts=($(get_version_parts "${version}"))
-  [[ -n "${parts[2]}" && "${parts[2]}" -gt 0 ]] && echo "true" || echo "false"
+  [[ "${parts[2]}" -gt 0 ]] && echo "true" || echo "false"
   return 0
 }
 
