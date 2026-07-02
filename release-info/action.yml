@@ -108,7 +108,7 @@ runs:
       uses: hazelcast/mono-actions/invoke-jfrog-cli@main
       with:
         command: 'upload'
-        src-pattern: ${{ steps.setup-folders-and-vars.outputs.rel_info_file }}
+        src-pattern: ${{ steps.setup-folders-and-vars.outputs.src-pattern }}
         target-path: ${{ inputs.jfrog-files-repo }}/hazelcast-enterprise/
         aws-role-to-assume: ${{ inputs.aws-role-to-assume }}
 
