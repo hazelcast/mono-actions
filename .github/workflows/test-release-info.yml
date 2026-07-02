@@ -6,7 +6,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    environment: sandbox
     permissions:
       id-token: write
     env:
@@ -31,7 +30,7 @@ jobs:
           command: 'generate'
           release-version: '5.5.0'
           github-token: ${{ secrets.GH_TOKEN }}
-          jfrog-files-repo: ${{ vars.JFROG_PREPROD_FILES_REPO }}
+          jfrog-files-repo: sandbox-files-preprod
           aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
           rel-info-file: "test-smoke-${{ github.run_id }}-${{ github.run_attempt }}.json"
 
@@ -60,7 +59,7 @@ jobs:
           command: 'get'
           release-version: '5.5.0'
           github-token: ${{ secrets.GH_TOKEN }}
-          jfrog-files-repo: ${{ vars.JFROG_PREPROD_FILES_REPO }}
+          jfrog-files-repo: sandbox-files-preprod
           aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
           rel-info-file: "test-smoke-${{ github.run_id }}-${{ github.run_attempt }}.json"
 

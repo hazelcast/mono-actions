@@ -64,8 +64,11 @@ runs:
 
         rel_info_file="${CUSTOME_REL_INFO_FILE:-release.info-${RELEASE_VERSION}.json}"
         echo "rel_info_file=${tmp_dir}/${rel_info_file}" >> ${GITHUB_OUTPUT}
-        echo "src-pattern=${JFROG_REPO}/hazelcast-enterprise/${rel_info_file}" >> ${GITHUB_OUTPUT}
 
+        jfrog_path="hazelcast-enterprise${CUSTOME_REL_INFO_FILE:+/testing-folder-upload}"
+        echo "src-pattern=${JFROG_REPO}/${jfrog_path}/${rel_info_file}" >> ${GITHUB_OUTPUT}
+
+        # needs to in WORKSPACE for checkout to work
         echo "mono-dir=mono-temp.${RANDOM}" >> ${GITHUB_OUTPUT}
       env:
         RELEASE_VERSION: ${{ inputs.release-version }}
