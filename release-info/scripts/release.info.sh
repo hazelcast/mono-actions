@@ -130,7 +130,7 @@ function generate_rel_info_json() {
   is_beta=$(is_beta_release "${release_version}")
   is_patch=$(is_patch_release "${release_version}")
   is_rel_mm=$(is_major_minor "${release_version}")
-  [[ "${is_beta}" == "true" ]] && is_rel_mm="false"
+  [[ "${is_beta}" == "true" ]] && is_rel_mm="false" # exclude EBTA as we have is_beta
 
   mc_version=$(get_latest_mc_version)
 
@@ -151,7 +151,7 @@ function generate_rel_info_json() {
       "is-latest-stable-release": $ilsr,
       "is-beta-release": $ibr,
       "is-rel-major-minor": $irm,
-      "is-patch": $ip
+      "is-patch-release": $ip
     }' > "${output_file}"
 
   log_version_variables "${output_file}"

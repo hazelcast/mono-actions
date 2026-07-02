@@ -201,8 +201,8 @@ function test_generate_rel_info_json() {
   msg="Generate: Resolves true for is-rel-major-minor property"
   assert_eq "true" "$(jq -r '."is-rel-major-minor"' "${out_json}")" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  msg="Generate: Flags is-patch accurately to false"
-  assert_eq "false" "$(jq -r '."is-patch"' "${out_json}")" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  msg="Generate: Flags is-patch-release accurately to false"
+  assert_eq "false" "$(jq -r '."is-patch-release"' "${out_json}")" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   local out_beta_json="${TEST_TEMP_DIR}/release_beta.json"
   
@@ -221,10 +221,10 @@ function test_load_version_json() {
   local mock_input msg
   mock_input="${TEST_TEMP_DIR}/mock_input.json"
   truncate -s 0 "${GITHUB_OUTPUT}"
-  
+
   echo '{
     "master-version": "5.5.0",
-    "is-patch": "true"
+    "is-patch-release": "true"
   }' > "${mock_input}"
 
   load_version_json "${mock_input}" > /dev/null 2>&1
@@ -232,8 +232,8 @@ function test_load_version_json() {
   msg="Load: Properly appends master-version variable mapping to GITHUB_OUTPUT channel"
   grep -q "master-version=5.5.0" "${GITHUB_OUTPUT}" && log_success "${msg}" || { echo "✖ ${msg}"; TESTS_RESULT=1; }
 
-  msg="Load: Properly appends is-patch variable mapping to GITHUB_OUTPUT channel"
-  grep -q "is-patch=true" "${GITHUB_OUTPUT}" && log_success "${msg}" || { echo "✖ ${msg}"; TESTS_RESULT=1; }
+  msg="Load: Properly appends is-patch-release variable mapping to GITHUB_OUTPUT channel"
+  grep -q "is-patch-release=true" "${GITHUB_OUTPUT}" && log_success "${msg}" || { echo "✖ ${msg}"; TESTS_RESULT=1; }
 
   return "${TESTS_RESULT}"
 }

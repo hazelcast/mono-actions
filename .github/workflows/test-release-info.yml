@@ -17,7 +17,7 @@ jobs:
         assert_eq "false" "${SUITE_LATEST_STABLE}" "is-latest-stable-release should be false" || TESTS_RESULT=$?
         assert_eq "false" "${SUITE_BETA_RELEASE}" "is-beta-release should be false" || TESTS_RESULT=$?
         assert_eq "true" "${SUITE_IS_MAJOR_MINOR}" "is-rel-major-minor should be true" || TESTS_RESULT=$?
-        assert_eq "false" "${SUITE_IS_PATCH}" "is-patch should be false" || TESTS_RESULT=$?
+        assert_eq "false" "${SUITE_IS_PATCH}" "is-patch-release should be false" || TESTS_RESULT=$?
 
     steps:
       - name: Checkout current action repository
@@ -50,7 +50,7 @@ jobs:
           SUITE_LATEST_STABLE: ${{ steps.generate-action.outputs.is-latest-stable-release }}
           SUITE_BETA_RELEASE: ${{ steps.generate-action.outputs.is-beta-release }}
           SUITE_IS_MAJOR_MINOR: ${{ steps.generate-action.outputs.is-rel-major-minor }}
-          SUITE_IS_PATCH: ${{ steps.generate-action.outputs.is-patch }}
+          SUITE_IS_PATCH: ${{ steps.generate-action.outputs.is-patch-release }}
 
       - name: Run Action Retrieval Test
         id: get-action
@@ -79,4 +79,4 @@ jobs:
           SUITE_LATEST_STABLE: ${{ steps.get-action.outputs.is-latest-stable-release }}
           SUITE_BETA_RELEASE: ${{ steps.get-action.outputs.is-beta-release }}
           SUITE_IS_MAJOR_MINOR: ${{ steps.get-action.outputs.is-rel-major-minor }}
-          SUITE_IS_PATCH: ${{ steps.get-action.outputs.is-patch }}
+          SUITE_IS_PATCH: ${{ steps.get-action.outputs.is-patch-release }}

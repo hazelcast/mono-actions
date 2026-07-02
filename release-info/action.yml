@@ -41,9 +41,9 @@ outputs:
   is-rel-major-minor:
     description: 'Returns true if the patch component of release-version is zero and not BETA'
     value: ${{ steps.export-versions.outputs.is-rel-major-minor }}
-  is-patch:
+  is-patch-release:
     description: 'Returns true if the patch component of release-version is non-zero'
-    value: ${{ steps.export-versions.outputs.is-patch }}
+    value: ${{ steps.export-versions.outputs.is-patch-release }}
   is-latest-stable-release:
     description: 'Returns true if `release-version` (major.minor) is latest'
     value: ${{ steps.export-versions.outputs.is-latest-stable-release }}
