@@ -34,7 +34,7 @@ jobs:
           aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
           rel-info-file: "test-smoke-${{ github.run_id }}-${{ github.run_attempt }}.json"
 
-      - name: Validate Generation Outputs
+      - name: Validate Generation Outputss
         run: |
           source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
