@@ -36,7 +36,7 @@ jobs:
 
       - name: Validate Generation Outputs
         run: |
-          source /dev/stdin <<< "$(curl --fail --silent https://githubusercontent.com)"
+          source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
           TESTS_RESULT=0
           log_header "Verifying Action Output Flags (GENERATE)"
@@ -65,7 +65,7 @@ jobs:
 
       - name: Validate Retrieval Outputs
         run: |
-          source /dev/stdin <<< "$(curl --fail --silent https://githubusercontent.com)"
+          source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
           TESTS_RESULT=0
           log_header "Verifying Action Output Flags (GET)"
