@@ -65,10 +65,13 @@ runs:
         rel_info_file="${CUSTOME_REL_INFO_FILE:-release.info-${RELEASE_VERSION}.json}"
         echo "rel_info_file=${tmp_dir}/${rel_info_file}" >> ${GITHUB_OUTPUT}
 
+        # JFrog targets
         jfrog_path="hazelcast-enterprise${CUSTOME_REL_INFO_FILE:+/testing-folder-upload}"
-        echo "src-pattern=${JFROG_REPO}/${jfrog_path}/${rel_info_file}" >> ${GITHUB_OUTPUT}
+        target_dir="${JFROG_REPO}/${jfrog_path}/"
+        echo "target-dir=${target_dir}" >> ${GITHUB_OUTPUT}
+        echo "src-pattern=${target_dir}${rel_info_file}" >> ${GITHUB_OUTPUT}
 
-        # needs to in WORKSPACE for checkout to work
+        # needs to be checked out in WORKSPACE
         echo "mono-dir=mono-temp.${RANDOM}" >> ${GITHUB_OUTPUT}
       env:
         RELEASE_VERSION: ${{ inputs.release-version }}
@@ -110,7 +113,7 @@ runs:
         command: 'upload'
         expected-count: '1'
         src-pattern: ${{ steps.setup-folders-and-vars.outputs.rel_info_file }}
-        target-path: ${{ steps.setup-folders-and-vars.outputs.src-pattern }}
+        target-path: ${{ steps.setup-folders-and-vars.outputs.target-dir }}
         aws-role-to-assume: ${{ inputs.aws-role-to-assume }}
 
     - name: Download release info file from JFrog
@@ -129,7 +132,6 @@ runs:
       run: |
         set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
         source "${GITHUB_ACTION_PATH}/scripts/release.info.sh"
-        
         load_version_json "${REL_INFO_FILE}"
       env:
         REL_INFO_FILE: ${{ steps.setup-folders-and-vars.outputs.rel_info_file }}
