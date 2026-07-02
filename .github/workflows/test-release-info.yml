@@ -1,0 +1,83 @@
+name: Test test-release-info action
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    environment: sandbox
+    permissions:
+      id-token: write
+    env:
+      VALIDATE_SCRIPT: |
+        assert_not_empty "${SUITE_MASTER_VER}" "master-version should be populated" || TESTS_RESULT=$?
+        assert_not_empty "${SUITE_MASTER_MM}" "master-major-minor should be populated" || TESTS_RESULT=$?
+        assert_not_empty "${SUITE_REL_MM}" "rel-major-minor should be populated" || TESTS_RESULT=$?
+        assert_not_empty "${SUITE_MC_VER}" "mc-version should be populated" || TESTS_RESULT=$?
+        assert_not_empty "${SUITE_LATEST_STABLE}" "is-latest-stable-release should be populated" || TESTS_RESULT=$?
+        assert_not_empty "${SUITE_BETA_RELEASE}" "is-beta-release should be populated" || TESTS_RESULT=$?
+        assert_not_empty "${SUITE_IS_MAJOR_MINOR}" "is-rel-major-minor should be populated" || TESTS_RESULT=$?
+        assert_not_empty "${SUITE_IS_PATCH}" "is-patch should be populated" || TESTS_RESULT=$?
+
+    steps:
+      - name: Checkout current action repository
+        uses: actions/checkout@v7
+
+      - name: Run Action Generation Test
+        id: generate-action
+        uses: ./release-info
+        with:
+          command: 'generate'
+          release-version: '5.5.0'
+          github-token: ${{ secrets.GH_TOKEN }}
+          jfrog-files-repo: ${{ vars.JFROG_PREPROD_FILES_REPO }}
+          aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+          rel-info-file: "test-smoke-${{ github.run_id }}-${{ github.run_attempt }}.json"
+
+      - name: Validate Generation Outputs
+        run: |
+          source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+
+          TESTS_RESULT=0
+          log_header "Verifying Action Output Flags (GENERATE)"
+          eval "$VALIDATE_SCRIPT"
+          assert_eq 0 "$TESTS_RESULT" "All tests should pass"
+        env:
+          SUITE_MASTER_VER: ${{ steps.generate-action.outputs.master-version }}
+          SUITE_MASTER_MM: ${{ steps.generate-action.outputs.master-major-minor }}
+          SUITE_REL_MM: ${{ steps.generate-action.outputs.rel-major-minor }}
+          SUITE_MC_VER: ${{ steps.generate-action.outputs.mc-version }}
+          SUITE_LATEST_STABLE: ${{ steps.generate-action.outputs.is-latest-stable-release }}
+          SUITE_BETA_RELEASE: ${{ steps.generate-action.outputs.is-beta-release }}
+          SUITE_IS_MAJOR_MINOR: ${{ steps.generate-action.outputs.is-rel-major-minor }}
+          SUITE_IS_PATCH: ${{ steps.generate-action.outputs.is-patch }}
+
+      - name: Run Action Retrieval Test
+        id: get-action
+        uses: ./release-info
+        with:
+          command: 'get'
+          release-version: '5.5.0'
+          github-token: ${{ secrets.GH_TOKEN }}
+          jfrog-files-repo: ${{ vars.JFROG_PREPROD_FILES_REPO }}
+          aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+          rel-info-file: "test-smoke-${{ github.run_id }}-${{ github.run_attempt }}.json"
+
+      - name: Validate Retrieval Outputs
+        run: |
+          source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+
+          TESTS_RESULT=0
+          log_header "Verifying Action Output Flags (GET)"
+          eval "$VALIDATE_SCRIPT"
+          assert_eq 0 "$TESTS_RESULT" "All tests should pass"
+        env:
+          SUITE_MASTER_VER: ${{ steps.get-action.outputs.master-version }}
+          SUITE_MASTER_MM: ${{ steps.get-action.outputs.master-major-minor }}
+          SUITE_REL_MM: ${{ steps.get-action.outputs.rel-major-minor }}
+          SUITE_MC_VER: ${{ steps.get-action.outputs.mc-version }}
+          SUITE_LATEST_STABLE: ${{ steps.get-action.outputs.is-latest-stable-release }}
+          SUITE_BETA_RELEASE: ${{ steps.get-action.outputs.is-beta-release }}
+          SUITE_IS_MAJOR_MINOR: ${{ steps.get-action.outputs.is-rel-major-minor }}
+          SUITE_IS_PATCH: ${{ steps.get-action.outputs.is-patch }}
