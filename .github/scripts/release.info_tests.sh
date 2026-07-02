@@ -18,6 +18,7 @@ function reset_mocks() {
     elif [[ "$*" == *"maven.functions.sh"* ]]; then
       echo "function get_project_version() { echo \"5.5.0-SNAPSHOT\"; }"
     fi
+    return 0
   }
   export -f curl
 
@@ -34,6 +35,7 @@ function reset_mocks() {
       echo "5.12.0"
       echo "5.1.0"
     fi
+    return 0
   }
   export -f gh
 }
