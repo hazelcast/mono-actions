@@ -14,10 +14,10 @@ jobs:
         assert_not_empty "${SUITE_MASTER_MM}" "master-major-minor should be populated" || TESTS_RESULT=$?
         assert_not_empty "${SUITE_REL_MM}" "rel-major-minor should be populated" || TESTS_RESULT=$?
         assert_not_empty "${SUITE_MC_VER}" "mc-version should be populated" || TESTS_RESULT=$?
-        assert_not_empty "${SUITE_LATEST_STABLE}" "is-latest-stable-release should be populated" || TESTS_RESULT=$?
-        assert_not_empty "${SUITE_BETA_RELEASE}" "is-beta-release should be populated" || TESTS_RESULT=$?
-        assert_not_empty "${SUITE_IS_MAJOR_MINOR}" "is-rel-major-minor should be populated" || TESTS_RESULT=$?
-        assert_not_empty "${SUITE_IS_PATCH}" "is-patch should be populated" || TESTS_RESULT=$?
+        assert_eq "false" "${SUITE_LATEST_STABLE}" "is-latest-stable-release should be false" || TESTS_RESULT=$?
+        assert_eq "false" "${SUITE_BETA_RELEASE}" "is-beta-release should be false" || TESTS_RESULT=$?
+        assert_eq "true" "${SUITE_IS_MAJOR_MINOR}" "is-rel-major-minor should be true" || TESTS_RESULT=$?
+        assert_eq "false" "${SUITE_IS_PATCH}" "is-patch should be false" || TESTS_RESULT=$?
 
     steps:
       - name: Checkout current action repository
@@ -36,7 +36,7 @@ jobs:
 
       - name: Validate Generation Outputs
         run: |
-          source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+          source /dev/stdin <<< "$(curl --fail --silent https://githubusercontent.com)"
 
           TESTS_RESULT=0
           log_header "Verifying Action Output Flags (GENERATE)"
@@ -65,7 +65,7 @@ jobs:
 
       - name: Validate Retrieval Outputs
         run: |
-          source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+          source /dev/stdin <<< "$(curl --fail --silent https://githubusercontent.com)"
 
           TESTS_RESULT=0
           log_header "Verifying Action Output Flags (GET)"
