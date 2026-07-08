@@ -1,4 +1,4 @@
-source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
+source /dev/stdin <<< "$(curl --fail --retry 5 --retry-all-errors --show-error --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
 
 # Default JFrog CLI thread count for concurrency. Use a different thread count
 # before calling any functions (where applicable):

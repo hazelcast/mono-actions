@@ -6,7 +6,7 @@ export GH_DEBUG=${RUNNER_DEBUG:+1}
 REPO_NAME=$1
 BRANCH_NAME=$2
 
-source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
+source /dev/stdin <<< "$(curl --fail --retry 5 --retry-all-errors --show-error --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
 
 TMP_REPO_DIR=tmp-repo
 gh repo clone "${REPO_NAME}" "${TMP_REPO_DIR}" -- --filter=blob:none --no-checkout --single-branch --branch "${BRANCH_NAME}"
