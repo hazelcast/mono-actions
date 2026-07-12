@@ -8,27 +8,46 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+    env:
+      RELEASE_VERSION: '5.5.0'
+      JFROG_REPO: sandbox-files-preprod
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+
+      - name: Generate temp Release Info
+        uses: hazelcast/mono-actions/release-info@DI-719-migrate-antora-1
+        with:
+          mode: 'generate'
+          release-version: ${{ env.RELEASE_VERSION }}
+          github-token: ${{ secrets.GH_TOKEN }}
+          jfrog-files-repo: ${{ env.JFROG_REPO }}
+          aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+          is-test-run: true
 
       - name: Download Management Center (JFROG)
         id: test-mc-jfrog
         uses: ./download-latest-management-center
         with:
           license-type: 'LICENSED'
-          aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+          release-version: ${{ env.RELEASE_VERSION }}
+          jfrog-files-repo: ${{ env.JFROG_REPO }}
           github-token: ${{ secrets.GH_TOKEN }}
+          aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+          is-test-run: true
 
       - name: Download Management Center (S3)
         id: test-mc-s3
         uses: ./download-latest-management-center
         with:
           license-type: 'NLC'
+          release-version: ${{ env.RELEASE_VERSION }}
+          jfrog-files-repo: ${{ env.JFROG_REPO }}
           aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
           aws-s3-path: ${{ vars.S3_MANCENTER_NLC_PATH }}
           unzip-folder: '/tmp/custom-mc-unzip-dir'
           github-token: ${{ secrets.GH_TOKEN }}
+          is-test-run: true
 
       - name: Test outputs
         run: |

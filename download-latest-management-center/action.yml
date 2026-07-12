@@ -3,6 +3,9 @@ description: |
   Downloads latest released Management Center distribution zip from different known locations
 
 inputs:
+  release-version:
+    description: 'The release version in progress'
+    required: true
   license-type:
     description: "The license type"
     type: choice
@@ -10,23 +13,29 @@ inputs:
       - LICENSED # licensed public version
       - NLC # private operator version
     required: true
-  aws-role-to-assume:
-    description: 'AWS Role to assume for accessing secrets'
-    required: true
   unzip-folder:
     description: "Folder to unzip the MC zip; otherwise, creates /tmp/... folder"
     required: false
+  jfrog-files-repo:
+    description: 'Jfrog preprod files repo'
+    required: true
+  aws-role-to-assume:
+    description: 'AWS Role to assume for accessing secrets'
+    required: true
   aws-s3-path:
     description: "The S3 path required for licensed variant"
     required: false
   github-token:
     description: "The GitHub Token used to query the repository tags"
     required: true
+  is-test-run:
+    description: 'When true, uses a temporary JSON file and testing folder path'
+    type: boolean
 
 outputs:
   name:
     description: 'MC name with version'
-    value: ${{ steps.resolve-latest-mc-zip.outputs.name }}
+    value: ${{ steps.get-mc-download-vars.outputs.name }}
   unzip-folder:
     description: 'Absolute unzipped path'
     value: ${{ steps.get-mc-download-vars.outputs.unzip-folder }}
@@ -34,34 +43,15 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Get latest ManCenter zip name
-      id: resolve-latest-mc-zip
-      shell: bash
-      run: |
-        set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
-
-        source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
-
-        LATEST_MC_VER=$( \
-          gh api \
-            repos/hazelcast/management-center/tags \
-            --paginate \
-            --jq '.[] | select(.name | test("^v?[0-9]+\\.[0-9]+\\.[0-9]+$")) | .name | ltrimstr("v")' | \
-          sort --version-sort --reverse | \
-          head --lines 1
-        )
-
-        if [[ -z "${LATEST_MC_VER}" ]]; then
-          echoerr "Failed to get latest MC ZIP from GitHub"
-          exit 1
-        fi
-
-        MC_NAME="hazelcast-management-center-${LATEST_MC_VER}"
-        echo "Found ManCenter version: '${MC_NAME}'"
-        echo "name=${MC_NAME}" >> ${GITHUB_OUTPUT}
-        echo "name-zip=${MC_NAME}.zip" >> ${GITHUB_OUTPUT}
-      env:
-        GH_TOKEN: ${{ inputs.github-token }}
+    - name: Get release info
+      id: get-rel-info
+      uses: hazelcast/mono-actions/release-info@DI-719-migrate-antora-1
+      with:
+        release-version: ${{ inputs.release-version }}
+        jfrog-files-repo: ${{ inputs.jfrog-files-repo }}
+        github-token: ${{ inputs.github-token }}
+        aws-role-to-assume: ${{ inputs.aws-role-to-assume }}
+        is-test-run: ${{ inputs.is-test-run }}
 
     - name: Get MC download vars
       id: get-mc-download-vars
@@ -69,18 +59,21 @@ runs:
       run: |
         source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
 
+        mc_name="hazelcast-management-center-${MC_VERSION}"
+        mc_name_zip="${mc_name}.zip"
+
         if [[ -z "${UNZIP_FOLDER}" ]]; then
           UNZIP_FOLDER=$(mktemp --directory)
         fi
 
         case "${LICENSE_TYPE}" in
           "NLC")
-            LOCAL_ZIP_NAME="${MC_NAME_ZIP%.zip}-nlc.zip"
-            DOWNLOAD_URL="s3://${S3_PATH}/${LOCAL_ZIP_NAME}"
+            local_zip_name="${mc_name_zip%.zip}-nlc.zip"
+            download_url="s3://${S3_PATH}/${local_zip_name}"
             ;;
           "LICENSED")
-            LOCAL_ZIP_NAME="${MC_NAME_ZIP}"
-            DOWNLOAD_URL="download/management-center/${MC_NAME_ZIP}"
+            local_zip_name="${mc_name_zip}"
+            download_url="download/management-center/${local_zip_name}"
             ;;
           *)
             echoerr "❌ Invalid license type '${LICENSE_TYPE}'. Must be 'NLC' or 'LICENSED'." >&2
@@ -88,13 +81,16 @@ runs:
             ;;
         esac
 
-        echo "url=${DOWNLOAD_URL}" >> ${GITHUB_OUTPUT}
-        echo "local-zip-name=${LOCAL_ZIP_NAME}" >> ${GITHUB_OUTPUT}
-        echo "unzip-folder=${UNZIP_FOLDER}/${MC_NAME}" >> ${GITHUB_OUTPUT}
+        echo "url=${download_url}" >> ${GITHUB_OUTPUT}
+        echo "local-zip-name=${local_zip_name}" >> ${GITHUB_OUTPUT}
+        echo "unzip-folder=${UNZIP_FOLDER}/${mc_name}" >> ${GITHUB_OUTPUT}
         echo "unzip-folder-root=${UNZIP_FOLDER}" >> ${GITHUB_OUTPUT}
+
+        # Outputs
+        echo "name=${mc_name}" >> ${GITHUB_OUTPUT}
+        echo "name-zip=${mc_name_zip}" >> ${GITHUB_OUTPUT}  
       env:
-        MC_NAME: ${{ steps.resolve-latest-mc-zip.outputs.name }}
-        MC_NAME_ZIP: ${{ steps.resolve-latest-mc-zip.outputs.name-zip }}
+        MC_VERSION: ${{ steps.get-rel-info.outputs.mc-version }}
         LICENSE_TYPE: ${{ inputs.license-type }}
         UNZIP_FOLDER: ${{ inputs.unzip-folder }}
         S3_PATH: ${{ inputs.aws-s3-path }}
