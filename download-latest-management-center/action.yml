@@ -57,7 +57,7 @@ runs:
       id: get-mc-download-vars
       shell: bash
       run: |
-        source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
+        source /dev/stdin <<< "$(curl --fail --retry 5 --retry-all-errors --show-error --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
 
         mc_name="hazelcast-management-center-${MC_VERSION}"
         mc_name_zip="${mc_name}.zip"
