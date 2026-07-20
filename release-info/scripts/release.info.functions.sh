@@ -127,7 +127,7 @@ function generate_rel_info_json() {
   is_beta=$(is_beta_release "${release_version}")
   is_patch=$(is_patch_release "${release_version}")
   is_rel_mm=$(is_major_minor "${release_version}")
-  [[ "${is_beta}" == "true" ]] && is_rel_mm="false" # exclude EBTA as we have `is_beta`
+  [[ "${is_beta}" == "true" ]] && is_rel_mm="false" # exclude BETA as we have `is_beta`
 
   mc_version=$(get_latest_mc_version "${repo_owner}")
   mc_major_minor=$(get_major_minor_parts "${mc_version}")
