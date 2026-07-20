@@ -5,7 +5,7 @@ set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 
 source /dev/stdin <<< "$(curl --fail --retry 5 --retry-all-errors --show-error --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
-source "${SCRIPT_DIR}/../../release-info/scripts/release.info.sh"
+source "${SCRIPT_DIR}/../../release-info/scripts/release.info.functions.sh"
 
 # Global Test Status Tracking Flag
 TESTS_RESULT=0
