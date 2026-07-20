@@ -95,7 +95,7 @@ function get_latest_mc_version() {
   )
 
   if [[ -z "${latest_mc_ver}" ]]; then
-    echoerr "❌ Failed to get latest MC ZIP from GitHub"
+    echoerr "❌ Failed to get latest MC version from GitHub"
     exit 1
   fi
 
