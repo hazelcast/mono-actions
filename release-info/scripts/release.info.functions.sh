@@ -2,11 +2,11 @@ source /dev/stdin <<< "$(curl --fail --retry 5 --retry-all-errors --show-error -
 
 # Gets POM 'project_version'
 function get_master_version() {
-  local mono_repo=$1
+  local mono_repo_path=$1
 
   source /dev/stdin <<< "$(curl --fail --retry 5 --retry-all-errors --show-error --silent https://raw.githubusercontent.com/hazelcast/mono-actions/main/.github/scripts/maven.functions.sh)"
 
-  cd "${mono_repo}" || exit 1
+  cd "${mono_repo_path}" || exit 1
   get_project_version
   return 0
 }
