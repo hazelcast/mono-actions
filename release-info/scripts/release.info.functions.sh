@@ -111,47 +111,49 @@ function generate_rel_info_json() {
   local repo_owner=$3
   local mono_path=$4
 
-  local master_ver
-  local master_mm
-  master_ver=$(get_master_version "${mono_path}")
-  master_mm=$(get_major_minor_parts "${master_ver}")
+  local master_version
+  local master_major_minor
+  master_version=$(get_master_version "${mono_path}")
+  master_major_minor=$(get_major_minor_parts "${master_version}")
 
-  local rel_mm
+  local release_major_minor
   local is_latest_stable
   local is_beta
-  local is_rel_mm
+  local is_release_major_minor
   local is_patch
   
-  rel_mm=$(get_major_minor_parts "${release_version}")
+  release_major_minor=$(get_major_minor_parts "${release_version}")
   is_latest_stable=$(is_latest_stable_release "${release_version}" "${repo_owner}")
   is_beta=$(is_beta_release "${release_version}")
   is_patch=$(is_patch_release "${release_version}")
-  is_rel_mm=$(is_major_minor "${release_version}")
-  [[ "${is_beta}" == "true" ]] && is_rel_mm="false" # exclude BETA as we have `is_beta`
+  is_release_major_minor=$(is_major_minor "${release_version}")
+  [[ "${is_beta}" == "true" ]] && is_release_major_minor="false" # exclude BETA as we have `is_beta`
 
+  local mc_version
+  local mc_major_minor
   mc_version=$(get_latest_mc_version "${repo_owner}")
   mc_major_minor=$(get_major_minor_parts "${mc_version}")
 
   jq -n \
-    --arg mv "$master_ver" \
-    --arg mmm "$master_mm" \
-    --arg rmm "$rel_mm" \
-    --arg mcv "$mc_version" \
-    --arg mcmm "$mc_major_minor" \
-    --arg ilsr "$is_latest_stable" \
-    --arg ibr "$is_beta" \
-    --arg irm "$is_rel_mm" \
-    --arg ip "$is_patch" \
+    --arg master_ver "$master_version" \
+    --arg master_major_minor "$master_major_minor" \
+    --arg rel_major_minor "$release_major_minor" \
+    --arg mc_ver "$mc_version" \
+    --arg mc_major_minor "$mc_major_minor" \
+    --arg is_latest_stable "$is_latest_stable" \
+    --arg is_beta "$is_beta" \
+    --arg is_rel_major_minor "$is_release_major_minor" \
+    --arg is_patch "$is_patch" \
     '{
-      "master-version": $mv,
-      "master-major-minor": $mmm,
-      "rel-major-minor": $rmm,
-      "mc-version": $mcv,
-      "mc-major-minor": $mcmm,
-      "is-latest-stable-release": $ilsr,
-      "is-beta-release": $ibr,
-      "is-rel-major-minor": $irm,
-      "is-patch-release": $ip
+      "master-version": $master_ver,
+      "master-major-minor": $master_major_minor,
+      "rel-major-minor": $rel_major_minor,
+      "mc-version": $mc_ver,
+      "mc-major-minor": $mc_major_minor,
+      "is-latest-stable-release": $is_latest_stable,
+      "is-beta-release": $is_beta,
+      "is-rel-major-minor": $is_rel_major_minor,
+      "is-patch-release": $is_patch
     }' > "${output_file}"
 
   log_version_variables "${output_file}"
