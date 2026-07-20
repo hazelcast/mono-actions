@@ -82,10 +82,12 @@ function get_major_minor_parts() {
 
 # Returns the `latest` MC version checked against tags
 function get_latest_mc_version() {
+  local repo_owner=$1
+
   local latest_mc_ver
   latest_mc_ver=$( \
     gh api \
-      repos/hazelcast/management-center/tags \
+      repos/${repo_owner}/management-center/tags \
       --paginate \
       --jq '.[] | select(.name | test("^v?[0-9]+\\.[0-9]+\\.[0-9]+$")) | .name | ltrimstr("v")' | \
     sort --version-sort --reverse | \
@@ -127,7 +129,7 @@ function generate_rel_info_json() {
   is_rel_mm=$(is_major_minor "${release_version}")
   [[ "${is_beta}" == "true" ]] && is_rel_mm="false" # exclude EBTA as we have `is_beta`
 
-  mc_version=$(get_latest_mc_version)
+  mc_version=$(get_latest_mc_version "${repo_owner}")
   mc_major_minor=$(get_major_minor_parts "${mc_version}")
 
   jq -n \
