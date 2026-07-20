@@ -12,7 +12,7 @@ function get_master_version() {
 }
 
 # Return `true` if current release is `latest` againts `z-branch`. We can't use tag as it might not 
-# exist (during `pacakge`). Similarly, we can't use release branches as they get deleted.
+# exist (during `package`). Similarly, we can't use release branches as they get deleted.
 function is_latest_stable_release() {
   local release_ver=$1
   local repo_owner=$2
