@@ -46,3 +46,4 @@ runs:
       with:
         slack-webhook-url: ${{ inputs.slack-webhook-url }}
         slack-channel: ${{ inputs.slack-channel }}
+        status: failure
