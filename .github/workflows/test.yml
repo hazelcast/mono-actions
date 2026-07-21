@@ -20,6 +20,10 @@ jobs:
         working-directory: hazelcast
         run: ${GITHUB_WORKSPACE}/.github/scripts/test_scripts.sh
 
+  test-get-latest-released-version:
+    uses: ./.github/workflows/test-get-latest-released-version.yml
+    secrets: inherit
+
   test-setup-maven:
     uses: ./.github/workflows/test-setup-maven.yml
     secrets: inherit
@@ -43,6 +47,7 @@ jobs:
   assert-all-jobs-succeeded:
     runs-on: ubuntu-latest
     needs:
+      - test-get-latest-released-version
       - test-setup-maven
       - test-resolve-javadoc-deploy-config
       - test-resolve-website-assets-deploy-config
