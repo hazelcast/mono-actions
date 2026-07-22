@@ -1,0 +1,26 @@
+name: Test get-latest-released-version action
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: get-latest-released-version
+        uses: ./get-latest-released-version
+        with:
+          github-token: ${{ github.token }}
+          repository: hazelcast/hazelcast-jet
+
+      - name: Test outputs
+        run: |
+          source /dev/stdin <<< "$(curl --fail --retry 5 --retry-all-errors --show-error --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+
+          TESTS_RESULT=0
+
+          assert_eq "4.5.4" "${{ steps.get-latest-released-version.outputs.latest-version }}" "Incorrect latest version" || TESTS_RESULT=$?
+
+          assert_eq 0 "${TESTS_RESULT}" "All tests should pass"
