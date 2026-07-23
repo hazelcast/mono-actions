@@ -47,14 +47,14 @@ runs:
       uses: hazelcast/mono-actions/get-latest-released-version@main
       with:
         github-token: ${{ inputs.github-token }}
-        repository: ${{ env.GITHUB_OWNER }}/hazelcast-mono
+        repository: ${{ github.repository_owner }}/hazelcast-mono
 
     - name: Get latest MC released version
       id: latest-mc-version
       uses: hazelcast/mono-actions/get-latest-released-version@main
       with:
         github-token: ${{ inputs.github-token }}
-        repository: ${{ env.GITHUB_OWNER }}/management-center
+        repository: ${{ github.repository_owner }}/management-center
 
     - name: Install 'xq'
       shell: bash
