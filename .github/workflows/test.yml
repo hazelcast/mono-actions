@@ -40,8 +40,8 @@ jobs:
     uses: ./.github/workflows/test-invoke-jfrog-cli.yml
     secrets: inherit
 
-  test-release-info:
-    uses: ./.github/workflows/test-release-info.yml
+  test-get-release-info:
+    uses: ./.github/workflows/test-get-release-info.yml
     secrets: inherit
 
   assert-all-jobs-succeeded:
@@ -52,7 +52,7 @@ jobs:
       - test-resolve-website-assets-deploy-config
       - test-download-latest-management-center
       - test-invoke-jfrog-cli
-      - test-release-info
+      - test-get-release-info
     if: always()
     steps:
       - name: Check all jobs succeeded

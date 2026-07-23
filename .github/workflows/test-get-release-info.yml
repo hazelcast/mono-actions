@@ -12,7 +12,7 @@ jobs:
 
       - name: Test release info action
         id: test-action
-        uses: ./release-info
+        uses: ./get-release-info
         with:
           release-version: '5.5.0'
           github-token: ${{ secrets.GH_TOKEN }}
