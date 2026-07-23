@@ -60,7 +60,7 @@ runs:
       shell: bash
       run: |
         # Required by script to properly extract POM version
-        python3 --module-name pip install --quiet yq
+        python3 -m pip install --quiet yq
 
     - name: Set Release Info
       id: set-release-info
