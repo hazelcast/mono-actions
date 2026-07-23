@@ -1,38 +1,37 @@
 source /dev/stdin <<< "$(curl --fail --retry 5 --retry-all-errors --show-error --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
 
-# Gets POM 'project_version'
+# Gets EE POM '<version>' from master and verifies
 function get_master_version() {
-  local mono_repo_path=$1
+  local repo_owner=$1
 
-  source /dev/stdin <<< "$(curl --fail --retry 5 --retry-all-errors --show-error --silent https://raw.githubusercontent.com/hazelcast/mono-actions/main/.github/scripts/maven.functions.sh)"
+  # Use 'xq' to extract the exact <version> XML node
+  local version
+  version=$(
+    gh api \
+      -H "Accept: application/vnd.github.raw+json" \
+      "repos/${repo_owner}/hazelcast-mono/contents/pom.xml?ref=master" | \
+    xq --raw-output '.project.version // empty'
+  )
 
-  cd "${mono_repo_path}" || exit 1
-  get_project_version
+  if [[ -z "${version}" ]]; then
+    echoerr "The 'project.version' element not found or is empty in the POM"
+    return 1
+  fi
+
+  if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.0-SNAPSHOT$ ]]; then
+    echoerr "'${version}' is invalid. Must be 'x.y.0-SNAPSHOT'"
+    return 1
+  fi
+
+  echo "${version}"
   return 0
 }
 
-# Return `true` if current release is `latest` againts `z-branch`. We can't use tag as it might not 
-# exist (during `package`). Similarly, we can't use release branches as they get deleted.
+# Return `true` if current release is `latest` by comparing with LATEST_HZ_VERSION
 function is_latest_stable_release() {
   local release_ver=$1
-  local repo_owner=$2
 
-  local latest_branch
-  latest_branch=$( \
-    gh api \
-      "repos/${repo_owner}/hazelcast-mono/branches" \
-      --paginate \
-      --jq '.[] | select(.name | test("^[0-9]+\\.[0-9]+\\.z$")) | .name' | \
-    sort --version-sort --reverse | \
-    head --lines 1 \
-  )
-
-  if [[ -z ${latest_branch} ]]; then
-    echoerr "❌ Failed to resolve 'latest_stable' from repository '${repo_owner}/hazelcast-mono'."
-    exit 1
-  fi
-
-  if [[ $(get_major_minor_parts "${release_ver}") == $(get_major_minor_parts "${latest_branch}") ]]; then
+  if [[ $(get_major_minor_parts "${release_ver}") == $(get_major_minor_parts "${LATEST_HZ_VERSION}") ]]; then
     echo "true"
   else
     echo "false"
@@ -80,40 +79,16 @@ function get_major_minor_parts() {
   return 0
 }
 
-# Returns the `latest` MC version checked against tags
-function get_latest_mc_version() {
-  local repo_owner=$1
+# Resolves and outputs various release info variables
+function set_rel_info_outputs() {
+  local release_version=$1
+  local repo_owner=$2
 
-  local latest_mc_ver
-  latest_mc_ver=$( \
-    gh api \
-      repos/${repo_owner}/management-center/tags \
-      --paginate \
-      --jq '.[] | select(.name | test("^v?[0-9]+\\.[0-9]+\\.[0-9]+$")) | .name | ltrimstr("v")' | \
-    sort --version-sort --reverse | \
-    head --lines 1 \
-  )
-
-  if [[ -z "${latest_mc_ver}" ]]; then
-    echoerr "❌ Failed to get latest MC version from GitHub"
-    exit 1
-  fi
-
-  echo "${latest_mc_ver}"
-  return 0
-}
-
-# Generates Release Info JSON file consisting of all outputs returned by functions
-# in this file
-function generate_rel_info_json() {
-  local output_file=$1
-  local release_version=$2
-  local repo_owner=$3
-  local mono_path=$4
+  validate_input_env_variables
 
   local master_version
   local master_major_minor
-  master_version=$(get_master_version "${mono_path}")
+  master_version=$(get_master_version "${repo_owner}")
   master_major_minor=$(get_major_minor_parts "${master_version}")
 
   local release_major_minor
@@ -123,70 +98,61 @@ function generate_rel_info_json() {
   local is_patch
   
   release_major_minor=$(get_major_minor_parts "${release_version}")
-  is_latest_stable=$(is_latest_stable_release "${release_version}" "${repo_owner}")
+  is_latest_stable=$(is_latest_stable_release "${release_version}")
   is_beta=$(is_beta_release "${release_version}")
   is_patch=$(is_patch_release "${release_version}")
   is_release_major_minor=$(is_major_minor "${release_version}")
-  [[ "${is_beta}" == "true" ]] && is_release_major_minor="false" # exclude BETA as we have `is_beta`
+  [[ "${is_beta}" == "true" ]] && is_release_major_minor="false"
 
   local mc_version
   local mc_major_minor
-  mc_version=$(get_latest_mc_version "${repo_owner}")
+  mc_version="${LATEST_MC_RELEASE}"
   mc_major_minor=$(get_major_minor_parts "${mc_version}")
 
-  jq -n \
-    --arg master_ver "$master_version" \
-    --arg master_major_minor "$master_major_minor" \
-    --arg rel_major_minor "$release_major_minor" \
-    --arg mc_ver "$mc_version" \
-    --arg mc_major_minor "$mc_major_minor" \
-    --arg is_latest_stable "$is_latest_stable" \
-    --arg is_beta "$is_beta" \
-    --arg is_rel_major_minor "$is_release_major_minor" \
-    --arg is_patch "$is_patch" \
-    '{
-      "master-version": $master_ver,
-      "master-major-minor": $master_major_minor,
-      "rel-major-minor": $rel_major_minor,
-      "mc-version": $mc_ver,
-      "mc-major-minor": $mc_major_minor,
-      "is-latest-stable-release": $is_latest_stable,
-      "is-beta-release": $is_beta,
-      "is-rel-major-minor": $is_rel_major_minor,
-      "is-patch-release": $is_patch
-    }' > "${output_file}"
+  {
+    echo "master-version=${master_version}"
+    echo "master-major-minor=${master_major_minor}"
+    echo "rel-major-minor=${release_major_minor}"
+    echo "mc-version=${mc_version}"
+    echo "mc-major-minor=${mc_major_minor}"
+    echo "is-latest-stable-release=${is_latest_stable}"
+    echo "is-beta-release=${is_beta}"
+    echo "is-rel-major-minor=${is_release_major_minor}"
+    echo "is-patch-release=${is_patch}"
+  } >> "${GITHUB_OUTPUT}"
 
-  log_version_variables "${output_file}"
+  local longest_key="is-latest-stable-release"
+  local padding_size=${#longest_key}
+  local log_format="  %-${padding_size}s : %s\n"
+
+  echo "========================================="
+  echo "   SET-REL-INFO-OUTPUTS VARIABLES"
+  echo "========================================="
+  printf "${log_format}" "master-version" "${master_version}"
+  printf "${log_format}" "master-major-minor" "${master_major_minor}"
+  printf "${log_format}" "rel-major-minor" "${release_major_minor}"
+  printf "${log_format}" "mc-version" "${mc_version}"
+  printf "${log_format}" "mc-major-minor" "${mc_major_minor}"
+  printf "${log_format}" "is-beta-release" "${is_beta}"
+  printf "${log_format}" "is-rel-major-minor" "${is_release_major_minor}"
+  printf "${log_format}" "is-patch-release" "${is_patch}"
+  printf "${log_format}" "is-latest-stable-release" "${is_latest_stable}"
+  echo "========================================="
+
   return 0
 }
 
-# Loads the Release Info JSON file and sets all fields into `GITHUB_OUTPUT`
-# It will also output the prettified JSON contents
-function load_version_json() {
-  local json_file=$1
-
-  if [[ ! -f "${json_file}" ]]; then
-    echoerr "❌ Failed to find version info file"
+# Checks expected input env vars are set. These will be passed in by the action
+function validate_input_env_variables() {
+  if [[ -z "${LATEST_MC_RELEASE:-}" ]]; then
+    echoerr "❌ Error: LATEST_MC_RELEASE environment variable is missing or empty."
     exit 1
   fi
 
-  jq -r 'to_entries | .[] | "\(.key)=\(.value)"' "${json_file}" >> ${GITHUB_OUTPUT}
-  
-  log_version_variables "${json_file}"
-  return 0
-}
+  if [[ -z "${LATEST_HZ_VERSION:-}" ]]; then
+    echoerr "❌ Error: LATEST_HZ_VERSION environment variable is missing or empty."
+    exit 1
+  fi
 
-# Pretty logs the Release Info JSON file
-function log_version_variables() {
-  local json_file=$1
-
-  local pretty_json
-  pretty_json=$(jq '.' "${json_file}")
-
-  echo "========================================="
-  echo "   GET-VERSION-INFO OUTPUT VARIABLES"
-  echo "========================================="
-  echo "${pretty_json}"
-  echo "========================================="
   return 0
 }

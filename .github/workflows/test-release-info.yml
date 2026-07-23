@@ -6,82 +6,45 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-    env:
-      RELEASE_VERSION: '5.5.0'
-      RELEASE_VERSION_MM: '5.5'
-      VALIDATE_SCRIPT: |
-        assert_not_empty "${SUITE_MASTER_VER}" "master-version should be populated" || TESTS_RESULT=$?
-        assert_not_empty "${SUITE_MASTER_MM}" "master-major-minor should be populated" || TESTS_RESULT=$?
-        assert_not_empty "${SUITE_MC_VER}" "mc-version should be populated" || TESTS_RESULT=$?
-        assert_not_empty "${SUITE_MC_MM}" "mc-major-minor should be populated" || TESTS_RESULT=$?
-        assert_eq "${RELEASE_VERSION_MM}" "${SUITE_REL_MM}" "rel-major-minor should match ${RELEASE_VERSION_MM}"
-        assert_eq "false" "${SUITE_LATEST_STABLE}" "is-latest-stable-release should be false" || TESTS_RESULT=$?
-        assert_eq "false" "${SUITE_BETA_RELEASE}" "is-beta-release should be false" || TESTS_RESULT=$?
-        assert_eq "true" "${SUITE_IS_MAJOR_MINOR}" "is-rel-major-minor should be true" || TESTS_RESULT=$?
-        assert_eq "false" "${SUITE_IS_PATCH}" "is-patch-release should be false" || TESTS_RESULT=$?
-
     steps:
       - name: Checkout current action repository
         uses: actions/checkout@v7
 
-      - name: Test `generate` release info
-        id: generate-action
+      - name: Test release info action
+        id: test-action
         uses: ./release-info
         with:
-          mode: 'generate'
-          release-version: ${{ env.RELEASE_VERSION }}
+          release-version: '5.5.0'
           github-token: ${{ secrets.GH_TOKEN }}
-          jfrog-files-repo: sandbox-files-preprod
-          aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
-          is-test-run: true
 
-      - name: Validate `generate` outputs
+      - name: Validate action outputs
         run: |
           source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 
           TESTS_RESULT=0
-          log_header "Verifying Action Output Flags (GENERATE)"
-          eval "$VALIDATE_SCRIPT"
+          log_header "Verifying Action Output Flags"
+
+          # version checks
+          assert_not_empty "${SUITE_MASTER_VER}" "master-version should be populated" || TESTS_RESULT=$?
+          assert_not_empty "${SUITE_MASTER_MM}" "master-major-minor should be populated" || TESTS_RESULT=$?
+          assert_not_empty "${SUITE_MC_VER}" "mc-version should be populated" || TESTS_RESULT=$?
+          assert_not_empty "${SUITE_MC_MM}" "mc-major-minor should be populated" || TESTS_RESULT=$?
+          assert_eq "5.5" "${SUITE_REL_MM}" "rel-major-minor should match 5.5" || TESTS_RESULT=$?
+
+          # boolean checks
+          assert_eq "false" "${SUITE_LATEST_STABLE}" "is-latest-stable-release should be false" || TESTS_RESULT=$?
+          assert_eq "false" "${SUITE_BETA_RELEASE}" "is-beta-release should be false" || TESTS_RESULT=$?
+          assert_eq "true" "${SUITE_IS_MAJOR_MINOR}" "is-rel-major-minor should be true" || TESTS_RESULT=$?
+          assert_eq "false" "${SUITE_IS_PATCH}" "is-patch-release should be false" || TESTS_RESULT=$?
+
           assert_eq 0 "$TESTS_RESULT" "All tests should pass"
         env:
-          SUITE_MASTER_VER: ${{ steps.generate-action.outputs.master-version }}
-          SUITE_MASTER_MM: ${{ steps.generate-action.outputs.master-major-minor }}
-          SUITE_REL_MM: ${{ steps.generate-action.outputs.rel-major-minor }}
-          SUITE_MC_VER: ${{ steps.generate-action.outputs.mc-version }}
-          SUITE_MC_MM: ${{ steps.generate-action.outputs.mc-major-minor }}
-          SUITE_LATEST_STABLE: ${{ steps.generate-action.outputs.is-latest-stable-release }}
-          SUITE_BETA_RELEASE: ${{ steps.generate-action.outputs.is-beta-release }}
-          SUITE_IS_MAJOR_MINOR: ${{ steps.generate-action.outputs.is-rel-major-minor }}
-          SUITE_IS_PATCH: ${{ steps.generate-action.outputs.is-patch-release }}
-
-      - name: Test `get` release info
-        id: get-action
-        uses: ./release-info
-        with:
-          mode: 'get'
-          release-version: ${{ env.RELEASE_VERSION }}
-          github-token: ${{ secrets.GH_TOKEN }}
-          jfrog-files-repo: sandbox-files-preprod
-          aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
-          is-test-run: true
-
-      - name: Validate `get` outputs
-        run: |
-          source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
-
-          TESTS_RESULT=0
-          log_header "Verifying Action Output Flags (GET)"
-          eval "$VALIDATE_SCRIPT"
-          assert_eq 0 "$TESTS_RESULT" "All tests should pass"
-        env:
-          SUITE_MASTER_VER: ${{ steps.get-action.outputs.master-version }}
-          SUITE_MASTER_MM: ${{ steps.get-action.outputs.master-major-minor }}
-          SUITE_REL_MM: ${{ steps.get-action.outputs.rel-major-minor }}
-          SUITE_MC_VER: ${{ steps.get-action.outputs.mc-version }}
-          SUITE_MC_MM: ${{ steps.get-action.outputs.mc-major-minor }}
-          SUITE_LATEST_STABLE: ${{ steps.get-action.outputs.is-latest-stable-release }}
-          SUITE_BETA_RELEASE: ${{ steps.get-action.outputs.is-beta-release }}
-          SUITE_IS_MAJOR_MINOR: ${{ steps.get-action.outputs.is-rel-major-minor }}
-          SUITE_IS_PATCH: ${{ steps.get-action.outputs.is-patch-release }}
+          SUITE_MASTER_VER: ${{ steps.test-action.outputs.master-version }}
+          SUITE_MASTER_MM: ${{ steps.test-action.outputs.master-major-minor }}
+          SUITE_REL_MM: ${{ steps.test-action.outputs.rel-major-minor }}
+          SUITE_MC_VER: ${{ steps.test-action.outputs.mc-version }}
+          SUITE_MC_MM: ${{ steps.test-action.outputs.mc-major-minor }}
+          SUITE_LATEST_STABLE: ${{ steps.test-action.outputs.is-latest-stable-release }}
+          SUITE_BETA_RELEASE: ${{ steps.test-action.outputs.is-beta-release }}
+          SUITE_IS_MAJOR_MINOR: ${{ steps.test-action.outputs.is-rel-major-minor }}
+          SUITE_IS_PATCH: ${{ steps.test-action.outputs.is-patch-release }}

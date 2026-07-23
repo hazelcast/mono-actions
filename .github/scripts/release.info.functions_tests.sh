@@ -7,19 +7,18 @@ SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 source /dev/stdin <<< "$(curl --fail --retry 5 --retry-all-errors --show-error --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
 source "${SCRIPT_DIR}/../../release-info/scripts/release.info.functions.sh"
 
-# Global Test Status Tracking Flag
 TESTS_RESULT=0
 
-# Constant to satisfy Sonar rule regarding literal repetition
 readonly MOCK_OWNER="hazelcast"
 
 function reset_mocks() {
+  export LATEST_MC_RELEASE="5.12.0"
+  export LATEST_HZ_VERSION="5.4.0"
+
   curl() {
     if [[ "$*" == *"logging.functions.sh"* ]]; then
       echo "function echodebug() { echo \"[DEBUG] \$*\"; }"
       echo "function echoerr() { echo \"\$*\"; >&2; }"
-    elif [[ "$*" == *"maven.functions.sh"* ]]; then
-      echo "function get_project_version() { echo \"5.5.0-SNAPSHOT\"; }"
     fi
     return 0
   }
@@ -27,20 +26,20 @@ function reset_mocks() {
 
   gh() {
     if [[ "${MOCK_GH_FAIL:-false}" == "true" ]]; then
-      return 0
+      return 1
     fi
-    if [[ "$*" == *"branches"* ]]; then
-      echo "5.3.z"
-      echo "5.4.z"
-      echo "5.2.z"
-    elif [[ "$*" == *"tags"* ]]; then
-      echo "5.11.0"
-      echo "5.12.0"
-      echo "5.1.0"
-    fi
+    echo '<project><version>5.5.0-SNAPSHOT</version></project>'
     return 0
   }
   export -f gh
+
+  xq() {
+    if [[ "$*" == *".project.version // empty"* ]]; then
+      echo "5.5.0-SNAPSHOT"
+    fi
+    return 0
+  }
+  export -f xq
 }
 
 TEST_TEMP_DIR=$(mktemp -d)
@@ -48,7 +47,6 @@ export GITHUB_OUTPUT="${TEST_TEMP_DIR}/github_output.txt"
 touch "${GITHUB_OUTPUT}"
 
 trap 'rm -rf "${TEST_TEMP_DIR}"' EXIT
-
 
 function test_get_version_parts() {
   log_header "Testing get_version_parts"
@@ -147,149 +145,95 @@ function test_is_latest_stable_release() {
 
   local actual msg
   
-  actual=$(is_latest_stable_release "5.4.0" "${MOCK_OWNER}")
-  msg="Passes version matching the highest simulated remote branch"
+  actual=$(is_latest_stable_release "5.4.0")
+  msg="Passes version matching LATEST_HZ_VERSION major-minor layout"
   assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  actual=$(is_latest_stable_release "5.3.0" "${MOCK_OWNER}")
-  msg="Fails legacy version sequences against remote branches"
+  actual=$(is_latest_stable_release "5.3.0")
+  msg="Fails legacy version sequences against LATEST_HZ_VERSION"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
 }
 
-function test_is_latest_stable_release_error() {
-  log_header "Testing is_latest_stable_release error handling"
-  
-  local MOCK_GH_FAIL="true"
-  export MOCK_GH_FAIL
+function test_validate_input_env_variables() {
+  log_header "Testing validate_input_env_variables success"
   reset_mocks
 
-  local actual_stderr actual_exit_code
-  actual_stderr=$( (is_latest_stable_release "5.4.0" "${MOCK_OWNER}") 2>&1 >/dev/null ) && actual_exit_code=0 || actual_exit_code=$?
+  local actual_exit_code=0
+  validate_input_env_variables && actual_exit_code=0 || actual_exit_code=$?
 
-  local msg="Function returns exit status code 1 when latest_stable cannot be resolved"
+  local msg="Validation block passes when expected environment keys are set"
+  assert_eq 0 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  return "${TESTS_RESULT}"
+}
+
+function test_validate_input_env_variables_error() {
+  log_header "Testing validate_input_env_variables error handling"
+
+  # Test LATEST_MC_RELEASE is missing
+  reset_mocks
+  unset LATEST_MC_RELEASE
+  
+  local actual_exit_code=0
+  (validate_input_env_variables) 2>/dev/null && actual_exit_code=0 || actual_exit_code=$?
+
+  local msg="Checks missing LATEST_MC_RELEASE"
   assert_eq 1 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  local msg="Error string printed to stderr matches formatting parameters layout"
-  local expected_err="::error::ERROR - ❌ Failed to resolve 'latest_stable' from repository 'hazelcast/hazelcast-mono'."
-  assert_eq "${expected_err}" "${actual_stderr}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  # Test LATEST_HZ_VERSION is missing
+  reset_mocks
+  unset LATEST_HZ_VERSION
+  
+  actual_exit_code=0
+  (validate_input_env_variables) 2>/dev/null && actual_exit_code=0 || actual_exit_code=$?
+
+  local msg="Checks missing LATEST_HZ_VERSION"
+  assert_eq 1 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
 }
 
-function test_generate_rel_info_json() {
-  log_header "Testing generate_rel_info_json"
+function test_set_rel_info_outputs() {
+  log_header "Testing set_rel_info_outputs"
   reset_mocks
-
-  local out_json fake_mono msg
-  out_json="${TEST_TEMP_DIR}/release_stable.json"
-  fake_mono="${TEST_TEMP_DIR}/mono-repo"
-  mkdir -p "${fake_mono}"
-
-  generate_rel_info_json "${out_json}" "5.4.0" "${MOCK_OWNER}" "${fake_mono}" 2>&1 | grep -v "::debug::" || true
-  
-  msg="Generate: Creates physical destination JSON file on disk"
-  [[ -f "${out_json}" ]] && log_success "${msg}" || { echo "✖ ${msg}"; TESTS_RESULT=1; }
-
-  msg="Generate: Computes correct rel-major-minor key inside JSON"
-  assert_eq "5.4" "$(jq -r '."rel-major-minor"' "${out_json}")" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  msg="Generate: Computes correct mc-version key inside JSON"
-  assert_eq "5.12.0" "$(jq -r '."mc-version"' "${out_json}")" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  msg="Generate: Computes correct mc-major-minor key inside JSON"
-  assert_eq "5.12" "$(jq -r '."mc-major-minor"' "${out_json}")" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  msg="Generate: Assigns false to is-beta-release field"
-  assert_eq "false" "$(jq -r '."is-beta-release"' "${out_json}")" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  msg="Generate: Resolves true for is-rel-major-minor property"
-  assert_eq "true" "$(jq -r '."is-rel-major-minor"' "${out_json}")" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  msg="Generate: Flags is-patch-release accurately to false"
-  assert_eq "false" "$(jq -r '."is-patch-release"' "${out_json}")" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  local out_beta_json="${TEST_TEMP_DIR}/release_beta.json"
-  
-  generate_rel_info_json "${out_beta_json}" "5.4.0-BETA-1" "${MOCK_OWNER}" "${fake_mono}" 2>&1 | grep -v "::debug::" || true
-
-  msg="Beta Path: Forces is-rel-major-minor property to false"
-  assert_eq "false" "$(jq -r '."is-rel-major-minor"' "${out_beta_json}")" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  return "${TESTS_RESULT}"
-}
-
-function test_load_version_json() {
-  log_header "Testing load_version_json"
-  reset_mocks
-
-  local mock_input msg
-  mock_input="${TEST_TEMP_DIR}/mock_input.json"
   truncate -s 0 "${GITHUB_OUTPUT}"
 
-  echo '{
-    "master-version": "5.5.0",
-    "is-patch-release": "true"
-  }' > "${mock_input}"
+  set_rel_info_outputs "5.4.0" "${MOCK_OWNER}" > /dev/null
 
-  load_version_json "${mock_input}" > /dev/null 2>&1
+  local msg actual
 
-  msg="Load: Properly appends master-version variable mapping to GITHUB_OUTPUT channel"
-  grep -q "master-version=5.5.0" "${GITHUB_OUTPUT}" && log_success "${msg}" || { echo "✖ ${msg}"; TESTS_RESULT=1; }
+  msg="Computes correct rel-major-minor key inside property file"
+  actual=$(grep "^rel-major-minor=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
+  assert_eq "5.4" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  msg="Load: Properly appends is-patch-release variable mapping to GITHUB_OUTPUT channel"
-  grep -q "is-patch-release=true" "${GITHUB_OUTPUT}" && log_success "${msg}" || { echo "✖ ${msg}"; TESTS_RESULT=1; }
-
-  return "${TESTS_RESULT}"
-}
-
-function test_get_latest_mc_version() {
-  log_header "Testing get_latest_mc_version"
-  reset_mocks
-
-  local actual msg
-
-  actual=$(get_latest_mc_version)
-  msg="Correctly fetches latest stable version from GitHub tags and strips the leading v"
+  msg="Computes correct mc-version key inside property file"
+  actual=$(grep "^mc-version=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
   assert_eq "5.12.0" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  return "${TESTS_RESULT}"
-}
+  msg="Computes correct mc-major-minor key inside property file"
+  actual=$(grep "^mc-major-minor=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
+  assert_eq "5.12" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-function test_get_latest_mc_version_error() {
-  log_header "Testing get_latest_mc_version error handling"
-  
-  local MOCK_GH_FAIL="true"
-  export MOCK_GH_FAIL
-  reset_mocks
+  msg="Assigns false to is-beta-release field"
+  actual=$(grep "^is-beta-release=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
+  assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  local actual_stderr actual_exit_code
-  actual_stderr=$( (get_latest_mc_version) 2>&1 >/dev/null ) && actual_exit_code=0 || actual_exit_code=$?
+  msg="Resolves true for is-rel-major-minor property"
+  actual=$(grep "^is-rel-major-minor=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
+  assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  local msg="Function returns exit status code 1 when mc tags cannot be resolved"
-  assert_eq 1 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  msg="Flags is-patch-release accurately to false"
+  actual=$(grep "^is-patch-release=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
+  assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  local msg="Error string printed to stderr matches mc error layout"
-  local expected_err="::error::ERROR - ❌ Failed to get latest MC ZIP from GitHub"
-  assert_eq "${expected_err}" "${actual_stderr}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  truncate -s 0 "${GITHUB_OUTPUT}"
+  set_rel_info_outputs "5.4.0-BETA-1" "${MOCK_OWNER}" > /dev/null
 
-  return "${TESTS_RESULT}"
-}
-
-function test_load_version_json_error() {
-  log_header "Testing load_version_json error handling"
-  reset_mocks
-
-  local actual_stderr actual_exit_code
-  actual_stderr=$( (load_version_json "non_existent_file.json") 2>&1 >/dev/null ) && actual_exit_code=0 || actual_exit_code=$?
-
-  local msg="Function returns exit status code 1 when target JSON file does not exist"
-  assert_eq 1 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  local msg="Error string printed to stderr matches JSON missing file error layout"
-  local expected_err="::error::ERROR - ❌ Failed to find version info file"
-  assert_eq "${expected_err}" "${actual_stderr}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  msg="Beta Path: Forces is-rel-major-minor property to false"
+  actual=$(grep "^is-rel-major-minor=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
+  assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
 }
@@ -301,11 +245,8 @@ test_is_beta_release
 test_is_major_minor
 test_is_patch_release
 test_is_latest_stable_release
-test_is_latest_stable_release_error
-test_generate_rel_info_json
-test_get_latest_mc_version
-test_get_latest_mc_version_error
-test_load_version_json
-test_load_version_json_error
+test_validate_input_env_variables
+test_validate_input_env_variables_error
+test_set_rel_info_outputs
 
 assert_eq 0 "${TESTS_RESULT}" "All tests should pass"
