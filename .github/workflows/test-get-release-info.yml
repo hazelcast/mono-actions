@@ -1,0 +1,50 @@
+name: Test test-release-info action
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current action repository
+        uses: actions/checkout@v7
+
+      - name: Test release info action
+        id: test-action
+        uses: ./get-release-info
+        with:
+          release-version: '5.5.0'
+          github-token: ${{ secrets.GH_TOKEN }}
+
+      - name: Validate action outputs
+        run: |
+          source /dev/stdin <<< "$(curl --fail --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+
+          TESTS_RESULT=0
+          log_header "Verifying Action Output Flags"
+
+          # version checks
+          assert_not_empty "${SUITE_MASTER_VER}" "master-version should be populated" || TESTS_RESULT=$?
+          assert_not_empty "${SUITE_MASTER_MM}" "master-major-minor should be populated" || TESTS_RESULT=$?
+          assert_not_empty "${SUITE_MC_VER}" "mc-version should be populated" || TESTS_RESULT=$?
+          assert_not_empty "${SUITE_MC_MM}" "mc-major-minor should be populated" || TESTS_RESULT=$?
+          assert_eq "5.5" "${SUITE_REL_MM}" "rel-major-minor should match 5.5" || TESTS_RESULT=$?
+
+          # boolean checks
+          assert_eq "false" "${SUITE_LATEST_STABLE}" "is-latest-stable-release should be false" || TESTS_RESULT=$?
+          assert_eq "false" "${SUITE_BETA_RELEASE}" "is-beta-release should be false" || TESTS_RESULT=$?
+          assert_eq "true" "${SUITE_IS_MAJOR_MINOR}" "is-rel-major-minor should be true" || TESTS_RESULT=$?
+          assert_eq "false" "${SUITE_IS_PATCH}" "is-patch-release should be false" || TESTS_RESULT=$?
+
+          assert_eq 0 "$TESTS_RESULT" "All tests should pass"
+        env:
+          SUITE_MASTER_VER: ${{ steps.test-action.outputs.master-version }}
+          SUITE_MASTER_MM: ${{ steps.test-action.outputs.master-major-minor }}
+          SUITE_REL_MM: ${{ steps.test-action.outputs.rel-major-minor }}
+          SUITE_MC_VER: ${{ steps.test-action.outputs.mc-version }}
+          SUITE_MC_MM: ${{ steps.test-action.outputs.mc-major-minor }}
+          SUITE_LATEST_STABLE: ${{ steps.test-action.outputs.is-latest-stable-release }}
+          SUITE_BETA_RELEASE: ${{ steps.test-action.outputs.is-beta-release }}
+          SUITE_IS_MAJOR_MINOR: ${{ steps.test-action.outputs.is-rel-major-minor }}
+          SUITE_IS_PATCH: ${{ steps.test-action.outputs.is-patch-release }}
