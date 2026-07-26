@@ -12,31 +12,17 @@ TESTS_RESULT=0
 readonly MOCK_OWNER="hazelcast"
 
 function reset_mocks() {
-  export LATEST_MC_RELEASE="5.12.0"
-  export LATEST_HZ_VERSION="5.4.0"
-
-  curl() {
-    if [[ "$*" == *"logging.functions.sh"* ]]; then
-      echo "function echodebug() { echo \"[DEBUG] \$*\"; }"
-      echo "function echoerr() { echo \"\$*\"; >&2; }"
-    fi
-    return 0
-  }
-  export -f curl
-
   gh() {
     if [[ "${MOCK_GH_FAIL:-false}" == "true" ]]; then
       return 1
     fi
-    echo '<project><version>5.5.0-SNAPSHOT</version></project>'
+    echo "<project><version>5.5.0-SNAPSHOT</version></project>"
     return 0
   }
   export -f gh
 
   xq() {
-    if [[ "$*" == *".project.version // empty"* ]]; then
-      echo "5.5.0-SNAPSHOT"
-    fi
+    echo "5.5.0-SNAPSHOT"
     return 0
   }
   export -f xq
@@ -100,7 +86,7 @@ function test_is_beta_release() {
 
   actual=$(is_beta_release "5.3.0-SNAPSHOT")
   msg="Ignores alternative release variants like SNAPSHOT as false"
-  assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  assert_eq "false" "${actual}" "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
 }
@@ -143,54 +129,66 @@ function test_is_latest_stable_release() {
   log_header "Testing is_latest_stable_release"
   reset_mocks
 
+  latest_hz_release="5.4.0"
+
   local actual msg
   
-  actual=$(is_latest_stable_release "5.4.0")
+  actual=$(is_latest_stable_release "${latest_hz_release}" "${latest_hz_release}")
   msg="Passes version matching LATEST_HZ_VERSION major-minor layout"
   assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  actual=$(is_latest_stable_release "5.3.0")
+  actual=$(is_latest_stable_release "5.3.0" "${latest_hz_release}")
   msg="Fails legacy version sequences against LATEST_HZ_VERSION"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
 }
 
-function test_validate_input_env_variables() {
-  log_header "Testing validate_input_env_variables success"
+function test_get_master_version() {
+  log_header "Testing get_master_version"
   reset_mocks
 
-  local actual_exit_code=0
-  validate_input_env_variables && actual_exit_code=0 || actual_exit_code=$?
+  local actual msg
 
-  local msg="Validation block passes when expected environment keys are set"
-  assert_eq 0 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  actual=$(get_master_version "${MOCK_OWNER}")
+  msg="Correctly extracts the expected version string from master branch POM"
+  assert_eq "5.5.0-SNAPSHOT" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
 }
 
-function test_validate_input_env_variables_error() {
-  log_header "Testing validate_input_env_variables error handling"
+function test_get_master_version_errors() {
+  log_header "Testing get_master_version Error Scenarios"
 
-  # Test LATEST_MC_RELEASE is missing
+  local msg exit_code
+
   reset_mocks
-  unset LATEST_MC_RELEASE
+  MOCK_GH_FAIL="true"
+  xq() { return 1; }
+  export -f xq
   
-  local actual_exit_code=0
-  (validate_input_env_variables) 2>/dev/null && actual_exit_code=0 || actual_exit_code=$?
+  msg="Handles GitHub API command failure gracefully"
+  exit_code=0
+  get_master_version "${MOCK_OWNER}" 2>/dev/null || exit_code=$?
+  assert_eq 1 "${exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
-  local msg="Checks missing LATEST_MC_RELEASE"
-  assert_eq 1 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
-
-  # Test LATEST_HZ_VERSION is missing
   reset_mocks
-  unset LATEST_HZ_VERSION
-  
-  actual_exit_code=0
-  (validate_input_env_variables) 2>/dev/null && actual_exit_code=0 || actual_exit_code=$?
+  xq() { echo ""; return 0; }
+  export -f xq
 
-  local msg="Checks missing LATEST_HZ_VERSION"
-  assert_eq 1 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  msg="Fails when project.version node is missing or empty"
+  exit_code=0
+  get_master_version "${MOCK_OWNER}" 2>/dev/null || exit_code=$?
+  assert_eq 1 "${exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  reset_mocks
+  xq() { echo "5.5.0-MALFORMED"; return 0; }
+  export -f xq
+
+  msg="Fails when the version string violates the expected pattern"
+  exit_code=0
+  get_master_version "${MOCK_OWNER}" 2>/dev/null || exit_code=$?
+  assert_eq 1 "${exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"
 }
@@ -200,9 +198,19 @@ function test_set_rel_info_outputs() {
   reset_mocks
   truncate -s 0 "${GITHUB_OUTPUT}"
 
-  set_rel_info_outputs "5.4.0" "${MOCK_OWNER}" > /dev/null
-
+  local test_latest_hz="5.4.0"
+  local test_latest_mc="5.12.0"
   local msg actual
+
+  set_rel_info_outputs "5.4.0" "${MOCK_OWNER}" "${test_latest_hz}" "${test_latest_mc}" > /dev/null
+
+  msg="Computes correct master-version key inside property file"
+  actual=$(grep "^master-version=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
+  assert_eq "5.5.0-SNAPSHOT" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  msg="Computes correct master-major-minor key inside property file"
+  actual=$(grep "^master-major-minor=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
+  assert_eq "5.5" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   msg="Computes correct rel-major-minor key inside property file"
   actual=$(grep "^rel-major-minor=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
@@ -210,7 +218,7 @@ function test_set_rel_info_outputs() {
 
   msg="Computes correct mc-version key inside property file"
   actual=$(grep "^mc-version=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
-  assert_eq "5.12.0" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+  assert_eq "${test_latest_mc}" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   msg="Computes correct mc-major-minor key inside property file"
   actual=$(grep "^mc-major-minor=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
@@ -228,8 +236,19 @@ function test_set_rel_info_outputs() {
   actual=$(grep "^is-patch-release=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
+  msg="Flags is-latest-stable-release to true when matching latest version"
+  actual=$(grep "^is-latest-stable-release=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
+  assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
   truncate -s 0 "${GITHUB_OUTPUT}"
-  set_rel_info_outputs "5.4.0-BETA-1" "${MOCK_OWNER}" > /dev/null
+  set_rel_info_outputs "5.3.0" "${MOCK_OWNER}" "${test_latest_hz}" "${test_latest_mc}" > /dev/null
+
+  msg="Flags is-latest-stable-release to false when version is older"
+  actual=$(grep "^is-latest-stable-release=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
+  assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  truncate -s 0 "${GITHUB_OUTPUT}"
+  set_rel_info_outputs "5.4.0-BETA-1" "${MOCK_OWNER}" "${test_latest_hz}" "${test_latest_mc}" > /dev/null
 
   msg="Beta Path: Forces is-rel-major-minor property to false"
   actual=$(grep "^is-rel-major-minor=" "${GITHUB_OUTPUT}" | cut -d'=' -f2 | xargs)
@@ -238,15 +257,14 @@ function test_set_rel_info_outputs() {
   return "${TESTS_RESULT}"
 }
 
-# --- Run test suites ---
 test_get_version_parts
 test_get_major_minor_parts
 test_is_beta_release
 test_is_major_minor
 test_is_patch_release
 test_is_latest_stable_release
-test_validate_input_env_variables
-test_validate_input_env_variables_error
+test_get_master_version
+test_get_master_version_errors
 test_set_rel_info_outputs
 
 assert_eq 0 "${TESTS_RESULT}" "All tests should pass"

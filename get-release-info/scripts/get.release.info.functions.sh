@@ -27,11 +27,12 @@ function get_master_version() {
   return 0
 }
 
-# Return `true` if current release is `latest` by comparing with LATEST_HZ_VERSION
+# Return `true` if current release is `latest` by comparing with latest_hz_version
 function is_latest_stable_release() {
   local release_ver=$1
+  local latest_hz_version=$2
 
-  if [[ $(get_major_minor_parts "${release_ver}") == $(get_major_minor_parts "${LATEST_HZ_VERSION}") ]]; then
+  if [[ "${release_ver}" == "${latest_hz_version}" ]]; then
     echo "true"
   else
     echo "false"
@@ -83,8 +84,8 @@ function get_major_minor_parts() {
 function set_rel_info_outputs() {
   local release_version=$1
   local repo_owner=$2
-
-  validate_input_env_variables
+  local latest_hz_version=$3
+  local latest_mc_version=$4
 
   local master_version
   local master_major_minor
@@ -98,7 +99,7 @@ function set_rel_info_outputs() {
   local is_patch
   
   release_major_minor=$(get_major_minor_parts "${release_version}")
-  is_latest_stable=$(is_latest_stable_release "${release_version}")
+  is_latest_stable=$(is_latest_stable_release "${release_version}" "${latest_hz_version}")
   is_beta=$(is_beta_release "${release_version}")
   is_patch=$(is_patch_release "${release_version}")
   is_release_major_minor=$(is_major_minor "${release_version}")
@@ -106,7 +107,7 @@ function set_rel_info_outputs() {
 
   local mc_version
   local mc_major_minor
-  mc_version="${LATEST_MC_RELEASE}"
+  mc_version="${latest_mc_version}"
   mc_major_minor=$(get_major_minor_parts "${mc_version}")
 
   {
@@ -138,21 +139,6 @@ function set_rel_info_outputs() {
   printf "${log_format}" "is-patch-release" "${is_patch}"
   printf "${log_format}" "is-latest-stable-release" "${is_latest_stable}"
   echo "========================================="
-
-  return 0
-}
-
-# Checks expected input env vars are set. These will be passed in by the action
-function validate_input_env_variables() {
-  if [[ -z "${LATEST_MC_RELEASE:-}" ]]; then
-    echoerr "❌ Error: LATEST_MC_RELEASE environment variable is missing or empty."
-    exit 1
-  fi
-
-  if [[ -z "${LATEST_HZ_VERSION:-}" ]]; then
-    echoerr "❌ Error: LATEST_HZ_VERSION environment variable is missing or empty."
-    exit 1
-  fi
 
   return 0
 }

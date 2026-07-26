@@ -71,7 +71,9 @@ runs:
         
         set_rel_info_outputs \
           "${RELEASE_VERSION}" \
-          "${REPO_OWNER}"
+          "${REPO_OWNER}" \
+          "${LATEST_HZ_VERSION}" \
+          "${LATEST_MC_RELEASE}"
       env:
         RELEASE_VERSION: ${{ inputs.release-version }}
         REPO_OWNER: ${{ github.repository_owner }}
