@@ -37,7 +37,7 @@ function is_latest_stable_release() {
 
   # We need to account for new in-flight latest `major.minor`. Example, current `major.minor`
   # is 5.7.x and we are releasing 5.8.0. The `latest_hz_version` is derived from latest
-  # tag but tag v5.8.0 will not exist during `package` phase. So need to ensure newer releases
+  # tag but v5.8.0 will not exist during `package` phase. So need to ensure newer releases
   # without a tag always resolve to `true`
   local highest_version
   highest_version=$(
