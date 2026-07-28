@@ -133,12 +133,28 @@ function test_is_latest_stable_release() {
 
   local actual msg
   
+  actual=$(is_latest_stable_release  "5.5.0" "${latest_hz_release}")
+  msg="Passes with 'true' when 5.5.0 > ${latest_hz_release}"
+  assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  actual=$(is_latest_stable_release  "5.5.0" "5.4.5")
+  msg="Passes with 'true' when 5.5.0 > 5.4.5"
+  assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
   actual=$(is_latest_stable_release "${latest_hz_release}" "${latest_hz_release}")
-  msg="Passes version matching LATEST_HZ_VERSION major-minor layout"
+  msg="Passes with 'true' when ${latest_hz_release} == ${latest_hz_release}"
+  assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  actual=$(is_latest_stable_release "5.4.1" "${latest_hz_release}")
+  msg="Passes with 'true' when 5.4.1 >= ${latest_hz_release}"
   assert_eq "true" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   actual=$(is_latest_stable_release "5.3.0" "${latest_hz_release}")
-  msg="Fails legacy version sequences against LATEST_HZ_VERSION"
+  msg="Passes with 'false' when 5.3.0 < ${latest_hz_release}"
+  assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+  actual=$(is_latest_stable_release "5.3.5" "${latest_hz_release}")
+  msg="Passes with 'false' when 5.3.5 < ${latest_hz_release}"
   assert_eq "false" "${actual}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
   return "${TESTS_RESULT}"

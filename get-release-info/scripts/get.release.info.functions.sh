@@ -27,12 +27,26 @@ function get_master_version() {
   return 0
 }
 
-# Return `true` if current release is `latest` by comparing with latest_hz_version
+# Return `true` if current release is `latest` by comparing `major.minor` parts with `latest_hz_version`
 function is_latest_stable_release() {
   local release_ver=$1
   local latest_hz_version=$2
 
-  if [[ "${release_ver}" == "${latest_hz_version}" ]]; then
+  local rel_major_minor=$(get_major_minor_parts "${release_ver}")
+  local latest_major_minor=$(get_major_minor_parts "${latest_hz_version}")
+
+  # We need to account for new in-flight latest `major.minor`. Example, current `major.minor`
+  # is 5.7.x and we are releasing 5.8.0. The `latest_hz_version` is derived from latest
+  # tag but tag v5.8.0 will not exist during `package` phase. So need to ensure newer releases
+  # without a tag always resolve to `true`
+  local highest_version
+  highest_version=$(
+    echo "${rel_major_minor}"$'\n'"${latest_major_minor}" | \
+      sort -V | \
+      tail -n 1
+  )
+
+  if [[ "${highest_version}" == "${rel_major_minor}" ]]; then
     echo "true"
   else
     echo "false"
