@@ -1,0 +1,42 @@
+name: Get latest released version from repository
+
+inputs:
+  github-token:
+    description: "The GitHub Token used to query the repository"
+    required: true
+  repository:
+    description: "The repository to check"
+    required: false
+    default: ${{ github.repository }}
+
+outputs:
+  latest-version:
+    value: ${{ steps.resolve.outputs.latest-version }}
+
+runs:
+  using: composite
+  steps:
+    - id: resolve
+      shell: bash
+      run: |
+        echo "latest-version=$( \
+          gh api \
+            repos/${REPOSITORY}/tags \
+            --paginate \
+            --jq '.[] | select(.name | test("^v?\\d+\\.\\d+\\.\\d+$")) | .name | ltrimstr("v")' \
+          | sort --version-sort --reverse \
+          | head --lines 1
+        )" >> ${GITHUB_OUTPUT}
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        REPOSITORY: ${{ inputs.repository }}
+
+    - if: ${{ steps.resolve.outputs.latest-version == '' }}
+      shell: bash
+      run: |
+        source /dev/stdin <<< "$(curl --fail --retry 5 --retry-all-errors --show-error --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
+
+        echoerr "Failed to get latest ${REPOSITORY} from GitHub"
+        exit 1
+      env:
+        REPOSITORY: ${{ inputs.repository }}

@@ -34,34 +34,22 @@ outputs:
 runs:
   using: composite
   steps:
+    - uses: hazelcast/mono-actions/get-latest-released-version@main
+      id: mc-latest-version
+      with:
+        github-token: ${{ inputs.github-token }}
+        repository: hazelcast/management-center
+
     - name: Get latest ManCenter zip name
       id: resolve-latest-mc-zip
       shell: bash
       run: |
-        set -o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
-
-        source /dev/stdin <<< "$(curl --fail --retry 5 --retry-all-errors --show-error --silent https://raw.githubusercontent.com/hazelcast/github-actions-common-scripts/main/logging.functions.sh)"
-
-        LATEST_MC_VER=$( \
-          gh api \
-            repos/hazelcast/management-center/tags \
-            --paginate \
-            --jq '.[] | select(.name | test("^v?[0-9]+\\.[0-9]+\\.[0-9]+$")) | .name | ltrimstr("v")' | \
-          sort --version-sort --reverse | \
-          head --lines 1
-        )
-
-        if [[ -z "${LATEST_MC_VER}" ]]; then
-          echoerr "Failed to get latest MC ZIP from GitHub"
-          exit 1
-        fi
-
         MC_NAME="hazelcast-management-center-${LATEST_MC_VER}"
         echo "Found ManCenter version: '${MC_NAME}'"
         echo "name=${MC_NAME}" >> ${GITHUB_OUTPUT}
         echo "name-zip=${MC_NAME}.zip" >> ${GITHUB_OUTPUT}
       env:
-        GH_TOKEN: ${{ inputs.github-token }}
+        LATEST_MC_VER: ${{ steps.mc-latest-version.outputs.latest-version }}
 
     - name: Get MC download vars
       id: get-mc-download-vars
