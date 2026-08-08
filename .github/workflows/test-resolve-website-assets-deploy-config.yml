@@ -9,12 +9,9 @@ jobs:
     env:
       RELEASE_VERSION: '3.11.0'
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
       - name: Setup website assets deploy config (ALL)
         id: resolve-website-assets-deploy-config-all
-        uses: ./resolve-website-assets-deploy-config
+        uses: $/resolve-website-assets-deploy-config
         with:
           release-version: ${{ env.RELEASE_VERSION }}
           release-type: 'ALL'
@@ -22,7 +19,7 @@ jobs:
 
       - name: Setup website assets deploy config (OSS)
         id: resolve-website-assets-deploy-config-oss
-        uses: ./resolve-website-assets-deploy-config
+        uses: $/resolve-website-assets-deploy-config
         with:
           release-version:  ${{ env.RELEASE_VERSION }}
           release-type: 'OSS'
@@ -30,7 +27,7 @@ jobs:
 
       - name: Setup website assets deploy config (EE)
         id: resolve-website-assets-deploy-config-ee
-        uses: ./resolve-website-assets-deploy-config
+        uses: $/resolve-website-assets-deploy-config
         with:
           release-version:  ${{ env.RELEASE_VERSION }}
           release-type: 'EE'

@@ -34,7 +34,7 @@ outputs:
 runs:
   using: composite
   steps:
-    - uses: hazelcast/mono-actions/get-latest-released-version@main
+    - uses: $/get-latest-released-version@main
       id: mc-latest-version
       with:
         github-token: ${{ inputs.github-token }}
@@ -96,7 +96,7 @@ runs:
 
     - name: Download ManCenter from JFrog
       if: ${{ inputs.license-type == 'LICENSED' }}
-      uses: hazelcast/mono-actions/invoke-jfrog-cli@main
+      uses: $/invoke-jfrog-cli@main
       with:
         command: 'download'
         src-pattern: ${{ steps.get-mc-download-vars.outputs.url }}

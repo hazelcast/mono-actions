@@ -9,12 +9,9 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
       - name: Download Management Center (JFROG)
         id: test-mc-jfrog
-        uses: ./download-latest-management-center
+        uses: $/download-latest-management-center
         with:
           license-type: 'LICENSED'
           aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
@@ -22,7 +19,7 @@ jobs:
 
       - name: Download Management Center (S3)
         id: test-mc-s3
-        uses: ./download-latest-management-center
+        uses: $/download-latest-management-center
         with:
           license-type: 'NLC'
           aws-role-to-assume: ${{ vars.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}

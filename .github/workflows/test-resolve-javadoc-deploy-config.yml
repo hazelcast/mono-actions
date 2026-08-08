@@ -10,12 +10,9 @@ jobs:
       RELEASE_VERSION: '5.5.5'
       JFROG_REPO: 'sandbox-files'
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
       - name: Resolve Javadoc deploy config (ALL)
         id: resolve-javadoc-deploy-config-all
-        uses: ./resolve-javadoc-deploy-config
+        uses: $/resolve-javadoc-deploy-config
         with:
           release-version: ${{ env.RELEASE_VERSION }}
           release-type: 'ALL'
@@ -23,7 +20,7 @@ jobs:
 
       - name: Resolve Javadoc deploy config (OSS)
         id: resolve-javadoc-deploy-config-oss
-        uses: ./resolve-javadoc-deploy-config
+        uses: $/resolve-javadoc-deploy-config
         with:
           release-version:  ${{ env.RELEASE_VERSION }}
           release-type: 'OSS'
@@ -31,7 +28,7 @@ jobs:
 
       - name: Resolve Javadoc deploy config (EE)
         id: resolve-javadoc-deploy-config-ee
-        uses: ./resolve-javadoc-deploy-config
+        uses: $/resolve-javadoc-deploy-config
         with:
           release-version:  ${{ env.RELEASE_VERSION }}
           release-type: 'EE'
