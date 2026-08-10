@@ -7,12 +7,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout current action repository
-        uses: actions/checkout@v7
-
       - name: Test release info action
         id: test-action
-        uses: ./get-release-info
+        uses: $/get-release-info
         with:
           release-version: '5.5.0'
           github-token: ${{ secrets.GH_TOKEN }}

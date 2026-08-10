@@ -44,14 +44,14 @@ runs:
   steps:
     - name: Get latest HZ released version
       id: latest-hz-version
-      uses: hazelcast/mono-actions/get-latest-released-version@main
+      uses: $/get-latest-released-version
       with:
         github-token: ${{ inputs.github-token }}
         repository: ${{ github.repository_owner }}/hazelcast-mono
 
     - name: Get latest MC released version
       id: latest-mc-version
-      uses: hazelcast/mono-actions/get-latest-released-version@main
+      uses: $/get-latest-released-version
       with:
         github-token: ${{ inputs.github-token }}
         repository: ${{ github.repository_owner }}/management-center
