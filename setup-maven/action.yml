@@ -10,7 +10,7 @@ inputs:
     required: false
   gpg-private-key:
     description: |
-      GPG private key to sign Maven artifacts with. Set `env: GPG_PASSPHRASE: ${{ secrets.MY_GPG_PASSPHRASE }}`
+      GPG private key to sign Maven artifacts with. Set 'env: GPG_PASSPHRASE: $\{{ secrets.MY_GPG_PASSPHRASE }}'
       when calling `mvn deploy`. See https://github.com/actions/setup-java#gpg-signing
     required: false
 
