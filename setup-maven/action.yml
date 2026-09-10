@@ -8,6 +8,12 @@ inputs:
   root:
     description: Custom root where Hazelcast code is checkouted out. Defaults to ${GITHUB_WORKSPACE}
     required: false
+  gpg-private-key:
+    description: |
+      GPG private key to sign Maven artifacts with. Set `env: GPG_PASSPHRASE: ${{ secrets.MY_GPG_PASSPHRASE }}`
+      when calling `mvn deploy`. See https://github.com/actions/setup-java#gpg-signing
+    required: false
+
 outputs:
   cache-hit:
     value: ${{ steps.maven-cache.outputs.cache-hit == 'true' && 'true' || 'false' }}
@@ -78,6 +84,7 @@ runs:
         with:
           java-version: ${{ steps.get-java-version.outputs.JAVA_VERSION }}
           distribution: temurin
+          gpg-private-key: ${{ inputs.gpg-private-key }}
           
       - name: Set MAVEN_ARGS
         shell: bash
