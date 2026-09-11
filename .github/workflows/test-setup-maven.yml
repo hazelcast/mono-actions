@@ -58,7 +58,7 @@ jobs:
               -Durl=file://.
           ) || true
 
-          [ -f "$(find hazelcast -name "hazelcast-root-*.pom.asc" | head -n 1)" ]; file_exists=$?
+          [[ -f "$(find hazelcast -name "hazelcast-root-*.pom.asc" | head -n 1)" ]]; file_exists=$?
           msg="The signed pom.asc should be generated"
           assert_eq 0 "${file_exists}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
 
