@@ -3,6 +3,9 @@ name: Test setup-maven action
 on:
   workflow_call:
 
+env:
+  CURL_ASSERT_SCRIPT: curl --fail --retry 5 --retry-all-errors --show-error --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -18,10 +21,11 @@ jobs:
         uses: $/setup-maven
         with:
           root: hazelcast
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
 
       - name: Test outputs
         run: |
-          source /dev/stdin <<< "$(curl --fail --retry 5 --retry-all-errors --show-error --silent https://raw.githubusercontent.com/hazelcast/assert.sh/main/assert.sh)"
+          source /dev/stdin <<< "$(${CURL_ASSERT_SCRIPT})"
 
           TESTS_RESULT=0
 
@@ -36,4 +40,28 @@ jobs:
           assert_non_empty "${{ steps.setup-maven.outputs.cache-key }}" "cache-key"
           assert_non_empty "${{ steps.setup-maven.outputs.cache-hit }}" "cache-hit"
 
-          assert_eq 0 "$TESTS_RESULT" "All tests should pass"
+          assert_eq 0 "${TESTS_RESULT}" "All tests should pass"
+
+      - name: Test GPG signing
+        run: |
+          set +o errexit -o nounset -o pipefail ${RUNNER_DEBUG:+-x}
+
+          source /dev/stdin <<< "$(${CURL_ASSERT_SCRIPT})"
+
+          TESTS_RESULT=0
+
+          (
+          cd hazelcast && \
+            ./mvnw gpg:sign-and-deploy-file \
+              -DpomFile=pom.xml \
+              -Dfile=pom.xml \
+              -Durl=file://.
+          ) || true
+
+          [[ -f "$(find hazelcast -name "hazelcast-root-*.pom.asc" | head -n 1)" ]]; file_exists=$?
+          msg="The signed pom.asc should be generated"
+          assert_eq 0 "${file_exists}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
+
+          assert_eq 0 "${TESTS_RESULT}" "All tests should pass"
+        env:
+          GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
