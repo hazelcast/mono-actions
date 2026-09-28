@@ -59,7 +59,7 @@ function test_get_jf_options_common() {
   reset_mocks
 
   local actual_opts
-  actual_opts=$(__get_jf_options_common "copy" "6" "false")
+  actual_opts=$(__get_jf_options_common "move" "6" "false")
 
   local expected_opts="--fail-no-op --format=json --flat --threads 6"
   local msg="Common options compile with custom thread configurations without explode options"
@@ -164,24 +164,24 @@ function test_jfrog_cli_download_by_aql() {
   return "${TESTS_RESULT}"
 }
 
-function test_jfrog_cli_copy_by_aql() {
-  log_header "Testing jfrog_cli_copy_by_aql"
+function test_jfrog_cli_move_by_aql() {
+  log_header "Testing jfrog_cli_move_by_aql"
   reset_mocks
 
   local payload='{"items": [{"name": "hz-enterprise"}]}'
   local spec_vars="TARGET=prod"
 
-  jfrog_cli_copy_by_aql "${payload}" "${spec_vars}" 4
+  jfrog_cli_move_by_aql "${payload}" "${spec_vars}" 4
   local actual_exit_code=$?
 
   local actual_args=$(cat "${MOCK_ARGS_FILE}")
   local actual_stdin=$(cat "${MOCK_STDIN_FILE}")
 
-  local msg="jfrog_cli_copy_by_aql finished with exit code 0"
+  local msg="jfrog_cli_move_by_aql finished with exit code 0"
   assert_eq 0 "${actual_exit_code}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
   
-  local expected_args="$(get_jfrog_cli_default_options 'copy') --spec /dev/stdin --spec-vars=${spec_vars}"
-  local msg="Copy operational specification formatting layout matches"
+  local expected_args="$(get_jfrog_cli_default_options 'move') --spec /dev/stdin --spec-vars=${spec_vars}"
+  local msg="Move operational specification formatting layout matches"
   assert_eq "${expected_args}" "${actual_args}" "${msg}" && log_success "${msg}" || TESTS_RESULT=$?
   
   local msg="Mirrored explicit target payload layout"
@@ -291,7 +291,7 @@ test_get_jf_options
 test_get_jf_options_error_flow
 test_jfrog_cli_download_by_file
 test_jfrog_cli_download_by_aql
-test_jfrog_cli_copy_by_aql
+test_jfrog_cli_move_by_aql
 test_jfrog_cli_upload_by_file
 test_jfrog_assert_failure_flow
 test_jfrog_skip_assertion_flow

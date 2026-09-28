@@ -48,10 +48,10 @@ function jfrog_cli_download_by_file() {
   return $?
 }
 
-# Copies repository files directly on the server side using AQL. This is more efficient compared to
+# Moves repository files directly on the server side using AQL. This is more efficient compared to
 # downloading and re-uploading.
-# See https://docs.jfrog.com/artifactory/docs/generic-files#copying-files
-function jfrog_cli_copy_by_aql() {
+# See https://docs.jfrog.com/artifactory/docs/generic-files#moving-files
+function jfrog_cli_move_by_aql() {
   local aql_payload="$1"
   local spec_vars="$2"
   local expected_count="${3:-}"
@@ -59,8 +59,8 @@ function jfrog_cli_copy_by_aql() {
   local explode="${5:-false}"
 
   local opts=()
-  opts+=($(__get_jf_options "aql" "copy" "${spec_vars}" "${thread_count}" "${explode}"))
-  __execute_jf_command "${aql_payload}" "copy" "${expected_count}" "${opts[@]}"
+  opts+=($(__get_jf_options "aql" "move" "${spec_vars}" "${thread_count}" "${explode}"))
+  __execute_jf_command "${aql_payload}" "move" "${expected_count}" "${opts[@]}"
   return $?
 }
 
