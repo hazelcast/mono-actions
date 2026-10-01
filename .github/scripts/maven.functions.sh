@@ -130,6 +130,8 @@ function mvn() {
     else
         command mvn "$@"
     fi
+
+    return
 }
 
 # shellcheck disable=SC2310
