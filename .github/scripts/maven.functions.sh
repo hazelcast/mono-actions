@@ -16,7 +16,7 @@ function get_maven_artifact() {
     # https://github.com/hazelcast/hazelcast/issues/25451#issuecomment-1720248676/
     MAVEN_OPTS="" \
     MAVEN_ARGS="--batch-mode --quiet" \
-    ./mvnw dependency:get \
+    mvn dependency:get \
         -DgroupId="${group_id}" \
         -DartifactId="${artifact_id}" \
         -Dversion="${artifact_version}" \
@@ -70,7 +70,7 @@ function evaluate_mvn_expression() {
     # https://github.com/hazelcast/hazelcast/issues/25451#issuecomment-1720248676/
     MAVEN_OPTS="" \
     MAVEN_ARGS="--batch-mode --quiet" \
-    ./mvnw \
+    mvn \
         help:evaluate \
         -Dexpression="${expression}" \
         -DforceStdout \
@@ -119,6 +119,19 @@ function exit_with_error() {
 
     echoerr "ERROR: ${message}"
     exit 1
+}
+
+# Override `mvn` to use Maven wrapper _if exists_
+function mvn() {
+    local mvn_wrapper="./mvnw"
+
+    if [[ -x ${mvn_wrapper} ]]; then
+        "${mvn_wrapper}" "$@"
+    else
+        command mvn "$@"
+    fi
+
+    return
 }
 
 # shellcheck disable=SC2310
