@@ -1,5 +1,5 @@
 name: 'JFrog CLI Helper Utilities'
-description: 'Wraps JFrog download, upload, and copy operations'
+description: 'Wraps JFrog download, upload, and move operations'
 
 inputs:
   command:
@@ -7,7 +7,7 @@ inputs:
     type: choice
     required: true
     options:
-      - copy
+      - move
       - download
       - upload
   aql:
@@ -67,11 +67,11 @@ runs:
               "jfrog_cli_${CMD}_by_file" "${TARGET_PATH}" "${SRC_PATTERN}" "${EXPECTED_COUNT}" "${THREADS}" "${EXPLODE}"
             fi
             ;;
-          "copy")
+          "move")
             if [[ -z "${AQL}" ]]; then 
-              exit_with_err "copy requires 'aql' input"
+              exit_with_err "move requires 'aql' input"
             else
-              jfrog_cli_copy_by_aql "${AQL}" "${SPEC_VARS}" "${EXPECTED_COUNT}" "${THREADS}"
+              jfrog_cli_move_by_aql "${AQL}" "${SPEC_VARS}" "${EXPECTED_COUNT}" "${THREADS}"
             fi
             ;;
           *)
