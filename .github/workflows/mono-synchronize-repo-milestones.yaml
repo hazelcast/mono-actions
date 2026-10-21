@@ -1,0 +1,28 @@
+name: Synchronize Repo Milestones
+on:
+  workflow_call:
+
+jobs:
+  update-milestones:
+    name: Update milestones in ${{ matrix.repository }}
+    strategy:
+      fail-fast: false
+      matrix:
+        repository:
+          - ${{ github.repository_owner }}/hazelcast
+    runs-on: ubicloud-standard-2
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: hazelcast/mono-actions
+          ref: add-copybara-workflows
+          path: .mono-actions
+      - name: Update milestones in ${{ matrix.repository }}
+        run: .mono-actions/.github/workflows/mono-synchronize-repo-milestones.sh ${{ github.repository_owner }}/hazelcast-mono ${{ matrix.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.DEVOPSHAZELCAST_PAT_FOR_MONOREPO }}
+      - uses: hazelcast/docker-actions/slack-notification@master
+        if: failure()
+        with:
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_MONOREPO }}
+          slack-channel: ${{ vars.MONOREPO_SLACK_CHANNEL }}

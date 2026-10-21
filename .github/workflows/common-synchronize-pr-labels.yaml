@@ -1,0 +1,33 @@
+name: Synchronize PR Labels
+on:
+   workflow_call:
+jobs:
+   synchronize-pr-labels:
+      runs-on: ubicloud-standard-2
+      steps:
+         - uses: actions/checkout@v6
+           with:
+              repository: hazelcast/mono-actions
+              ref: add-copybara-workflows
+              path: .mono-actions
+              sparse-checkout: .github
+         - name: Copy labels to other PR
+           run: |
+              SOURCE_REPO="${GITHUB_REPOSITORY}"
+              SOURCE_PR="${{ github.event.pull_request.number }}"
+              CONTENT="$(gh pr view --repo "$SOURCE_REPO" "$SOURCE_PR" --json "body,comments" -q '.body, .comments[].body')"
+
+              while read -r line; do
+                if [[ $line =~ (Closes|Internal\ PR)\ ([^/]+/[^/]+)#([0-9]+) ]]; then
+                  TARGET_REPO="${BASH_REMATCH[2]}"
+                  TARGET_PR="${BASH_REMATCH[3]}"
+                  .mono-actions/.github/workflows/common-synchronize-pr-labels.sh $SOURCE_REPO $SOURCE_PR $TARGET_REPO $TARGET_PR
+                fi
+              done <<< "$CONTENT"
+           env:
+              GH_TOKEN: ${{ secrets.DEVOPSHAZELCAST_PAT_FOR_MONOREPO }}
+         - uses: hazelcast/docker-actions/slack-notification@master
+           if: failure()
+           with:
+            slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_MONOREPO }}
+            slack-channel: ${{ vars.MONOREPO_SLACK_CHANNEL }}
