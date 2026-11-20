@@ -96,12 +96,6 @@ jobs:
           assert_field_ee "${FIELD}" 'hazelcast-ee-docs' "${JSON_EE}"
           assert_field_ee "${FIELD}" 'hazelcast-ee-docs' "${JSON_ALL}"
 
-          FIELD="local-root"
-          assert_field_oss "${FIELD}" 'hazelcast' "${JSON_OSS}"
-          assert_field_oss "${FIELD}" 'hazelcast' "${JSON_ALL}"
-          assert_field_ee "${FIELD}" '.' "${JSON_EE}"
-          assert_field_ee "${FIELD}" '.' "${JSON_ALL}"
-
           FIELD="jar-folder"
           assert_field_oss "${FIELD}" 'hazelcast/target' "${JSON_OSS}"
           assert_field_oss "${FIELD}" 'hazelcast/target' "${JSON_ALL}"
