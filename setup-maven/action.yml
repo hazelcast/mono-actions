@@ -13,6 +13,13 @@ inputs:
       GPG private key to sign Maven artifacts with. Set 'env: GPG_PASSPHRASE: $\{{ secrets.MY_GPG_PASSPHRASE }}'
       when calling `mvn deploy`. See https://github.com/actions/setup-java#gpg-signing
     required: false
+  server-id:
+    description: |
+      Maven server ID to configure in ~/.m2/settings.xml. Set 'env: MAVEN_USERNAME' and 'env: MAVEN_PASSWORD'
+      when calling `mvn deploy`. Defaults to 'github', matching the default used by `actions/setup-java`
+      Note: default must be set; otherwise, caller will fail with empty ID error
+    required: false
+    default: 'github'
 
 outputs:
   cache-hit:
@@ -85,6 +92,9 @@ runs:
           java-version: ${{ steps.get-java-version.outputs.JAVA_VERSION }}
           distribution: temurin
           gpg-private-key: ${{ inputs.gpg-private-key }}
+          server-id: ${{ inputs.server-id }}
+          server-username: ${{ inputs.server-id != '' && 'MAVEN_USERNAME' || '' }}
+          server-password: ${{ inputs.server-id != '' && 'MAVEN_PASSWORD' || '' }}
           
       - name: Set MAVEN_ARGS
         shell: bash
