@@ -34,9 +34,9 @@ function assert_get_jdk_version {
 }
 
 log_header "Tests for get_maven_artifact"
-assert_get_maven_artifact  "com.google.guava" "listenablefuture" "9999.0-empty-to-avoid-conflict-with-guava" "https://repo1.maven.org/maven2"
+assert_get_maven_artifact  "com.google.guava" "listenablefuture" "9999.0-empty-to-avoid-conflict-with-guava" "https://repo.maven.apache.org/maven2"
 # https://github.com/hazelcast/hazelcast/issues/25451#issuecomment-1720248676/
-MAVEN_OPTS="-verbose:gc" assert_get_maven_artifact  "com.google.guava" "listenablefuture" "9999.0-empty-to-avoid-conflict-with-guava" "https://repo1.maven.org/maven2"
+MAVEN_OPTS="-verbose:gc" assert_get_maven_artifact  "com.google.guava" "listenablefuture" "9999.0-empty-to-avoid-conflict-with-guava" "https://repo.maven.apache.org/maven2"
 
 log_header "Tests for get_jdk_version"
 assert_get_jdk_version
